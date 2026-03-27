@@ -199,6 +199,109 @@ export const ChangePasswordFormSchema = pipe(
   }, 'New passwords do not match. Please try again.')
 )
 
+// const descriptionMax = 500 // PRODUCTION:UNCOMMENT
+const descriptionMax = 502
+
+// const categoryNameMax = 100 // PRODUCTION:UNCOMMENT
+const categoryNameMax = 102
+
+// const tagNameMax = 100 // PRODUCTION:UNCOMMENT
+const tagNameMax = 102
+
+const VALID_PERIODS = ['daily', 'weekly', 'monthly', 'yearly']
+
+/**
+ * Expense create/update form schema
+ */
+export const ExpenseFormSchema = object({
+  amount: pipe(
+    string('Amount is required.'),
+    minLength(1, 'Amount is required.'),
+    custom(
+      (v) =>
+        typeof v === 'string' && /^\d+(\.\d{1,2})?$/.test(v.trim()) && parseFloat(v.trim()) > 0,
+      'Amount must be a positive number (e.g. 12.50).'
+    )
+  ),
+  date: pipe(
+    string('Date is required.'),
+    minLength(1, 'Date is required.'),
+    custom(
+      (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v.trim()),
+      'Date must be in YYYY-MM-DD format.'
+    )
+  ),
+  description: pipe(
+    string('Description is required.'),
+    minLength(1, 'Description is required.'),
+    maxLength(descriptionMax, 'Description must be 500 characters or fewer.')
+  ),
+  categoryId: optional(pipe(string())),
+  newCategory: optional(pipe(string(), maxLength(categoryNameMax, 'Category name must be 100 characters or fewer.'))),
+  tags: optional(pipe(string())),
+  newTags: optional(pipe(string())),
+})
+
+/**
+ * Category name schema
+ */
+export const CategoryNameSchema = object({
+  name: pipe(
+    string('Category name is required.'),
+    minLength(1, 'Category name is required.'),
+    maxLength(categoryNameMax, 'Category name must be 100 characters or fewer.')
+  ),
+})
+
+/**
+ * Tag name schema
+ */
+export const TagNameSchema = object({
+  name: pipe(
+    string('Tag name is required.'),
+    minLength(1, 'Tag name is required.'),
+    maxLength(tagNameMax, 'Tag name must be 100 characters or fewer.')
+  ),
+})
+
+/**
+ * Recurring expense form schema
+ */
+export const RecurringExpenseFormSchema = object({
+  amount: pipe(
+    string('Amount is required.'),
+    minLength(1, 'Amount is required.'),
+    custom(
+      (v) =>
+        typeof v === 'string' && /^\d+(\.\d{1,2})?$/.test(v.trim()) && parseFloat(v.trim()) > 0,
+      'Amount must be a positive number (e.g. 12.50).'
+    )
+  ),
+  description: pipe(
+    string('Description is required.'),
+    minLength(1, 'Description is required.'),
+    maxLength(descriptionMax, 'Description must be 500 characters or fewer.')
+  ),
+  period: pipe(
+    string('Period is required.'),
+    minLength(1, 'Period is required.'),
+    custom(
+      (v) => typeof v === 'string' && VALID_PERIODS.includes(v.trim()),
+      'Period must be one of: daily, weekly, monthly, yearly.'
+    )
+  ),
+  nextRunDate: pipe(
+    string('Next run date is required.'),
+    minLength(1, 'Next run date is required.'),
+    custom(
+      (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v.trim()),
+      'Next run date must be in YYYY-MM-DD format.'
+    )
+  ),
+  categoryId: optional(pipe(string())),
+  newCategory: optional(pipe(string(), maxLength(categoryNameMax, 'Category name must be 100 characters or fewer.'))),
+})
+
 /**
  * Dynamic path parameter validation schemas
  */

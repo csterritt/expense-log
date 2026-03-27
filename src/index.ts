@@ -46,6 +46,11 @@ import {
 import { setupBetterAuthResponseInterceptor } from './routes/auth/better-auth-response-interceptor'
 
 import { Bindings } from './local-types'
+import { buildExpenses } from './routes/expenses/build-expenses'
+import { handleCreateExpense } from './routes/expenses/handle-create-expense'
+import { buildEditExpense } from './routes/expenses/build-edit-expense'
+import { handleUpdateExpense } from './routes/expenses/handle-update-expense'
+import { handleDeleteExpense } from './routes/expenses/handle-delete-expense'
 import { validateEnvBindings } from './middleware/guard-sign-up-mode'
 import { handleSetClock } from './routes/auth/handle-set-clock' // PRODUCTION:REMOVE
 import { handleResetClock } from './routes/auth/handle-reset-clock' // PRODUCTION:REMOVE
@@ -209,6 +214,11 @@ buildProfile(app)
 buildDeleteConfirm(app)
 handleChangePassword(app)
 handleDeleteAccount(app)
+buildExpenses(app)
+handleCreateExpense(app)
+buildEditExpense(app)
+handleUpdateExpense(app)
+handleDeleteExpense(app)
 
 if (isTestRouteEnabledFlag) {
   handleSetClock(app) // PRODUCTION:REMOVE

@@ -95,6 +95,71 @@ export const checkCodeExists = async (code: string): Promise<boolean> => {
 }
 
 /**
+ * Seed expenses, categories, and tags for testing
+ */
+export const seedExpenses = async (): Promise<void> => {
+  try {
+    const response = await fetch(
+      'http://localhost:3000/test/database/seed-expenses',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed expenses')
+    }
+
+    console.log('Expense test data seeded successfully')
+  } catch (error) {
+    console.error('Failed to seed expenses:', error)
+    throw error
+  }
+}
+
+/**
+ * Clear expense-related tables only
+ */
+export const clearExpenses = async (): Promise<void> => {
+  try {
+    const response = await fetch(
+      'http://localhost:3000/test/database/clear-expenses',
+      {
+        method: 'DELETE',
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to clear expenses')
+    }
+
+    console.log('Expense tables cleared successfully')
+  } catch (error) {
+    console.error('Failed to clear expenses:', error)
+    throw error
+  }
+}
+
+/**
  * Seed database with test data
  * Calls test-only server endpoint to seed database
  */

@@ -14,6 +14,11 @@ import {
   session,
   singleUseCode,
   interestedEmail,
+  category,
+  tag,
+  expense,
+  expenseTag,
+  recurringExpense,
 } from '../../db/schema'
 import { STANDARD_SECURE_HEADERS } from '../../constants'
 
@@ -38,6 +43,11 @@ testDatabaseRouter.delete(
       const db = createDbClient(c.env.EXPENSE_LOG_DB)
 
       // Delete in order to avoid foreign key constraints
+      await db.delete(expenseTag)
+      await db.delete(recurringExpense)
+      await db.delete(expense)
+      await db.delete(category)
+      await db.delete(tag)
       await db.delete(session)
       await db.delete(account)
       await db.delete(user)
@@ -243,6 +253,11 @@ testDatabaseRouter.get(
       const sessionCount = await db.select().from(session)
       const singleUseCodeCount = await db.select().from(singleUseCode)
       const interestedEmailCount = await db.select().from(interestedEmail)
+      const categoryCount = await db.select().from(category)
+      const tagCount = await db.select().from(tag)
+      const expenseCount = await db.select().from(expense)
+      const expenseTagCount = await db.select().from(expenseTag)
+      const recurringExpenseCount = await db.select().from(recurringExpense)
 
       return c.json({
         success: true,
@@ -252,6 +267,11 @@ testDatabaseRouter.get(
           sessions: sessionCount.length,
           singleUseCodes: singleUseCodeCount.length,
           interestedEmail: interestedEmailCount.length,
+          categories: categoryCount.length,
+          tags: tagCount.length,
+          expenses: expenseCount.length,
+          expenseTags: expenseTagCount.length,
+          recurringExpenses: recurringExpenseCount.length,
         },
         timestamp: new Date().toISOString(),
       })
@@ -300,6 +320,150 @@ testDatabaseRouter.get(
         {
           success: false,
           error: 'Failed to check code existence',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      )
+    }
+  }
+)
+
+/**
+ * Seed expenses, categories, and tags for testing
+ * POST /test/database/seed-expenses
+ */
+testDatabaseRouter.post(
+  '/seed-expenses',
+  secureHeaders(STANDARD_SECURE_HEADERS),
+  async (c) => {
+    try {
+      const db = createDbClient(c.env.EXPENSE_LOG_DB)
+
+      // Test categories
+      const testCategories = [
+        {
+          id: 'cat-food-001',
+          name: 'Food',
+          createdAt: new Date('2025-01-01'),
+        },
+        {
+          id: 'cat-transport-001',
+          name: 'Transport',
+          createdAt: new Date('2025-01-01'),
+        },
+      ]
+      for (const cat of testCategories) {
+        await db.insert(category).values(cat)
+      }
+
+      // Test tags
+      const testTags = [
+        {
+          id: 'tag-work-001',
+          name: 'work',
+          createdAt: new Date('2025-01-01'),
+        },
+        {
+          id: 'tag-personal-001',
+          name: 'personal',
+          createdAt: new Date('2025-01-01'),
+        },
+      ]
+      for (const t of testTags) {
+        await db.insert(tag).values(t)
+      }
+
+      // Test expenses (requires user gv9HBfkV7WbSSAkgVW0g5WtYf6hqaJyv from seed)
+      const testExpenses = [
+        {
+          id: 'exp-001',
+          userId: 'gv9HBfkV7WbSSAkgVW0g5WtYf6hqaJyv',
+          amountCents: 1250,
+          date: '2025-01-15',
+          description: 'Lunch at cafe',
+          categoryId: 'cat-food-001',
+          createdAt: new Date('2025-01-15'),
+          updatedAt: new Date('2025-01-15'),
+        },
+        {
+          id: 'exp-002',
+          userId: 'gv9HBfkV7WbSSAkgVW0g5WtYf6hqaJyv',
+          amountCents: 3500,
+          date: '2025-01-20',
+          description: 'Monthly bus pass',
+          categoryId: 'cat-transport-001',
+          createdAt: new Date('2025-01-20'),
+          updatedAt: new Date('2025-01-20'),
+        },
+      ]
+      for (const exp of testExpenses) {
+        await db.insert(expense).values(exp)
+      }
+
+      // Link tags to expenses
+      await db
+        .insert(expenseTag)
+        .values({ expenseId: 'exp-001', tagId: 'tag-personal-001' })
+      await db
+        .insert(expenseTag)
+        .values({ expenseId: 'exp-002', tagId: 'tag-work-001' })
+
+      console.log('Expense test data seeded successfully')
+
+      return c.json({
+        success: true,
+        message: 'Expense test data seeded successfully',
+        categoriesCreated: testCategories.length,
+        tagsCreated: testTags.length,
+        expensesCreated: testExpenses.length,
+        timestamp: new Date().toISOString(),
+      })
+    } catch (error) {
+      console.error('Failed to seed expense test data:', error)
+
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to seed expense test data',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500
+      )
+    }
+  }
+)
+
+/**
+ * Clear expense-related tables only
+ * DELETE /test/database/clear-expenses
+ */
+testDatabaseRouter.delete(
+  '/clear-expenses',
+  secureHeaders(STANDARD_SECURE_HEADERS),
+  async (c) => {
+    try {
+      const db = createDbClient(c.env.EXPENSE_LOG_DB)
+
+      await db.delete(expenseTag)
+      await db.delete(recurringExpense)
+      await db.delete(expense)
+      await db.delete(category)
+      await db.delete(tag)
+
+      console.log('Expense tables cleared successfully')
+
+      return c.json({
+        success: true,
+        message: 'Expense tables cleared successfully',
+        timestamp: new Date().toISOString(),
+      })
+    } catch (error) {
+      console.error('Failed to clear expense tables:', error)
+
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to clear expense tables',
           details: error instanceof Error ? error.message : 'Unknown error',
         },
         500

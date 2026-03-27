@@ -130,4 +130,9 @@ export const BASE_URLS = {
   SIGN_OUT: 'http://localhost:3000/auth/sign-out',
   PROFILE: 'http://localhost:3000/profile',
   PROFILE_DELETE_CONFIRM: 'http://localhost:3000/profile/delete-confirm',
+  EXPENSES: 'http://localhost:3000/expenses',
+  EXPENSES_SUMMARY: 'http://localhost:3000/expenses/summary',
+  CATEGORIES: 'http://localhost:3000/categories',
+  TAGS: 'http://localhost:3000/tags',
+  RECURRING: 'http://localhost:3000/recurring',
 } as const

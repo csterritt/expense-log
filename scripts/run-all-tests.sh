@@ -20,6 +20,10 @@ MODE_NAMES=("OPEN_SIGN_UP" "NO_SIGN_UP" "GATED_SIGN_UP" "INTEREST_SIGN_UP" "BOTH
 declare -a PASSED_COUNTS
 declare -a FAILED_COUNTS
 declare -a SKIPPED_COUNTS
+declare -a FAILURES_OUTPUT
+
+# Report flag
+REPORT_FAILURES=false
 
 # Colors for output
 RED='\033[0;31m'
@@ -65,7 +69,16 @@ run_tests() {
   
   # Run tests and capture output
   local output
-  output=$(npx playwright test --reporter=line 2>&1)
+  local test_exit_code
+  if [ "$REPORT_FAILURES" = true ]; then
+    # Capture full output including failures
+    output=$(npx playwright test --reporter=line e2e-tests 2>&1)
+    test_exit_code=$?
+  else
+    # Just capture summary for normal operation
+    output=$(npx playwright test --reporter=line e2e-tests 2>&1)
+    test_exit_code=$?
+  fi
   
   # Parse results - look for the summary line like "X passed (time)" or "X failed"
   local passed=0
@@ -96,6 +109,48 @@ run_tests() {
   PASSED_COUNTS+=("$passed")
   FAILED_COUNTS+=("$failed")
   SKIPPED_COUNTS+=("$skipped")
+  
+  # Store full output for reporting if there are failures and reporting is enabled
+  if [ "$REPORT_FAILURES" = true ] && [ "$failed" -gt 0 ]; then
+    FAILURES_OUTPUT+=("${mode_name}")
+    FAILURES_OUTPUT+=("$output")
+    FAILURES_OUTPUT+=("---")
+  fi
+}
+
+print_failures() {
+  if [ "$REPORT_FAILURES" = true ] && [ ${#FAILURES_OUTPUT[@]} -gt 0 ]; then
+    echo ""
+    echo -e "${RED}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${RED}                        FAILURE REPORT                        ${NC}"
+    echo -e "${RED}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    
+    local current_mode=""
+    local printing_output=false
+    
+    for line in "${FAILURES_OUTPUT[@]}"; do
+      if [ "$line" = "---" ]; then
+        printing_output=false
+        echo ""
+        continue
+      fi
+      
+      # Check if this line is a mode name (all caps with underscores)
+      if [[ "$line" =~ ^[A-Z_]+$ ]]; then
+        current_mode="$line"
+        echo -e "${RED}Failures in ${current_mode}:${NC}"
+        echo ""
+        printing_output=true
+        continue
+      fi
+      
+      # Print the output if we're in output mode
+      if [ "$printing_output" = true ]; then
+        echo "$line"
+      fi
+    done
+  fi
 }
 
 print_summary() {
@@ -155,6 +210,9 @@ print_summary() {
 
 main() {
   echo -e "${BLUE}Running e2e tests for all sign-up modes${NC}"
+  if [ "$REPORT_FAILURES" = true ]; then
+    echo -e "${YELLOW}Failure reporting enabled${NC}"
+  fi
   echo ""
   
   # Clean up any existing servers
@@ -184,9 +242,29 @@ main() {
   
   # Print summary
   print_summary
+  
+  # Print detailed failure report if requested
+  print_failures
 }
 
 # Trap to ensure cleanup on exit
 trap cleanup EXIT
+
+# Parse arguments
+echo "Processing arguments: $@"
+for arg in "$@"; do
+  echo "Processing argument: $arg"
+  case $arg in
+    --report)
+      REPORT_FAILURES=true
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $arg"
+      echo "Usage: $0 [--report]"
+      exit 1
+      ;;
+  esac
+done
 
 main

@@ -70,6 +70,37 @@ export const PATHS = {
   PROFILE: '/profile' as const,
   PROFILE_DELETE_CONFIRM: '/profile/delete-confirm' as const,
   PROFILE_DELETE: '/profile/delete' as const,
+
+  // Expense paths
+  EXPENSES: {
+    LIST: '/expenses' as const,
+    NEW: '/expenses/new' as const,
+    EDIT: '/expenses/:id/edit' as const,
+    DELETE: '/expenses/:id/delete' as const,
+    SUMMARY: '/expenses/summary' as const,
+  },
+
+  // Category paths
+  CATEGORIES: {
+    LIST: '/categories' as const,
+    EDIT: '/categories/:id/edit' as const,
+    DELETE: '/categories/:id/delete' as const,
+  },
+
+  // Tag paths
+  TAGS: {
+    LIST: '/tags' as const,
+    EDIT: '/tags/:id/edit' as const,
+    DELETE: '/tags/:id/delete' as const,
+  },
+
+  // Recurring expense paths
+  RECURRING: {
+    LIST: '/recurring' as const,
+    NEW: '/recurring/new' as const,
+    EDIT: '/recurring/:id/edit' as const,
+    DELETE: '/recurring/:id/delete' as const,
+  },
 } as const
 
 // Cookie names
@@ -140,6 +171,38 @@ export const MESSAGES = {
     'An account with this email already exists. Please check your email for a verification link or sign in if you have already verified your account.',
   NEW_VERIFICATION_EMAIL:
     'A new verification email has been sent. Please check your inbox.',
+} as const
+
+export const EXPENSE_MESSAGES = {
+  EXPENSE_CREATED: 'Expense added successfully.',
+  EXPENSE_UPDATED: 'Expense updated successfully.',
+  EXPENSE_DELETED: 'Expense deleted successfully.',
+  EXPENSE_NOT_FOUND: 'Expense not found.',
+  EXPENSE_INVALID_AMOUNT: 'Amount must be a positive number.',
+  EXPENSE_INVALID_DATE: 'Date is required.',
+  EXPENSE_DESCRIPTION_REQUIRED: 'Description is required.',
+  CATEGORY_CREATED: 'Category created successfully.',
+  CATEGORY_UPDATED: 'Category updated successfully.',
+  CATEGORY_DELETED: 'Category deleted successfully.',
+  TAG_CREATED: 'Tag created successfully.',
+  TAG_UPDATED: 'Tag updated successfully.',
+  TAG_DELETED: 'Tag deleted successfully.',
+} as const
+
+export const EXPENSE_VALIDATION = {
+  AMOUNT_REQUIRED: 'Amount is required.',
+  AMOUNT_POSITIVE: 'Amount must be greater than zero.',
+  AMOUNT_MAX: 'Amount is too large.',
+  DATE_REQUIRED: 'Date is required.',
+  DESCRIPTION_REQUIRED: 'Description is required.',
+  DESCRIPTION_MAX: 'Description must be 500 characters or fewer.',
+  CATEGORY_NAME_REQUIRED: 'Category name is required.',
+  CATEGORY_NAME_MAX: 'Category name must be 100 characters or fewer.',
+  TAG_NAME_REQUIRED: 'Tag name is required.',
+  TAG_NAME_MAX: 'Tag name must be 100 characters or fewer.',
+  PERIOD_REQUIRED: 'Period is required.',
+  PERIOD_INVALID: 'Period must be one of: daily, weekly, monthly, yearly.',
+  NEXT_RUN_DATE_REQUIRED: 'Next run date is required.',
 } as const
 
 export const MESSAGE_BUILDERS = {
