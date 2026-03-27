@@ -135,13 +135,13 @@
 
 ## Phase 5: Category & Tag Management Routes
 
-- [ ] 5.1 Create `src/routes/categories/build-categories.tsx` — GET `/categories` — list + inline edit
-- [ ] 5.2 Create `src/routes/categories/handle-update-category.ts` — POST `/categories/:id/edit`
-- [ ] 5.3 Create `src/routes/categories/handle-delete-category.ts` — POST `/categories/:id/delete`
-- [ ] 5.4 Create `src/routes/tags/build-tags.tsx` — GET `/tags` — list + inline edit
-- [ ] 5.5 Create `src/routes/tags/handle-update-tag.ts` — POST `/tags/:id/edit`
-- [ ] 5.6 Create `src/routes/tags/handle-delete-tag.ts` — POST `/tags/:id/delete`
-- [ ] 5.7 Register category and tag routes in `src/index.ts`
+- [X] 5.1 Create `src/routes/categories/build-categories.tsx` — GET `/categories` — list + inline edit
+- [X] 5.2 Create `src/routes/categories/handle-update-category.ts` — POST `/categories/:id/edit`
+- [X] 5.3 Create `src/routes/categories/handle-delete-category.ts` — POST `/categories/:id/delete`
+- [X] 5.4 Create `src/routes/tags/build-tags.tsx` — GET `/tags` — list + inline edit
+- [X] 5.5 Create `src/routes/tags/handle-update-tag.ts` — POST `/tags/:id/edit`
+- [X] 5.6 Create `src/routes/tags/handle-delete-tag.ts` — POST `/tags/:id/delete`
+- [X] 5.7 Register category and tag routes in `src/index.ts`
 
 ### TDD for Phase 5
 
@@ -156,12 +156,12 @@
 
 ## Phase 6: Summary Page
 
-- [ ] 6.1 Create `src/routes/expenses/build-summary.tsx` — GET `/expenses/summary`:
+- [X] 6.1 Create `src/routes/expenses/build-summary.tsx` — GET `/expenses/summary`:
   - Filter by category(ies) and/or tag(s) via multi-select
   - Totals per category and per tag
   - Sort by category or tag
   - Date range filter
-- [ ] 6.2 Register summary route in `src/index.ts`
+- [X] 6.2 Register summary route in `src/index.ts`
 
 ### TDD for Phase 6
 
@@ -173,15 +173,15 @@
 
 ## Phase 7: Recurring Expenses
 
-- [ ] 7.1 Create `src/routes/recurring/build-recurring.tsx` — GET `/recurring` — list + create form
-- [ ] 7.2 Create `src/routes/recurring/handle-create-recurring.ts` — POST `/recurring`
-- [ ] 7.3 Create `src/routes/recurring/build-edit-recurring.tsx` — GET `/recurring/:id/edit`
-- [ ] 7.4 Create `src/routes/recurring/handle-update-recurring.ts` — POST `/recurring/:id/edit`
-- [ ] 7.5 Create `src/routes/recurring/handle-delete-recurring.ts` — POST `/recurring/:id/delete`
-- [ ] 7.6 Create `src/lib/recurring-processor.ts` — logic to create expenses from due recurring templates
-- [ ] 7.7 Add `scheduled()` export in `src/index.ts` for Cloudflare cron trigger
-- [ ] 7.8 Add cron trigger config in `wrangler.jsonc`
-- [ ] 7.9 Register recurring routes in `src/index.ts`
+- [X] 7.1 Create `src/routes/recurring/build-recurring.tsx` — GET `/recurring` — list + create form
+- [X] 7.2 Create `src/routes/recurring/handle-create-recurring.ts` — POST `/recurring`
+- [X] 7.3 Create `src/routes/recurring/build-edit-recurring.tsx` — GET `/recurring/:id/edit`
+- [X] 7.4 Create `src/routes/recurring/handle-update-recurring.ts` — POST `/recurring/:id/edit`
+- [X] 7.5 Create `src/routes/recurring/handle-delete-recurring.ts` — POST `/recurring/:id/delete`
+- [X] 7.6 Create `src/lib/recurring-processor.ts` — logic to create expenses from due recurring templates
+- [X] 7.7 Add `scheduled()` export in `src/index.ts` for Cloudflare cron trigger
+- [X] 7.8 Add cron trigger config in `wrangler.jsonc`
+- [X] 7.9 Register recurring routes in `src/index.ts`
 
 ### TDD for Phase 7
 

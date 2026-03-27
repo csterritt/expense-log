@@ -17,7 +17,6 @@ import { buildPrivate } from './routes/build-private'
 import { build404 } from './routes/build-404'
 import { buildEmailConfirmation } from './routes/auth/build-email-confirmation'
 import { buildAwaitVerification } from './routes/auth/build-await-verification'
-import { createDbClient } from './db/client'
 import { buildSignIn } from './routes/auth/build-sign-in'
 import { buildSignUp } from './routes/auth/build-sign-up'
 import { buildGatedSignUp } from './routes/auth/build-gated-sign-up'
@@ -51,6 +50,20 @@ import { handleCreateExpense } from './routes/expenses/handle-create-expense'
 import { buildEditExpense } from './routes/expenses/build-edit-expense'
 import { handleUpdateExpense } from './routes/expenses/handle-update-expense'
 import { handleDeleteExpense } from './routes/expenses/handle-delete-expense'
+import { buildSummary } from './routes/expenses/build-summary'
+import { buildCategories } from './routes/categories/build-categories'
+import { handleUpdateCategory } from './routes/categories/handle-update-category'
+import { handleDeleteCategory } from './routes/categories/handle-delete-category'
+import { buildTags } from './routes/tags/build-tags'
+import { handleUpdateTag } from './routes/tags/handle-update-tag'
+import { handleDeleteTag } from './routes/tags/handle-delete-tag'
+import { buildRecurring } from './routes/recurring/build-recurring'
+import { handleCreateRecurring } from './routes/recurring/handle-create-recurring'
+import { buildEditRecurring } from './routes/recurring/build-edit-recurring'
+import { handleUpdateRecurring } from './routes/recurring/handle-update-recurring'
+import { handleDeleteRecurring } from './routes/recurring/handle-delete-recurring'
+import { processRecurringExpenses } from './lib/recurring-processor'
+import { createDbClient } from './db/client'
 import { validateEnvBindings } from './middleware/guard-sign-up-mode'
 import { handleSetClock } from './routes/auth/handle-set-clock' // PRODUCTION:REMOVE
 import { handleResetClock } from './routes/auth/handle-reset-clock' // PRODUCTION:REMOVE
@@ -214,11 +227,23 @@ buildProfile(app)
 buildDeleteConfirm(app)
 handleChangePassword(app)
 handleDeleteAccount(app)
+buildSummary(app)
 buildExpenses(app)
 handleCreateExpense(app)
 buildEditExpense(app)
 handleUpdateExpense(app)
 handleDeleteExpense(app)
+buildCategories(app)
+handleUpdateCategory(app)
+handleDeleteCategory(app)
+buildTags(app)
+handleUpdateTag(app)
+handleDeleteTag(app)
+buildRecurring(app)
+handleCreateRecurring(app)
+buildEditRecurring(app)
+handleUpdateRecurring(app)
+handleDeleteRecurring(app)
 
 if (isTestRouteEnabledFlag) {
   handleSetClock(app) // PRODUCTION:REMOVE
@@ -236,3 +261,14 @@ build404(app)
 showRoutes(app) // PRODUCTION:REMOVE
 
 export default app
+
+export const scheduled = async (
+  _event: ScheduledEvent,
+  env: Bindings,
+  _ctx: ExecutionContext
+): Promise<void> => {
+  const db = createDbClient((env as unknown as { EXPENSE_LOG_DB: D1Database }).EXPENSE_LOG_DB)
+  const today = new Date().toISOString().substring(0, 10)
+  const count = await processRecurringExpenses(db, today)
+  console.log(`Scheduled: processed ${count} recurring expenses for ${today}`)
+}

@@ -19,6 +19,9 @@
   "dev": {
     "port": 3000,
   },
+  "triggers": {
+    "crons": ["0 0 * * *"],
+  },
   "vars": {
     "Session": "",
     "db": "",
