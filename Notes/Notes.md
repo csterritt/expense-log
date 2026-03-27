@@ -18,6 +18,7 @@
 - SQLite database
 - Simple HTML/CSS frontend
 - DaisyUI components with Tailwind CSS for styling
+- See architecture.md for more details
 
 ### Database architecture
 
@@ -29,15 +30,20 @@
   - Description
   - Category?
   - Tags?
-  - Recurring (weekly, monthly, multi-month?)
+- Recurring expense
+  - Expense ID that recurs
+  - Period (weekly, monthly, multi-month?)
 
 ### Display
 
 - Form entry for new expense above history
+- CRUD for expenses
+- CRUD for recurring expenses
+- CRUD for categories - create on entry in the expense form, if it doesn't exist
+- CRUD for tags - create on entry in the expense form, if it doesn't exist
 - History
   - Sort by date descending, but can change sort
   - Different background for each month
-  - Search for category/tag
   - Filter by category/tag or description search
 - Summary
   - Select by category(ies)/tag(s)

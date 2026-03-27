@@ -70,7 +70,7 @@ export const handleAction = (app: Hono<{ Bindings: Bindings }>): void => {
 
 ### Route Security
 
-Every route must apply `secureHeaders(STANDARD_SECURE_HEADERS)` middleware.
+Every route must apply `secureHeaders(STANDARD_SECURE_HEADERS)` and `signedInAccess` middleware.
 
 ## Path Management
 
