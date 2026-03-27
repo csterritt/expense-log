@@ -20,7 +20,7 @@ import { DURATIONS } from '../constants'
  * @returns Configured better-auth instance
  */
 export const createAuth = (env: Bindings) => {
-  const db: D1Database = env.PROJECT_DB
+  const db: D1Database = env.EXPENSE_LOG_DB
   const dbClient = createDbClient(db)
 
   let alternateOrigin = 'http://localhost:3000/' // PRODUCTION:REMOVE

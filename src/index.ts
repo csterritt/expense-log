@@ -161,7 +161,7 @@ app.use(validateEnvBindings)
 // Initialize db client for each request
 app.use(async (c, next) => {
   // Create DB client for this request
-  const db = createDbClient(c.env.PROJECT_DB)
+  const db = createDbClient(c.env.EXPENSE_LOG_DB)
   c.set('db', db)
 
   await next()

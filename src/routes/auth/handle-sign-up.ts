@@ -7,7 +7,12 @@ import { secureHeaders } from 'hono/secure-headers'
 
 import { createAuth } from '../../lib/auth'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
-import { PATHS, STANDARD_SECURE_HEADERS, COOKIES, MESSAGES } from '../../constants'
+import {
+  PATHS,
+  STANDARD_SECURE_HEADERS,
+  COOKIES,
+  MESSAGES,
+} from '../../constants'
 import type { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { validateRequest, SignUpFormSchema } from '../../lib/validators'
@@ -101,7 +106,7 @@ export const handleSignUp = (app: Hono<{ Bindings: Bindings }>): void => {
           return handleSignUpApiError(c, apiError, email, PATHS.AUTH.SIGN_IN)
         }
 
-        const dbClient = createDbClient(c.env.PROJECT_DB)
+        const dbClient = createDbClient(c.env.EXPENSE_LOG_DB)
         await updateAccountTimestampAfterSignUp(dbClient, email)
 
         return redirectToAwaitVerification(c, email)

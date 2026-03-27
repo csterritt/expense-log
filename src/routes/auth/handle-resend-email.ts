@@ -53,7 +53,7 @@ export const handleResendEmail = (app: Hono<{ Bindings: Bindings }>): void => {
 
         try {
           // Create database client and auth instance
-          const db = createDbClient(c.env.PROJECT_DB)
+          const db = createDbClient(c.env.EXPENSE_LOG_DB)
           const auth = createAuth(c.env)
 
           // Check if user exists and get their verification status along with account info for rate limiting

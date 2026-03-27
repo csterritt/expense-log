@@ -19,7 +19,7 @@ export const renderer = jsxRenderer(
             href='/style-20250722184943.css'
             type='text/css'
           />
-          <title>Worker, D1, Drizzle</title>
+          <title>Expense Log</title>
         </head>
         <body className='min-h-screen bg-base-200'>{children}</body>
       </html>

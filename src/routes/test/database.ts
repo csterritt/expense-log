@@ -22,7 +22,9 @@ import { STANDARD_SECURE_HEADERS } from '../../constants'
  * These endpoints should ONLY be available in development/test environments
  */
 
-const testDatabaseRouter = new Hono<{ Bindings: { PROJECT_DB: D1Database } }>()
+const testDatabaseRouter = new Hono<{
+  Bindings: { EXPENSE_LOG_DB: D1Database }
+}>()
 
 /**
  * Clear all authentication data from the database
@@ -33,7 +35,7 @@ testDatabaseRouter.delete(
   secureHeaders(STANDARD_SECURE_HEADERS),
   async (c) => {
     try {
-      const db = createDbClient(c.env.PROJECT_DB)
+      const db = createDbClient(c.env.EXPENSE_LOG_DB)
 
       // Delete in order to avoid foreign key constraints
       await db.delete(session)
@@ -82,7 +84,7 @@ testDatabaseRouter.delete(
   secureHeaders(STANDARD_SECURE_HEADERS),
   async (c) => {
     try {
-      const db = createDbClient(c.env.PROJECT_DB)
+      const db = createDbClient(c.env.EXPENSE_LOG_DB)
 
       // Delete in order to avoid foreign key constraints
       await db.delete(session)
@@ -118,7 +120,7 @@ testDatabaseRouter.post(
   secureHeaders(STANDARD_SECURE_HEADERS),
   async (c) => {
     try {
-      const db = createDbClient(c.env.PROJECT_DB)
+      const db = createDbClient(c.env.EXPENSE_LOG_DB)
 
       // Insert test users
       const testUsers = [
@@ -233,7 +235,7 @@ testDatabaseRouter.get(
   secureHeaders(STANDARD_SECURE_HEADERS),
   async (c) => {
     try {
-      const db = createDbClient(c.env.PROJECT_DB)
+      const db = createDbClient(c.env.EXPENSE_LOG_DB)
 
       // Count records in each table
       const userCount = await db.select().from(user)
@@ -278,7 +280,7 @@ testDatabaseRouter.get(
   async (c) => {
     try {
       const code = c.req.param('code')
-      const db = createDbClient(c.env.PROJECT_DB)
+      const db = createDbClient(c.env.EXPENSE_LOG_DB)
 
       const result = await db
         .select({ code: singleUseCode.code })
