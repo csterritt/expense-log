@@ -24,15 +24,15 @@
 
 ## Phase 1: Database Schema & Migrations
 
-- [ ] 1.1 Add `category` table to `src/db/schema.ts` (id, name, createdAt)
-- [ ] 1.2 Add `tag` table to `src/db/schema.ts` (id, name, createdAt)
-- [ ] 1.3 Add `expense` table to `src/db/schema.ts` (id, userId FK, amountCents integer, date text, description, categoryId FK nullable, createdAt, updatedAt)
-- [ ] 1.4 Add `expenseTag` join table to `src/db/schema.ts` (expenseId FK, tagId FK, composite PK)
-- [ ] 1.5 Add `recurringExpense` table to `src/db/schema.ts` (id, expenseTemplateId FK, period enum-like text, nextRunDate text, isActive boolean, createdAt, updatedAt)
-- [ ] 1.6 Export types: `Category`, `Tag`, `Expense`, `ExpenseTag`, `RecurringExpense` + `New*` insert types
-- [ ] 1.7 Add tables to `schema` export object
-- [ ] 1.8 Run `drizzle-kit generate` to create migration SQL
-- [ ] 1.9 Run migration against local D1 (`wrangler d1 migrations apply`)
+- [X] 1.1 Add `category` table to `src/db/schema.ts` (id, name, createdAt)
+- [X] 1.2 Add `tag` table to `src/db/schema.ts` (id, name, createdAt)
+- [X] 1.3 Add `expense` table to `src/db/schema.ts` (id, userId FK, amountCents integer, date text, description, categoryId FK nullable, createdAt, updatedAt)
+- [X] 1.4 Add `expenseTag` join table to `src/db/schema.ts` (expenseId FK, tagId FK, composite PK)
+- [X] 1.5 Add `recurringExpense` table to `src/db/schema.ts` (id, expenseTemplateId FK, period enum-like text, nextRunDate text, isActive boolean, createdAt, updatedAt)
+- [X] 1.6 Export types: `Category`, `Tag`, `Expense`, `ExpenseTag`, `RecurringExpense` + `New*` insert types
+- [X] 1.7 Add tables to `schema` export object
+- [X] 1.8 Run `drizzle-kit generate` to create migration SQL
+- [X] 1.9 Run migration against local D1 (`wrangler d1 migrations apply`)
 
 ### TDD for Phase 1
 

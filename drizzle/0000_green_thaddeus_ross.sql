@@ -15,11 +15,53 @@ CREATE TABLE `account` (
 	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `category` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`createdAt` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `category_name_unique` ON `category` (`name`);--> statement-breakpoint
+CREATE TABLE `expense` (
+	`id` text PRIMARY KEY NOT NULL,
+	`userId` text NOT NULL,
+	`amountCents` integer NOT NULL,
+	`date` text NOT NULL,
+	`description` text NOT NULL,
+	`categoryId` text,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL,
+	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`categoryId`) REFERENCES `category`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE TABLE `expenseTag` (
+	`expenseId` text NOT NULL,
+	`tagId` text NOT NULL,
+	FOREIGN KEY (`expenseId`) REFERENCES `expense`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`tagId`) REFERENCES `tag`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
 CREATE TABLE `interestedEmail` (
 	`email` text PRIMARY KEY NOT NULL
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `interestedEmail_email_unique` ON `interestedEmail` (`email`);--> statement-breakpoint
+CREATE TABLE `recurringExpense` (
+	`id` text PRIMARY KEY NOT NULL,
+	`userId` text NOT NULL,
+	`amountCents` integer NOT NULL,
+	`description` text NOT NULL,
+	`categoryId` text,
+	`period` text NOT NULL,
+	`nextRunDate` text NOT NULL,
+	`isActive` integer DEFAULT true NOT NULL,
+	`createdAt` integer NOT NULL,
+	`updatedAt` integer NOT NULL,
+	FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`categoryId`) REFERENCES `category`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
 CREATE TABLE `session` (
 	`id` text PRIMARY KEY NOT NULL,
 	`userId` text NOT NULL,
@@ -34,9 +76,17 @@ CREATE TABLE `session` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `session_token_unique` ON `session` (`token`);--> statement-breakpoint
 CREATE TABLE `singleUseCode` (
-	`code` text PRIMARY KEY NOT NULL
+	`code` text PRIMARY KEY NOT NULL,
+	`email` text
 );
 --> statement-breakpoint
+CREATE TABLE `tag` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`createdAt` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `tag_name_unique` ON `tag` (`name`);--> statement-breakpoint
 CREATE TABLE `user` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
