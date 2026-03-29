@@ -34,7 +34,8 @@ export const handleUpdateCategory = (app: Hono<{ Bindings: Bindings }>): void =>
 
         if (!ok) {
           const commaSpot = err?.indexOf(',') ?? -1
-          const errorMsg = commaSpot > -1 ? err!.substring(0, commaSpot) : (err ?? MESSAGES.INVALID_INPUT)
+          const errorMsg =
+            commaSpot > -1 ? err!.substring(0, commaSpot) : (err ?? MESSAGES.INVALID_INPUT)
           return redirectWithError(c, PATHS.CATEGORIES.LIST, errorMsg)
         }
 
@@ -56,6 +57,6 @@ export const handleUpdateCategory = (app: Hono<{ Bindings: Bindings }>): void =>
         console.error('Update category handler error:', error)
         return redirectWithError(c, PATHS.CATEGORIES.LIST, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
-    }
+    },
   )
 }

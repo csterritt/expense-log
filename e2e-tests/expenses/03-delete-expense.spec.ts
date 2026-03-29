@@ -7,7 +7,7 @@ import { seedExpenses, clearExpenses } from '../support/db-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 const testWithExpenses = (
-  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>
+  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>,
 ) => {
   return testWithDatabase(async ({ page, request }) => {
     await seedExpenses()
@@ -31,7 +31,7 @@ test(
     expect(page.url()).toContain('/expenses')
     await expect(page.getByRole('alert')).toHaveText('Expense deleted successfully.')
     await expect(page.getByTestId('expense-history')).not.toContainText('Lunch at cafe')
-  })
+  }),
 )
 
 test(
@@ -45,5 +45,5 @@ test(
     await clickLink(page, 'delete-expense-exp-001')
 
     await expect(page.getByTestId('expense-history')).toContainText('Monthly bus pass')
-  })
+  }),
 )

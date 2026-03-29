@@ -97,7 +97,7 @@ const renderSummaryPage = (
   categoryFilter: string,
   tagFilter: string,
   dateFrom: string,
-  dateTo: string
+  dateTo: string,
 ) => {
   const totalCents = expenses.reduce((sum, e) => sum + e.amountCents, 0)
   const categoryTotals = computeCategoryTotals(expenses)
@@ -120,7 +120,11 @@ const renderSummaryPage = (
       <div className='card bg-base-100 shadow-xl mb-6'>
         <div className='card-body'>
           <h2 className='card-title'>Filters</h2>
-          <form method='get' action={PATHS.EXPENSES.SUMMARY} className='flex flex-wrap gap-3 items-end'>
+          <form
+            method='get'
+            action={PATHS.EXPENSES.SUMMARY}
+            className='flex flex-wrap gap-3 items-end'
+          >
             <div className='form-control'>
               <label className='label' htmlFor='summary-category'>
                 <span className='label-text'>Category</span>
@@ -207,7 +211,9 @@ const renderSummaryPage = (
               ${formatCents(totalCents)}
             </span>
           </div>
-          <p className='text-sm text-gray-500'>{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>
+          <p className='text-sm text-gray-500'>
+            {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
+          </p>
         </div>
       </div>
 
@@ -217,7 +223,9 @@ const renderSummaryPage = (
           <div className='card-body'>
             <h2 className='card-title'>By Category</h2>
             {categoryTotals.length === 0 ? (
-              <p className='text-gray-500' data-testid='no-category-totals'>No data</p>
+              <p className='text-gray-500' data-testid='no-category-totals'>
+                No data
+              </p>
             ) : (
               <table className='table w-full' data-testid='category-totals-table'>
                 <thead>
@@ -246,7 +254,9 @@ const renderSummaryPage = (
           <div className='card-body'>
             <h2 className='card-title'>By Tag</h2>
             {tagTotals.length === 0 ? (
-              <p className='text-gray-500' data-testid='no-tag-totals'>No data</p>
+              <p className='text-gray-500' data-testid='no-tag-totals'>
+                No data
+              </p>
             ) : (
               <table className='table w-full' data-testid='tag-totals-table'>
                 <thead>
@@ -314,9 +324,17 @@ export const buildSummary = (app: Hono<{ Bindings: Bindings }>): void => {
       return c.render(
         useLayout(
           c,
-          renderSummaryPage(expenses, categories, tags, categoryFilter, tagFilter, dateFrom, dateTo)
-        )
+          renderSummaryPage(
+            expenses,
+            categories,
+            tags,
+            categoryFilter,
+            tagFilter,
+            dateFrom,
+            dateTo,
+          ),
+        ),
       )
-    }
+    },
   )
 }

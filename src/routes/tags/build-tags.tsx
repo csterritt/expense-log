@@ -27,7 +27,11 @@ const renderTagsPage = (tags: Tag[]) => (
   <div data-testid='tags-page' className='w-full'>
     <div className='flex items-center justify-between mb-6'>
       <h1 className='text-2xl font-bold'>Tags</h1>
-      <a href={PATHS.EXPENSES.LIST} className='btn btn-outline btn-sm' data-testid='back-to-expenses-action'>
+      <a
+        href={PATHS.EXPENSES.LIST}
+        className='btn btn-outline btn-sm'
+        data-testid='back-to-expenses-action'
+      >
         Back to Expenses
       </a>
     </div>
@@ -78,10 +82,7 @@ const renderTagsPage = (tags: Tag[]) => (
                     </form>
                   </td>
                   <td>
-                    <form
-                      method='post'
-                      action={PATHS.TAGS.DELETE.replace(':id', t.id)}
-                    >
+                    <form method='post' action={PATHS.TAGS.DELETE.replace(':id', t.id)}>
                       <button
                         type='submit'
                         className='btn btn-sm btn-error btn-outline'
@@ -117,6 +118,6 @@ export const buildTags = (app: Hono<{ Bindings: Bindings }>): void => {
       const tags = tagsResult.isOk ? tagsResult.value : []
 
       return c.render(useLayout(c, renderTagsPage(tags)))
-    }
+    },
   )
 }

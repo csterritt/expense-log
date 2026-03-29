@@ -7,7 +7,7 @@ import { clearExpenses, seedExpenses } from '../support/db-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 const testWithExpenses = (
-  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>
+  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>,
 ) => {
   return testWithDatabase(async ({ page, request }) => {
     await seedExpenses()
@@ -25,7 +25,7 @@ test(
     await page.goto(BASE_URLS.EXPENSES_SUMMARY)
     expect(page.url()).toContain('/expenses/summary')
     expect(await isElementVisible(page, 'summary-page')).toBe(true)
-  })
+  }),
 )
 
 test('redirects to sign-in when accessing summary without auth', async ({ page }) => {
@@ -45,7 +45,7 @@ test(
     await expect(page.getByTestId('summary-page')).toContainText('Transport')
     await expect(page.getByTestId('summary-page')).toContainText('$12.50')
     await expect(page.getByTestId('summary-page')).toContainText('$35.00')
-  })
+  }),
 )
 
 test(
@@ -58,7 +58,7 @@ test(
 
     await expect(page.getByTestId('summary-page')).toContainText('work')
     await expect(page.getByTestId('summary-page')).toContainText('personal')
-  })
+  }),
 )
 
 test(
@@ -70,5 +70,5 @@ test(
     await page.goto(BASE_URLS.EXPENSES_SUMMARY)
 
     await expect(page.getByTestId('summary-total')).toContainText('$47.50')
-  })
+  }),
 )

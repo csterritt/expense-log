@@ -23,7 +23,7 @@ import { version } from '../version'
 export const useLayout = (
   c: Context,
   children: HtmlEscapedString | Promise<HtmlEscapedString>,
-  extraMessage?: string
+  extraMessage?: string,
 ) => {
   // Get message and error cookies
   const message = retrieveCookie(c, COOKIES.MESSAGE_FOUND) || extraMessage
@@ -49,21 +49,51 @@ export const useLayout = (
         </div>
         <div className='navbar-end flex items-center'>
           {!c.get('user') && (
-            <a
-              href={PATHS.AUTH.SIGN_IN}
-              className='btn btn-primary'
-              data-testid='sign-in-action'
-            >
+            <a href={PATHS.AUTH.SIGN_IN} className='btn btn-primary' data-testid='sign-in-action'>
               Sign in
             </a>
           )}
 
           {c.get('user') && (
-            <div className='flex items-center gap-4'>
-              <span className='text-sm'>
-                Welcome, {c.get('user')?.name || c.get('user')?.email || 'User'}
-                !
+            <div className='flex items-center gap-2 flex-wrap justify-end'>
+              <span className='text-sm hidden md:inline'>
+                Welcome, {c.get('user')?.name || c.get('user')?.email || 'User'}!
               </span>
+              <a
+                href={PATHS.EXPENSES.LIST}
+                className='btn btn-ghost btn-sm'
+                data-testid='nav-expenses-action'
+              >
+                Expenses
+              </a>
+              <a
+                href={PATHS.EXPENSES.SUMMARY}
+                className='btn btn-ghost btn-sm'
+                data-testid='nav-summary-action'
+              >
+                Summary
+              </a>
+              <a
+                href={PATHS.CATEGORIES.LIST}
+                className='btn btn-ghost btn-sm'
+                data-testid='nav-categories-action'
+              >
+                Categories
+              </a>
+              <a
+                href={PATHS.TAGS.LIST}
+                className='btn btn-ghost btn-sm'
+                data-testid='nav-tags-action'
+              >
+                Tags
+              </a>
+              <a
+                href={PATHS.RECURRING.LIST}
+                className='btn btn-ghost btn-sm'
+                data-testid='nav-recurring-action'
+              >
+                Recurring
+              </a>
               <a
                 href={PATHS.PROFILE}
                 className='btn btn-outline btn-sm'

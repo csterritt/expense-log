@@ -28,5 +28,5 @@ test(
 
     // Should be redirected to the protected page after successful sign-in
     await verifyOnProtectedPage(page)
-  })
+  }),
 )

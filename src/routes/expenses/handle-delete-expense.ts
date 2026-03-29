@@ -44,6 +44,6 @@ export const handleDeleteExpense = (app: Hono<{ Bindings: Bindings }>): void => 
         console.error('Delete expense handler error:', error)
         return redirectWithError(c, PATHS.EXPENSES.LIST, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
-    }
+    },
   )
 }

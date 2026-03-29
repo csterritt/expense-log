@@ -44,6 +44,6 @@ export const handleDeleteCategory = (app: Hono<{ Bindings: Bindings }>): void =>
         console.error('Delete category handler error:', error)
         return redirectWithError(c, PATHS.CATEGORIES.LIST, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
-    }
+    },
   )
 }

@@ -28,9 +28,7 @@ const renderEmailConfirmation = (message: string, isSuccess: boolean) => {
     <div data-testid='email-confirmation-page' className='flex justify-center'>
       <div className='card w-full max-w-md bg-base-100 shadow-xl'>
         <div className='card-body'>
-          <div
-            className={`alert ${isSuccess ? 'alert-success' : 'alert-error'} mb-4`}
-          >
+          <div className={`alert ${isSuccess ? 'alert-success' : 'alert-error'} mb-4`}>
             <div>
               <h2 className='font-bold text-lg'>
                 {isSuccess ? 'Email Confirmed!' : 'Confirmation Failed'}
@@ -86,9 +84,8 @@ const renderEmailSent = (email: string) => {
             <div>
               <h2 className='font-bold text-lg'>Check Your Email</h2>
               <p>
-                We've sent a confirmation link to <strong>{email}</strong>.
-                Please check your email and click the link to verify your
-                account.
+                We've sent a confirmation link to <strong>{email}</strong>. Please check your email
+                and click the link to verify your account.
               </p>
             </div>
           </div>
@@ -117,75 +114,69 @@ const renderEmailSent = (email: string) => {
  * Attach the email confirmation routes to the app.
  * @param app - Hono app instance
  */
-export const buildEmailConfirmation = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
+export const buildEmailConfirmation = (app: Hono<{ Bindings: Bindings }>): void => {
   // Email confirmation endpoint - handles verification tokens
-  app.get(
-    '/auth/verify-email',
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    async (c) => {
-      setupNoCacheHeaders(c)
+  app.get('/auth/verify-email', secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+    setupNoCacheHeaders(c)
 
-      const token = c.req.query('token')
-      const rawCallbackUrl = c.req.query('callbackUrl')
-      const requestOrigin = new URL(c.req.url).origin
-      const callbackUrl = validateCallbackUrl(rawCallbackUrl, requestOrigin)
+    const token = c.req.query('token')
+    const rawCallbackUrl = c.req.query('callbackUrl')
+    const requestOrigin = new URL(c.req.url).origin
+    const callbackUrl = validateCallbackUrl(rawCallbackUrl, requestOrigin)
 
-      if (!token) {
-        return c.render(
-          useLayout(
-            c,
-            renderEmailConfirmation(
-              'No verification token provided. Please check your email for the correct link.',
-              false
-            )
-          )
-        )
-      }
-
-      try {
-        // Use better-auth to verify the email token
-        const auth = createAuth(c.env)
-        const verification = await auth.api.verifyEmail({
-          query: { token, callbackURL: callbackUrl },
-        })
-
-        if (verification && 'status' in verification && verification.status) {
-          return c.render(
-            useLayout(
-              c,
-              renderEmailConfirmation(
-                'Your email has been successfully verified! You can now sign in to your account.',
-                true
-              )
-            )
-          )
-        } else {
-          return c.render(
-            useLayout(
-              c,
-              renderEmailConfirmation(
-                'The verification link is invalid or has expired. Please try signing up again.',
-                false
-              )
-            )
-          )
-        }
-      } catch (error) {
-        console.error('Email verification error:', error)
-        return c.render(
-          useLayout(
-            c,
-            renderEmailConfirmation(
-              'There was an error verifying your email. Please try again or contact support.',
-              false
-            )
-          )
-        )
-      }
+    if (!token) {
+      return c.render(
+        useLayout(
+          c,
+          renderEmailConfirmation(
+            'No verification token provided. Please check your email for the correct link.',
+            false,
+          ),
+        ),
+      )
     }
-  )
+
+    try {
+      // Use better-auth to verify the email token
+      const auth = createAuth(c.env)
+      const verification = await auth.api.verifyEmail({
+        query: { token, callbackURL: callbackUrl },
+      })
+
+      if (verification && 'status' in verification && verification.status) {
+        return c.render(
+          useLayout(
+            c,
+            renderEmailConfirmation(
+              'Your email has been successfully verified! You can now sign in to your account.',
+              true,
+            ),
+          ),
+        )
+      } else {
+        return c.render(
+          useLayout(
+            c,
+            renderEmailConfirmation(
+              'The verification link is invalid or has expired. Please try signing up again.',
+              false,
+            ),
+          ),
+        )
+      }
+    } catch (error) {
+      console.error('Email verification error:', error)
+      return c.render(
+        useLayout(
+          c,
+          renderEmailConfirmation(
+            'There was an error verifying your email. Please try again or contact support.',
+            false,
+          ),
+        ),
+      )
+    }
+  })
 
   // Email sent confirmation page
   app.get('/auth/email-sent', secureHeaders(STANDARD_SECURE_HEADERS), (c) => {
@@ -193,11 +184,7 @@ export const buildEmailConfirmation = (
 
     const email = retrieveCookie(c, COOKIES.EMAIL_ENTERED)
     if (!email) {
-      return redirectWithMessage(
-        c,
-        PATHS.AUTH.SIGN_IN,
-        'Please sign up to continue.'
-      )
+      return redirectWithMessage(c, PATHS.AUTH.SIGN_IN, 'Please sign up to continue.')
     }
 
     // Clear the email cookie after successful retrieval

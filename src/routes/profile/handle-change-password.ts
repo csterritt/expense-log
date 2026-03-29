@@ -33,9 +33,7 @@ const isErrorWithMessage = (value: unknown): value is { message: string } => {
  * Attach the change password handler to the app.
  * @param app - Hono app instance
  */
-export const handleChangePassword = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
+export const handleChangePassword = (app: Hono<{ Bindings: Bindings }>): void => {
   app.post(
     PATHS.PROFILE,
     secureHeaders(STANDARD_SECURE_HEADERS),
@@ -52,11 +50,7 @@ export const handleChangePassword = (
           if (commaSpot > -1) {
             err = err?.substring(0, commaSpot) || 'Invalid input'
           }
-          return redirectWithError(
-            c,
-            PATHS.PROFILE,
-            err || MESSAGES.INVALID_INPUT
-          )
+          return redirectWithError(c, PATHS.PROFILE, err || MESSAGES.INVALID_INPUT)
         }
 
         const { currentPassword, newPassword } = data as ChangePasswordData
@@ -81,7 +75,7 @@ export const handleChangePassword = (
           return redirectWithMessage(
             c,
             PATHS.PROFILE,
-            'Your password has been successfully changed.'
+            'Your password has been successfully changed.',
           )
         } catch (error) {
           console.error('Password change error:', error)
@@ -97,7 +91,7 @@ export const handleChangePassword = (
               return redirectWithError(
                 c,
                 PATHS.PROFILE,
-                'Current password is incorrect. Please try again.'
+                'Current password is incorrect. Please try again.',
               )
             }
           }
@@ -105,17 +99,13 @@ export const handleChangePassword = (
           return redirectWithError(
             c,
             PATHS.PROFILE,
-            'An error occurred while changing your password. Please try again.'
+            'An error occurred while changing your password. Please try again.',
           )
         }
       } catch (error) {
         console.error('Change password handler error:', error)
-        return redirectWithError(
-          c,
-          PATHS.PROFILE,
-          'An error occurred. Please try again.'
-        )
+        return redirectWithError(c, PATHS.PROFILE, 'An error occurred. Please try again.')
       }
-    }
+    },
   )
 }

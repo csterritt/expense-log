@@ -28,10 +28,7 @@ export interface SignInData {
 /**
  * Standard sign-up form (open sign-up mode)
  */
-export const submitSignUpForm = async (
-  page: Page,
-  user: UserCredentials = TEST_USERS.NEW_USER
-) => {
+export const submitSignUpForm = async (page: Page, user: UserCredentials = TEST_USERS.NEW_USER) => {
   await fillInput(page, 'signup-name-input', user.name)
   await fillInput(page, 'signup-email-input', user.email)
   await fillInput(page, 'signup-password-input', user.password)
@@ -41,10 +38,7 @@ export const submitSignUpForm = async (
 /**
  * Gated sign-up form (requires code)
  */
-export const submitGatedSignUpForm = async (
-  page: Page,
-  data: GatedSignUpData
-) => {
+export const submitGatedSignUpForm = async (page: Page, data: GatedSignUpData) => {
   await fillInput(page, 'gated-signup-code-input', data.code)
   await fillInput(page, 'gated-signup-name-input', data.name)
   await fillInput(page, 'gated-signup-email-input', data.email)
@@ -55,10 +49,7 @@ export const submitGatedSignUpForm = async (
 /**
  * Sign-in form
  */
-export const submitSignInForm = async (
-  page: Page,
-  user: SignInData = TEST_USERS.KNOWN_USER
-) => {
+export const submitSignInForm = async (page: Page, user: SignInData = TEST_USERS.KNOWN_USER) => {
   await fillInput(page, 'email-input', user.email)
   await fillInput(page, 'password-input', user.password)
   await clickLink(page, 'submit')
@@ -69,7 +60,7 @@ export const submitSignInForm = async (
  */
 export const submitInterestSignUpForm = async (
   page: Page,
-  email: string = TEST_USERS.INTERESTED_USER.email
+  email: string = TEST_USERS.INTERESTED_USER.email,
 ) => {
   await fillInput(page, 'interest-email-input', email)
   await clickLink(page, 'interest-action')
@@ -80,7 +71,7 @@ export const submitInterestSignUpForm = async (
  */
 export const submitForgotPasswordForm = async (
   page: Page,
-  email: string = TEST_USERS.KNOWN_USER.email
+  email: string = TEST_USERS.KNOWN_USER.email,
 ) => {
   await fillInput(page, 'forgot-email-input', email)
   await clickLink(page, 'forgot-password-action')
@@ -91,7 +82,7 @@ export const submitForgotPasswordForm = async (
  */
 export const submitResetPasswordForm = async (
   page: Page,
-  newPassword: string = TEST_USERS.RESET_USER.password
+  newPassword: string = TEST_USERS.RESET_USER.password,
 ) => {
   await fillInput(page, 'new-password-input', newPassword)
   await fillInput(page, 'confirm-password-input', newPassword)
@@ -101,16 +92,11 @@ export const submitResetPasswordForm = async (
 /**
  * Partial form fill for gated sign-up validation testing
  */
-export const fillGatedSignUpFormPartial = async (
-  page: Page,
-  fields: Partial<GatedSignUpData>
-) => {
+export const fillGatedSignUpFormPartial = async (page: Page, fields: Partial<GatedSignUpData>) => {
   if (fields.code) await fillInput(page, 'gated-signup-code-input', fields.code)
   if (fields.name) await fillInput(page, 'gated-signup-name-input', fields.name)
-  if (fields.email)
-    await fillInput(page, 'gated-signup-email-input', fields.email)
-  if (fields.password)
-    await fillInput(page, 'gated-signup-password-input', fields.password)
+  if (fields.email) await fillInput(page, 'gated-signup-email-input', fields.email)
+  if (fields.password) await fillInput(page, 'gated-signup-password-input', fields.password)
 }
 
 /**
@@ -119,7 +105,7 @@ export const fillGatedSignUpFormPartial = async (
 export const submitChangePasswordForm = async (
   page: Page,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ) => {
   await fillInput(page, 'current-password-input', currentPassword)
   await fillInput(page, 'new-password-input', newPassword)

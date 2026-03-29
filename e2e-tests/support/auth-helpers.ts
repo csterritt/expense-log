@@ -21,11 +21,7 @@ export const startSignIn = async (page: Page) => {
   await verifyOnSignInPage(page)
 }
 
-export const signInUser = async (
-  page: Page,
-  email: string,
-  password: string
-) => {
+export const signInUser = async (page: Page, email: string, password: string) => {
   // Navigate to sign-in page if not already there
   await startSignIn(page)
 

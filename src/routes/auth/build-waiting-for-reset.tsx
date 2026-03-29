@@ -29,9 +29,8 @@ const renderWaitingForReset = (email: string) => {
             <div>
               <h2 className='font-bold text-lg'>Check Your Email</h2>
               <p>
-                We've sent a password reset link to <strong>{email}</strong>.
-                Please check your email and click the link to reset your
-                password.
+                We've sent a password reset link to <strong>{email}</strong>. Please check your
+                email and click the link to reset your password.
               </p>
             </div>
           </div>
@@ -71,28 +70,22 @@ const renderWaitingForReset = (email: string) => {
  * Attach the waiting for reset route to the app.
  * @param app - Hono app instance
  */
-export const buildWaitingForReset = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
-  app.get(
-    PATHS.AUTH.WAITING_FOR_RESET,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    (c) => {
-      setupNoCacheHeaders(c)
+export const buildWaitingForReset = (app: Hono<{ Bindings: Bindings }>): void => {
+  app.get(PATHS.AUTH.WAITING_FOR_RESET, secureHeaders(STANDARD_SECURE_HEADERS), (c) => {
+    setupNoCacheHeaders(c)
 
-      const email = retrieveCookie(c, COOKIES.EMAIL_ENTERED)
-      if (!email) {
-        return redirectWithMessage(
-          c,
-          PATHS.AUTH.FORGOT_PASSWORD,
-          'Please enter your email address to reset your password.'
-        )
-      }
-
-      // Clear the email cookie after successful retrieval
-      removeCookie(c, COOKIES.EMAIL_ENTERED)
-
-      return c.render(useLayout(c, renderWaitingForReset(email)))
+    const email = retrieveCookie(c, COOKIES.EMAIL_ENTERED)
+    if (!email) {
+      return redirectWithMessage(
+        c,
+        PATHS.AUTH.FORGOT_PASSWORD,
+        'Please enter your email address to reset your password.',
+      )
     }
-  )
+
+    // Clear the email cookie after successful retrieval
+    removeCookie(c, COOKIES.EMAIL_ENTERED)
+
+    return c.render(useLayout(c, renderWaitingForReset(email)))
+  })
 }

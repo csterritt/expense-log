@@ -27,11 +27,7 @@ const renderSignOut = () => {
           </div>
 
           <div className='card-actions justify-center'>
-            <a
-              href={PATHS.ROOT}
-              className='btn btn-primary'
-              data-testid='go-home-action'
-            >
+            <a href={PATHS.ROOT} className='btn btn-primary' data-testid='go-home-action'>
               Home
             </a>
           </div>
@@ -46,13 +42,9 @@ const renderSignOut = () => {
  * @param app - Hono app instance
  */
 export const buildSignOut = (app: Hono<{ Bindings: Bindings }>): void => {
-  app.get(
-    PATHS.AUTH.SIGN_OUT,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    async (c) => {
-      setupNoCacheHeaders(c)
+  app.get(PATHS.AUTH.SIGN_OUT, secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+    setupNoCacheHeaders(c)
 
-      return c.render(useLayout(c, renderSignOut()))
-    }
-  )
+    return c.render(useLayout(c, renderSignOut()))
+  })
 }

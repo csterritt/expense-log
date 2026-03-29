@@ -38,7 +38,7 @@ const parseCents = (amount: string): number => {
 const resolveCategory = async (
   db: DrizzleClient,
   categoryId: string | undefined,
-  newCategoryName: string | undefined
+  newCategoryName: string | undefined,
 ): Promise<string | null> => {
   if (newCategoryName && newCategoryName.trim()) {
     const name = newCategoryName.trim()
@@ -63,7 +63,7 @@ const resolveCategory = async (
  */
 const resolveTags = async (
   db: DrizzleClient,
-  newTagsStr: string | undefined
+  newTagsStr: string | undefined,
 ): Promise<string[]> => {
   if (!newTagsStr || !newTagsStr.trim()) {
     return []
@@ -105,7 +105,8 @@ export const handleCreateExpense = (app: Hono<{ Bindings: Bindings }>): void => 
 
         if (!ok) {
           const commaSpot = err?.indexOf(',') ?? -1
-          const errorMsg = commaSpot > -1 ? err!.substring(0, commaSpot) : (err ?? MESSAGES.INVALID_INPUT)
+          const errorMsg =
+            commaSpot > -1 ? err!.substring(0, commaSpot) : (err ?? MESSAGES.INVALID_INPUT)
           return redirectWithError(c, PATHS.EXPENSES.LIST, errorMsg)
         }
 
@@ -144,6 +145,6 @@ export const handleCreateExpense = (app: Hono<{ Bindings: Bindings }>): void => 
         console.error('Create expense handler error:', error)
         return redirectWithError(c, PATHS.EXPENSES.LIST, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
-    }
+    },
   )
 }

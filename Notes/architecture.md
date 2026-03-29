@@ -58,13 +58,9 @@ POST routes use a handler function:
 
 ```typescript
 export const handleAction = (app: Hono<{ Bindings: Bindings }>): void => {
-  app.post(
-    PATHS.ROUTE_PATH,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    async (c) => {
-      // Process form submission
-    }
-  )
+  app.post(PATHS.ROUTE_PATH, secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+    // Process form submission
+  })
 }
 ```
 
@@ -110,16 +106,10 @@ export type NewUser = typeof user.$inferInsert
 - Pattern: public function with retry wrapper calling actual implementation
 
 ```typescript
-export const getUserByEmail = (
-  db: DrizzleClient,
-  email: string
-): Promise<Result<User[], Error>> =>
+export const getUserByEmail = (db: DrizzleClient, email: string): Promise<Result<User[], Error>> =>
   withRetry('getUserByEmail', () => getUserByEmailActual(db, email))
 
-const getUserByEmailActual = (
-  db: DrizzleClient,
-  email: string
-): Promise<Result<User[], Error>> =>
+const getUserByEmailActual = (db: DrizzleClient, email: string): Promise<Result<User[], Error>> =>
   toResult(() => db.select().from(user).where(eq(user.email, email)))
 ```
 

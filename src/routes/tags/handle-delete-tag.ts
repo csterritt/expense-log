@@ -44,6 +44,6 @@ export const handleDeleteTag = (app: Hono<{ Bindings: Bindings }>): void => {
         console.error('Delete tag handler error:', error)
         return redirectWithError(c, PATHS.TAGS.LIST, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
-    }
+    },
   )
 }

@@ -41,7 +41,7 @@ test(
     // Should stay on sign-in page with error
     await verifyOnSignInPage(page)
     await verifyAlert(page, ERROR_MESSAGES.INVALID_CREDENTIALS)
-  })
+  }),
 )
 
 test(
@@ -64,5 +64,5 @@ test(
     const pageContent = await page.content()
     expect(pageContent).toContain('Are you absolutely sure?')
     expect(pageContent).toContain('This action cannot be undone')
-  })
+  }),
 )

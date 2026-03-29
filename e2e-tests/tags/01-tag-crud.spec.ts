@@ -7,7 +7,7 @@ import { clearExpenses, seedExpenses } from '../support/db-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 const testWithExpenses = (
-  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>
+  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>,
 ) => {
   return testWithDatabase(async ({ page, request }) => {
     await seedExpenses()
@@ -25,7 +25,7 @@ test(
     await page.goto(BASE_URLS.TAGS)
     expect(page.url()).toContain('/tags')
     expect(await isElementVisible(page, 'tags-page')).toBe(true)
-  })
+  }),
 )
 
 test('redirects to sign-in when accessing tags without auth', async ({ page }) => {
@@ -42,7 +42,7 @@ test(
     await page.goto(BASE_URLS.TAGS)
     await expect(page.getByTestId('edit-tag-name-tag-work-001')).toHaveValue('work')
     await expect(page.getByTestId('edit-tag-name-tag-personal-001')).toHaveValue('personal')
-  })
+  }),
 )
 
 test(
@@ -58,7 +58,7 @@ test(
 
     await expect(page.getByRole('alert')).toHaveText('Tag updated successfully.')
     await expect(page.getByTestId('edit-tag-name-tag-work-001')).toHaveValue('office')
-  })
+  }),
 )
 
 test(
@@ -73,5 +73,5 @@ test(
 
     await expect(page.getByRole('alert')).toHaveText('Tag deleted successfully.')
     await expect(page.getByTestId('tag-row-tag-personal-001')).not.toBeVisible()
-  })
+  }),
 )

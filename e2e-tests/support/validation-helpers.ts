@@ -13,7 +13,7 @@ import { INVALID_DATA, ERROR_MESSAGES } from './test-data'
 export const testEmailValidation = async (
   page: Page,
   emailInputId: string,
-  submitButtonId: string
+  submitButtonId: string,
 ) => {
   await fillInput(page, emailInputId, INVALID_DATA.EMAILS[0]) // 'invalid-email'
   await clickLink(page, submitButtonId)
@@ -23,34 +23,22 @@ export const testEmailValidation = async (
 /**
  * Test required field validation
  */
-export const testRequiredEmailField = async (
-  page: Page,
-  submitButtonId: string
-) => {
+export const testRequiredEmailField = async (page: Page, submitButtonId: string) => {
   await clickLink(page, submitButtonId)
   await verifyAlert(page, ERROR_MESSAGES.INVALID_EMAIL)
 }
 
-export const testRequiredPasswordField = async (
-  page: Page,
-  submitButtonId: string
-) => {
+export const testRequiredPasswordField = async (page: Page, submitButtonId: string) => {
   await clickLink(page, submitButtonId)
   await verifyAlert(page, ERROR_MESSAGES.PASSWORD_REQUIRED)
 }
 
-export const testRequiredNameField = async (
-  page: Page,
-  submitButtonId: string
-) => {
+export const testRequiredNameField = async (page: Page, submitButtonId: string) => {
   await clickLink(page, submitButtonId)
   await verifyAlert(page, ERROR_MESSAGES.NAME_REQUIRED)
 }
 
-export const testRequiredCodeField = async (
-  page: Page,
-  submitButtonId: string
-) => {
+export const testRequiredCodeField = async (page: Page, submitButtonId: string) => {
   await clickLink(page, submitButtonId)
   await verifyAlert(page, ERROR_MESSAGES.CODE_REQUIRED)
 }
@@ -61,7 +49,7 @@ export const testRequiredCodeField = async (
 export const testInvalidCodeValidation = async (
   page: Page,
   codeInputId: string,
-  submitButtonId: string
+  submitButtonId: string,
 ) => {
   await fillInput(page, codeInputId, INVALID_DATA.CODES[0]) // 'INVALID-CODE'
   await clickLink(page, submitButtonId)
@@ -80,10 +68,7 @@ export interface FormValidationConfig {
   submitButtonId: string
 }
 
-export const testFormValidation = async (
-  page: Page,
-  config: FormValidationConfig
-) => {
+export const testFormValidation = async (page: Page, config: FormValidationConfig) => {
   // Test required fields
   if (config.emailInputId) {
     await testRequiredEmailField(page, config.submitButtonId)
@@ -108,11 +93,7 @@ export const testFormValidation = async (
 
   // Test code validation if code field exists
   if (config.codeInputId) {
-    await testInvalidCodeValidation(
-      page,
-      config.codeInputId,
-      config.submitButtonId
-    )
+    await testInvalidCodeValidation(page, config.codeInputId, config.submitButtonId)
   }
 }
 

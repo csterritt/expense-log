@@ -28,5 +28,5 @@ test(
 
     // Should show an error message indicating invalid credentials
     await verifyAlert(page, ERROR_MESSAGES.INVALID_CREDENTIALS)
-  })
+  }),
 )

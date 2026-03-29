@@ -1,20 +1,12 @@
 import { test } from '@playwright/test'
 
 import { verifyAlert } from '../support/finders'
-import {
-  verifyOnSignUpPage,
-  verifyOnSignInPage,
-} from '../support/page-verifiers'
+import { verifyOnSignUpPage, verifyOnSignInPage } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
 import { skipIfNotMode } from '../support/mode-helpers'
 import { navigateToSignUp } from '../support/navigation-helpers'
 import { submitSignUpForm } from '../support/form-helpers'
-import {
-  INVALID_DATA,
-  VALID_NAMES,
-  ERROR_MESSAGES,
-  TEST_USERS,
-} from '../support/test-data'
+import { INVALID_DATA, VALID_NAMES, ERROR_MESSAGES, TEST_USERS } from '../support/test-data'
 
 test.describe('Sign-Up Name Validation', () => {
   test.beforeEach(async () => {
@@ -38,7 +30,7 @@ test.describe('Sign-Up Name Validation', () => {
       // Should redirect to sign-in page with error message
       await verifyOnSignInPage(page)
       await verifyAlert(page, ERROR_MESSAGES.INVALID_NAME_CHARACTERS)
-    })
+    }),
   )
 
   test(
@@ -55,7 +47,7 @@ test.describe('Sign-Up Name Validation', () => {
 
       await verifyOnSignInPage(page)
       await verifyAlert(page, ERROR_MESSAGES.INVALID_NAME_CHARACTERS)
-    })
+    }),
   )
 
   test(
@@ -72,7 +64,7 @@ test.describe('Sign-Up Name Validation', () => {
 
       await verifyOnSignInPage(page)
       await verifyAlert(page, ERROR_MESSAGES.INVALID_NAME_CHARACTERS)
-    })
+    }),
   )
 
   test(
@@ -91,7 +83,7 @@ test.describe('Sign-Up Name Validation', () => {
       // If we're not on sign-up page, the name was accepted
       const url = page.url()
       test.expect(url).not.toContain('/auth/sign-up')
-    })
+    }),
   )
 
   test(
@@ -108,7 +100,7 @@ test.describe('Sign-Up Name Validation', () => {
 
       const url = page.url()
       test.expect(url).not.toContain('/auth/sign-up')
-    })
+    }),
   )
 
   test(
@@ -125,7 +117,7 @@ test.describe('Sign-Up Name Validation', () => {
 
       const url = page.url()
       test.expect(url).not.toContain('/auth/sign-up')
-    })
+    }),
   )
 
   test(
@@ -142,6 +134,6 @@ test.describe('Sign-Up Name Validation', () => {
 
       const url = page.url()
       test.expect(url).not.toContain('/auth/sign-up')
-    })
+    }),
   )
 })

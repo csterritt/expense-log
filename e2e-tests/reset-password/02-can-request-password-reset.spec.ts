@@ -1,10 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { verifyAlert, isElementVisible } from '../support/finders'
-import {
-  verifyOnForgotPasswordPage,
-  verifyOnWaitingForResetPage,
-} from '../support/page-verifiers'
+import { verifyOnForgotPasswordPage, verifyOnWaitingForResetPage } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
 import { completeForgotPasswordFlow } from '../support/workflow-helpers'
 import { navigateToForgotPassword } from '../support/navigation-helpers'
@@ -20,11 +17,9 @@ test(
     expect(page.url()).toContain('/auth/waiting-for-reset')
 
     // Verify all elements are present on waiting page
-    expect(await isElementVisible(page, 'back-to-sign-in-from-waiting')).toBe(
-      true
-    )
+    expect(await isElementVisible(page, 'back-to-sign-in-from-waiting')).toBe(true)
     expect(await isElementVisible(page, 'try-again-action')).toBe(true)
-  })
+  }),
 )
 
 test(
@@ -47,9 +42,9 @@ test(
     // Verify same success message (prevents email enumeration)
     await verifyAlert(
       page,
-      "If an account with that email exists, we've sent you a password reset link."
+      "If an account with that email exists, we've sent you a password reset link.",
     )
-  })
+  }),
 )
 
 test('shows error for invalid email format', async ({ page }) => {

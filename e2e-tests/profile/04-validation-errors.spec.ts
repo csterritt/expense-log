@@ -25,7 +25,7 @@ test(
     // Should show error
     await verifyOnProfilePage(page)
     await verifyAlert(page, 'Current password is required.')
-  })
+  }),
 )
 
 test(
@@ -39,17 +39,13 @@ test(
     await navigateToProfile(page)
 
     // Fill only current password
-    await fillInput(
-      page,
-      'current-password-input',
-      TEST_USERS.KNOWN_USER.password
-    )
+    await fillInput(page, 'current-password-input', TEST_USERS.KNOWN_USER.password)
     await clickLink(page, 'change-password-action')
 
     // Should show error
     await verifyOnProfilePage(page)
     await verifyAlert(page, 'Password must be at least 8 characters long.')
-  })
+  }),
 )
 
 test(
@@ -63,18 +59,14 @@ test(
     await navigateToProfile(page)
 
     // Fill current and new password but not confirm
-    await fillInput(
-      page,
-      'current-password-input',
-      TEST_USERS.KNOWN_USER.password
-    )
+    await fillInput(page, 'current-password-input', TEST_USERS.KNOWN_USER.password)
     await fillInput(page, 'new-password-input', 'newpassword123')
     await clickLink(page, 'change-password-action')
 
     // Should show error
     await verifyOnProfilePage(page)
     await verifyAlert(page, 'Password must be at least 8 characters long.')
-  })
+  }),
 )
 
 test(
@@ -88,11 +80,7 @@ test(
     await navigateToProfile(page)
 
     // Fill form without user info
-    await fillInput(
-      page,
-      'current-password-input',
-      TEST_USERS.KNOWN_USER.password
-    )
+    await fillInput(page, 'current-password-input', TEST_USERS.KNOWN_USER.password)
     await fillInput(page, 'new-password-input', 'anotherpassword456')
     await fillInput(page, 'confirm-password-input', 'anotherpassword456')
     await clickLink(page, 'change-password-action')
@@ -100,5 +88,5 @@ test(
     // Should succeed
     await verifyOnProfilePage(page)
     await verifyAlert(page, 'Your password has been successfully changed.')
-  })
+  }),
 )

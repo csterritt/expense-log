@@ -68,11 +68,7 @@ const renderProfile = (userName: string, userEmail: string) => {
         <div className='card-body'>
           <div className='flex justify-between'>
             <h2 className='card-title text-2xl font-bold mb-4'>Profile</h2>
-            <a
-              href={PATHS.PRIVATE}
-              className='btn btn-secondary'
-              data-testid='go-back-action'
-            >
+            <a href={PATHS.PRIVATE} className='btn btn-secondary' data-testid='go-back-action'>
               Back
             </a>
           </div>
@@ -162,10 +158,7 @@ const renderProfile = (userName: string, userEmail: string) => {
 
               {/* Humorous Question */}
               <div className='form-control w-full'>
-                <span
-                  className='text-sm text-gray-600 italic'
-                  data-testid='humorous-question'
-                >
+                <span className='text-sm text-gray-600 italic' data-testid='humorous-question'>
                   {questionOfTheDay}
                 </span>
               </div>
@@ -186,12 +179,9 @@ const renderProfile = (userName: string, userEmail: string) => {
           <div className='divider my-2 bg-error h-0.5'></div>
 
           <div>
-            <h3 className='text-lg font-semibold mb-3 text-error'>
-              Delete Account
-            </h3>
+            <h3 className='text-lg font-semibold mb-3 text-error'>Delete Account</h3>
             <p className='text-sm text-gray-600 mb-4'>
-              Once you delete your account, there is no going back. This action
-              cannot be undone.
+              Once you delete your account, there is no going back. This action cannot be undone.
             </p>
             <a
               href={PATHS.PROFILE_DELETE_CONFIRM}
@@ -212,17 +202,12 @@ const renderProfile = (userName: string, userEmail: string) => {
  * @param app - Hono app instance
  */
 export const buildProfile = (app: Hono<{ Bindings: Bindings }>): void => {
-  app.get(
-    PATHS.PROFILE,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    signedInAccess,
-    (c: Context) => {
-      const user = getSignedInUser(c)
-      const userName = user.name || 'User'
-      const userEmail = user.email || ''
+  app.get(PATHS.PROFILE, secureHeaders(STANDARD_SECURE_HEADERS), signedInAccess, (c: Context) => {
+    const user = getSignedInUser(c)
+    const userName = user.name || 'User'
+    const userEmail = user.email || ''
 
-      setupNoCacheHeaders(c)
-      return c.render(useLayout(c, renderProfile(userName, userEmail)))
-    }
-  )
+    setupNoCacheHeaders(c)
+    return c.render(useLayout(c, renderProfile(userName, userEmail)))
+  })
 }

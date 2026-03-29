@@ -18,15 +18,10 @@ import { addCookie } from '../lib/cookie-support'
  * Attach the set DB failures GET route to the app.
  * @param app - Hono app instance
  */
-export const handleSetDbFailures = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
+export const handleSetDbFailures = (app: Hono<{ Bindings: Bindings }>): void => {
   // } // PRODUCTION:UNCOMMENT
   // PRODUCTION:STOP
-  const allowedCookieNames = new Set<string>([
-    COOKIES.DB_FAIL_COUNT,
-    COOKIES.DB_FAIL_INCR,
-  ])
+  const allowedCookieNames = new Set<string>([COOKIES.DB_FAIL_COUNT, COOKIES.DB_FAIL_INCR])
   app.get(
     `${PATHS.AUTH.SET_DB_FAILURES}/:name/:times`,
     secureHeaders(STANDARD_SECURE_HEADERS),
@@ -44,6 +39,6 @@ export const handleSetDbFailures = (
       addCookie(c, name, times)
 
       return redirectWithMessage(c, PATHS.ROOT, ``)
-    }
+    },
   )
 }

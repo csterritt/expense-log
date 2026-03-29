@@ -46,6 +46,6 @@ export const handleDeleteRecurring = (app: Hono<{ Bindings: Bindings }>): void =
         console.error('Delete recurring expense handler error:', error)
         return redirectWithError(c, PATHS.RECURRING.LIST, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
-    }
+    },
   )
 }

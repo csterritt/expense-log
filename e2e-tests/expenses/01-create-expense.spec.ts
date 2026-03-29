@@ -14,7 +14,7 @@ test(
     await page.goto(BASE_URLS.EXPENSES)
     expect(page.url()).toContain('/expenses')
     expect(await isElementVisible(page, 'expenses-page')).toBe(true)
-  })
+  }),
 )
 
 test('redirects to sign-in when accessing expenses without auth', async ({ page }) => {
@@ -38,7 +38,7 @@ test(
     expect(page.url()).toContain('/expenses')
     await expect(page.getByRole('alert')).toHaveText('Expense added successfully.')
     await expect(page.getByTestId('expense-history')).toContainText('Coffee and snacks')
-  })
+  }),
 )
 
 test(
@@ -56,7 +56,7 @@ test(
 
     await expect(page.getByTestId('expense-history')).toContainText('Team lunch')
     await expect(page.getByTestId('expense-history')).toContainText('$99.99')
-  })
+  }),
 )
 
 test(
@@ -75,5 +75,5 @@ test(
 
     await expect(page.getByTestId('expense-history')).toContainText('Grocery run')
     await expect(page.getByTestId('expense-history')).toContainText('Groceries')
-  })
+  }),
 )

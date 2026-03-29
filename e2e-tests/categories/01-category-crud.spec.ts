@@ -7,7 +7,7 @@ import { clearExpenses, seedExpenses } from '../support/db-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 const testWithExpenses = (
-  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>
+  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>,
 ) => {
   return testWithDatabase(async ({ page, request }) => {
     await seedExpenses()
@@ -25,7 +25,7 @@ test(
     await page.goto(BASE_URLS.CATEGORIES)
     expect(page.url()).toContain('/categories')
     expect(await isElementVisible(page, 'categories-page')).toBe(true)
-  })
+  }),
 )
 
 test('redirects to sign-in when accessing categories without auth', async ({ page }) => {
@@ -42,7 +42,7 @@ test(
     await page.goto(BASE_URLS.CATEGORIES)
     await expect(page.getByTestId('edit-category-name-cat-food-001')).toHaveValue('Food')
     await expect(page.getByTestId('edit-category-name-cat-transport-001')).toHaveValue('Transport')
-  })
+  }),
 )
 
 test(
@@ -58,7 +58,7 @@ test(
 
     await expect(page.getByRole('alert')).toHaveText('Category updated successfully.')
     await expect(page.getByTestId('edit-category-name-cat-food-001')).toHaveValue('Dining')
-  })
+  }),
 )
 
 test(
@@ -73,5 +73,5 @@ test(
 
     await expect(page.getByRole('alert')).toHaveText('Category deleted successfully.')
     await expect(page.getByTestId('category-row-cat-transport-001')).not.toBeVisible()
-  })
+  }),
 )

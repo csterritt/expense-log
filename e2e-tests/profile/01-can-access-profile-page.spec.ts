@@ -1,10 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { clickLink, isElementVisible, getElementText } from '../support/finders'
-import {
-  verifyOnProfilePage,
-  verifyOnSignInPage,
-} from '../support/page-verifiers'
+import { verifyOnProfilePage, verifyOnSignInPage } from '../support/page-verifiers'
 import { navigateToProfile } from '../support/navigation-helpers'
 import { testWithDatabase } from '../support/test-helpers'
 import { submitSignInForm } from '../support/form-helpers'
@@ -23,7 +20,7 @@ test(
     // Should be on profile page
     await verifyOnProfilePage(page)
     expect(page.url()).toContain('/profile')
-  })
+  }),
 )
 
 test(
@@ -42,7 +39,7 @@ test(
 
     expect(displayedName).toBe(TEST_USERS.KNOWN_USER.name)
     expect(displayedEmail).toBe(TEST_USERS.KNOWN_USER.email)
-  })
+  }),
 )
 
 test(
@@ -60,7 +57,7 @@ test(
     expect(await isElementVisible(page, 'new-password-input')).toBe(true)
     expect(await isElementVisible(page, 'confirm-password-input')).toBe(true)
     expect(await isElementVisible(page, 'change-password-action')).toBe(true)
-  })
+  }),
 )
 
 test(
@@ -77,7 +74,7 @@ test(
     const question = await getElementText(page, 'humorous-question')
     expect(question).toBeTruthy()
     expect(question!.length).toBeGreaterThan(10)
-  })
+  }),
 )
 
 test('redirects to sign-in when not authenticated', async ({ page }) => {

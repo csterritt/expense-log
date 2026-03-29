@@ -25,11 +25,7 @@ const renderRoot = () => {
             Expense Log
           </h3>
           <div className='card-actions'>
-            <a
-              href={PATHS.PRIVATE}
-              className='btn btn-primary'
-              data-testid='visit-private-action'
-            >
+            <a href={PATHS.PRIVATE} className='btn btn-primary' data-testid='visit-private-action'>
               Protected Content
             </a>
           </div>
@@ -45,6 +41,6 @@ const renderRoot = () => {
  */
 export const buildRoot = (app: Hono<{ Bindings: Bindings }>): void => {
   app.get(PATHS.ROOT, secureHeaders(STANDARD_SECURE_HEADERS), (c) =>
-    c.render(useLayout(c, renderRoot()))
+    c.render(useLayout(c, renderRoot())),
   )
 }

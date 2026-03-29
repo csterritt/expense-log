@@ -17,7 +17,7 @@ const findOldPattern = () => {
   }
 
   console.error(
-    `Could not find old pattern in public/index.html. Please check the file and run this script again.`
+    `Could not find old pattern in public/index.html. Please check the file and run this script again.`,
   )
   process.exit(1)
 }
@@ -40,19 +40,17 @@ const fixFiles = (paths, oldPattern, newPattern) => {
 
 const findNewPattern = async () => {
   let newFilename = await globby(['public/style-*.css'])
-  console.log(
-    `... found ${newFilename.length} new filenames: ${JSON.stringify(newFilename)}`
-  )
+  console.log(`... found ${newFilename.length} new filenames: ${JSON.stringify(newFilename)}`)
   if (newFilename.length !== 1) {
     console.error(
-      `Found ${newFilename.length} new filenames. Please check the file and run this script again.`
+      `Found ${newFilename.length} new filenames. Please check the file and run this script again.`,
     )
     process.exit(1)
   }
   let newPatternList = filePattern.exec(newFilename[0])
   if (!newPatternList) {
     console.error(
-      `Could not find new pattern in ${newFilename[0]}. Please check the file and run this script again.`
+      `Could not find new pattern in ${newFilename[0]}. Please check the file and run this script again.`,
     )
     process.exit(1)
   }

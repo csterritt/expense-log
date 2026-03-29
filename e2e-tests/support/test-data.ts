@@ -62,13 +62,7 @@ export const GATED_CODES = {
 } as const
 
 export const INVALID_DATA = {
-  EMAILS: [
-    'invalid-email',
-    'not-an-email',
-    '@invalid.com',
-    'user@',
-    'user@.com',
-  ],
+  EMAILS: ['invalid-email', 'not-an-email', '@invalid.com', 'user@', 'user@.com'],
   PASSWORDS: [
     '', // empty
     '123', // too short
@@ -79,8 +73,7 @@ export const INVALID_DATA = {
 
 export const ERROR_MESSAGES = {
   // Authentication errors
-  INVALID_CREDENTIALS:
-    'Invalid email or password. Please check your credentials and try again.',
+  INVALID_CREDENTIALS: 'Invalid email or password. Please check your credentials and try again.',
   EMAIL_NOT_VERIFIED:
     'Please verify your email address before signing in. Check your email for a verification link.',
   MUST_SIGN_IN: 'You must sign in to visit that page',
@@ -99,8 +92,7 @@ export const ERROR_MESSAGES = {
   // Sign-up errors
   DUPLICATE_EMAIL:
     'An account with this email already exists. Please check your email for a verification link or sign in if you have already verified your account.',
-  INVALID_CODE:
-    'Invalid or expired sign-up code. Please check your code and try again.',
+  INVALID_CODE: 'Invalid or expired sign-up code. Please check your code and try again.',
 
   // Interest sign-up messages
   WAITLIST_SUCCESS:
@@ -109,13 +101,41 @@ export const ERROR_MESSAGES = {
     "Thanks! Your email is already on our waitlist. We'll notify you when we're accepting new accounts.",
 
   // Reset password messages
-  RESET_LINK_SENT:
-    "If an account with that email exists, we've sent you a password reset link.",
+  RESET_LINK_SENT: "If an account with that email exists, we've sent you a password reset link.",
   PASSWORD_RESET_SUCCESS:
     'Your password has been successfully reset. You can now sign in with your new password.',
 
   // Delete account messages
   ACCOUNT_DELETED: 'Your account has been successfully deleted.',
+} as const
+
+export const EXPENSE_TEST_DATA = {
+  CATEGORIES: {
+    FOOD: { id: 'cat-food-001', name: 'Food' },
+    TRANSPORT: { id: 'cat-transport-001', name: 'Transport' },
+  },
+  TAGS: {
+    WORK: { id: 'tag-work-001', name: 'work' },
+    PERSONAL: { id: 'tag-personal-001', name: 'personal' },
+  },
+  EXPENSES: {
+    LUNCH: {
+      id: 'exp-001',
+      amountCents: 1250,
+      amountDisplay: '12.50',
+      date: '2025-01-15',
+      description: 'Lunch at cafe',
+      categoryId: 'cat-food-001',
+    },
+    BUS_PASS: {
+      id: 'exp-002',
+      amountCents: 3500,
+      amountDisplay: '35.00',
+      date: '2025-01-20',
+      description: 'Monthly bus pass',
+      categoryId: 'cat-transport-001',
+    },
+  },
 } as const
 
 export const BASE_URLS = {

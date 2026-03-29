@@ -16,63 +16,51 @@ import { removeCookie } from '../../lib/cookie-support'
  * Processes sign-out via better-auth and redirects to home page with success message
  */
 export const handleSignOut = (app: Hono<{ Bindings: Bindings }>): void => {
-  app.post(
-    '/auth/sign-out',
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    async (c) => {
+  app.post('/auth/sign-out', secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+    try {
+      // Create better-auth instance
+      const auth = createAuth(c.env)
+
+      // Call better-auth handler directly to get proper response with cookie clearing
       try {
-        // Create better-auth instance
-        const auth = createAuth(c.env)
+        // Create a proper request for the better-auth sign-out endpoint
+        const authUrl = new URL(c.req.url)
+        authUrl.pathname = '/api/auth/sign-out'
 
-        // Call better-auth handler directly to get proper response with cookie clearing
-        try {
-          // Create a proper request for the better-auth sign-out endpoint
-          const authUrl = new URL(c.req.url)
-          authUrl.pathname = '/api/auth/sign-out'
+        const authRequest = new Request(authUrl.toString(), {
+          method: 'POST',
+          headers: c.req.raw.headers,
+        })
 
-          const authRequest = new Request(authUrl.toString(), {
-            method: 'POST',
-            headers: c.req.raw.headers,
+        // Call better-auth handler to get the actual response with cookie clearing headers
+        const authResponse = await auth.handler(authRequest)
+
+        if (authResponse && authResponse.status === 200) {
+          // Create redirect response to sign-out page
+          const redirectResponse = redirectWithMessage(c, PATHS.AUTH.SIGN_OUT, '')
+
+          // Handle multiple cookie headers if they exist
+          const allCookieHeaders = authResponse.headers.getSetCookie?.() || []
+          allCookieHeaders.forEach((cookie) => {
+            redirectResponse.headers.append('Set-Cookie', cookie)
           })
 
-          // Call better-auth handler to get the actual response with cookie clearing headers
-          const authResponse = await auth.handler(authRequest)
-
-          if (authResponse && authResponse.status === 200) {
-            // Create redirect response to sign-out page
-            const redirectResponse = redirectWithMessage(
-              c,
-              PATHS.AUTH.SIGN_OUT,
-              ''
-            )
-
-            // Handle multiple cookie headers if they exist
-            const allCookieHeaders = authResponse.headers.getSetCookie?.() || []
-            allCookieHeaders.forEach((cookie) => {
-              redirectResponse.headers.append('Set-Cookie', cookie)
-            })
-
-            return redirectResponse
-          }
-        } catch (apiError) {
-          console.error('Better-auth sign-out API error:', apiError)
+          return redirectResponse
         }
-
-        // Manually clear better-auth session cookies
-        removeCookie(c, 'better-auth.session_token')
-        removeCookie(c, 'better-auth.session_data')
-
-        return redirectWithMessage(c, PATHS.AUTH.SIGN_OUT, '')
-      } catch (error) {
-        console.error('Sign-out handler error:', error)
-
-        // Handle errors gracefully - still redirect to sign-out page
-        return redirectWithError(
-          c,
-          PATHS.AUTH.SIGN_OUT,
-          'Internal Server Error'
-        )
+      } catch (apiError) {
+        console.error('Better-auth sign-out API error:', apiError)
       }
+
+      // Manually clear better-auth session cookies
+      removeCookie(c, 'better-auth.session_token')
+      removeCookie(c, 'better-auth.session_data')
+
+      return redirectWithMessage(c, PATHS.AUTH.SIGN_OUT, '')
+    } catch (error) {
+      console.error('Sign-out handler error:', error)
+
+      // Handle errors gracefully - still redirect to sign-out page
+      return redirectWithError(c, PATHS.AUTH.SIGN_OUT, 'Internal Server Error')
     }
-  )
+  })
 }

@@ -41,10 +41,7 @@ const post = async (url: string, data: PushoverMessage): Promise<Response> => {
   return new Response(results, init)
 }
 
-export const pushoverNotify = async (
-  c: AppContext,
-  message: string
-): Promise<void> => {
+export const pushoverNotify = async (c: AppContext, message: string): Promise<void> => {
   const appId = c.env.PO_APP_ID?.trim()
   const userId = c.env.PO_USER_ID?.trim()
 

@@ -14,10 +14,7 @@ const INTERNAL_SERVER_ERROR = 500
 /**
  * Required environment bindings that must be set for the app to function
  */
-const REQUIRED_BINDINGS: (keyof Bindings)[] = [
-  'BETTER_AUTH_SECRET',
-  'SIGN_UP_MODE',
-]
+const REQUIRED_BINDINGS: (keyof Bindings)[] = ['BETTER_AUTH_SECRET', 'SIGN_UP_MODE']
 
 /**
  * Middleware that validates required environment bindings are present
@@ -25,7 +22,7 @@ const REQUIRED_BINDINGS: (keyof Bindings)[] = [
  */
 export const validateEnvBindings = async (
   c: Context<{ Bindings: Bindings; Variables: AppVariables }>,
-  next: Next
+  next: Next,
 ): Promise<Response | void> => {
   const missingBindings: string[] = []
 
@@ -37,13 +34,10 @@ export const validateEnvBindings = async (
   }
 
   if (missingBindings.length > 0) {
-    console.error(
-      '❌ Missing required environment bindings:',
-      missingBindings.join(', ')
-    )
+    console.error('❌ Missing required environment bindings:', missingBindings.join(', '))
     return c.text(
       'Server configuration error. Please contact the administrator.',
-      INTERNAL_SERVER_ERROR
+      INTERNAL_SERVER_ERROR,
     )
   }
 

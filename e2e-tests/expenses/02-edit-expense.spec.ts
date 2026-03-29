@@ -7,7 +7,7 @@ import { seedExpenses, clearExpenses } from '../support/db-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 const testWithExpenses = (
-  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>
+  testFn: ({ page, request }: { page: any; request: any }) => Promise<void>,
 ) => {
   return testWithDatabase(async ({ page, request }) => {
     await seedExpenses()
@@ -28,7 +28,7 @@ test(
 
     expect(page.url()).toContain('/expenses/')
     expect(page.url()).toContain('/edit')
-  })
+  }),
 )
 
 test(
@@ -45,7 +45,7 @@ test(
 
     await expect(amountInput).toHaveValue('12.50')
     await expect(descriptionInput).toHaveValue('Lunch at cafe')
-  })
+  }),
 )
 
 test(
@@ -63,5 +63,5 @@ test(
     expect(page.url()).toContain('/expenses')
     await expect(page.getByRole('alert')).toHaveText('Expense updated successfully.')
     await expect(page.getByTestId('expense-history')).toContainText('Updated lunch description')
-  })
+  }),
 )

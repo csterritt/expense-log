@@ -20,9 +20,7 @@ test.describe('Sign-In Page: Common Elements', () => {
     expect(await page.locator('h2').textContent()).toContain('Sign In')
   })
 
-  test('sign-in page does not have sign-up form elements embedded', async ({
-    page,
-  }) => {
+  test('sign-in page does not have sign-up form elements embedded', async ({ page }) => {
     await navigateToSignIn(page)
 
     // Sign-up form elements should never be on the sign-in page

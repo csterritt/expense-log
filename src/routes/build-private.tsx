@@ -29,8 +29,16 @@ const renderPrivate = () => {
 
           <div className='card-actions flex-col gap-3'>
             <a
-              href={PATHS.PROFILE}
+              href={PATHS.EXPENSES.LIST}
               className='btn btn-primary w-full'
+              data-testid='visit-expenses-action'
+            >
+              Go to Expenses
+            </a>
+
+            <a
+              href={PATHS.PROFILE}
+              className='btn btn-outline w-full'
               data-testid='visit-profile-action'
             >
               Go to Profile
@@ -55,10 +63,7 @@ const renderPrivate = () => {
  * @param app - Hono app instance
  */
 export const buildPrivate = (app: Hono<{ Bindings: Bindings }>): void => {
-  app.get(
-    PATHS.PRIVATE,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    signedInAccess,
-    (c) => c.render(useLayout(c, renderPrivate()))
+  app.get(PATHS.PRIVATE, secureHeaders(STANDARD_SECURE_HEADERS), signedInAccess, (c) =>
+    c.render(useLayout(c, renderPrivate())),
   )
 }

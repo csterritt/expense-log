@@ -14,7 +14,7 @@ test(
     await page.goto(BASE_URLS.RECURRING)
     expect(page.url()).toContain('/recurring')
     expect(await isElementVisible(page, 'recurring-page')).toBe(true)
-  })
+  }),
 )
 
 test('redirects to sign-in when accessing recurring without auth', async ({ page }) => {
@@ -38,7 +38,7 @@ test(
 
     await expect(page.getByRole('alert')).toHaveText('Recurring expense created successfully.')
     await expect(page.getByTestId('recurring-page')).toContainText('Monthly gym membership')
-  })
+  }),
 )
 
 test(
@@ -70,7 +70,7 @@ test(
     await expect(page.getByRole('alert')).toHaveText('Recurring expense updated successfully.')
     await expect(page.getByTestId('recurring-page')).toContainText('Weekly tea')
     await expect(page.getByTestId('recurring-page')).not.toContainText('Weekly coffee')
-  })
+  }),
 )
 
 test(
@@ -94,5 +94,5 @@ test(
 
     await expect(page.getByRole('alert')).toHaveText('Recurring expense deleted successfully.')
     await expect(page.getByTestId('recurring-page')).not.toContainText('Daily newspaper')
-  })
+  }),
 )

@@ -26,15 +26,12 @@ const renderInterestSignUp = (emailEntered: string) => {
     <div data-testid='sign-up-page-banner' className='flex justify-center'>
       <div className='card w-full max-w-md bg-base-100 shadow-xl'>
         <div className='card-body'>
-          <h2 className='card-title text-2xl font-bold mb-4'>
-            Join the Waitlist
-          </h2>
+          <h2 className='card-title text-2xl font-bold mb-4'>Join the Waitlist</h2>
 
           <div className='alert alert-info mb-4'>
             <p data-testid='no-new-accounts-message'>
-              We're not accepting new accounts at the moment, but we'd love to
-              notify you when we are! Enter your email address to join our
-              waitlist.
+              We're not accepting new accounts at the moment, but we'd love to notify you when we
+              are! Enter your email address to join our waitlist.
             </p>
           </div>
 
@@ -96,27 +93,20 @@ const renderInterestSignUp = (emailEntered: string) => {
  * Attach the interest sign-up route to the app.
  * @param app - Hono app instance
  */
-export const buildInterestSignUp = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
-  app.get(
-    PATHS.AUTH.INTEREST_SIGN_UP,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    (c) => {
-      // Check if user is already signed in using better-auth session
-      const user = (c as unknown as { get: (key: string) => unknown }).get(
-        'user'
-      ) as { id: string } | null
-      if (user) {
-        console.log('Already signed in')
-        return redirectWithMessage(c, PATHS.PRIVATE, MESSAGES.ALREADY_SIGNED_IN)
-      }
-
-      const emailEntered: string =
-        retrieveCookie(c, COOKIES.EMAIL_ENTERED) ?? ''
-
-      setupNoCacheHeaders(c)
-      return c.render(useLayout(c, renderInterestSignUp(emailEntered)))
+export const buildInterestSignUp = (app: Hono<{ Bindings: Bindings }>): void => {
+  app.get(PATHS.AUTH.INTEREST_SIGN_UP, secureHeaders(STANDARD_SECURE_HEADERS), (c) => {
+    // Check if user is already signed in using better-auth session
+    const user = (c as unknown as { get: (key: string) => unknown }).get('user') as {
+      id: string
+    } | null
+    if (user) {
+      console.log('Already signed in')
+      return redirectWithMessage(c, PATHS.PRIVATE, MESSAGES.ALREADY_SIGNED_IN)
     }
-  )
+
+    const emailEntered: string = retrieveCookie(c, COOKIES.EMAIL_ENTERED) ?? ''
+
+    setupNoCacheHeaders(c)
+    return c.render(useLayout(c, renderInterestSignUp(emailEntered)))
+  })
 }

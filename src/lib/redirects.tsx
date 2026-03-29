@@ -18,7 +18,7 @@ import { addCookie } from './cookie-support'
 export const redirectWithMessage = <E extends { Bindings: Bindings }>(
   c: Context<E>,
   redirectUrl: string,
-  message: string
+  message: string,
 ): Response => {
   if (message.trim() !== '') {
     addCookie(c, COOKIES.MESSAGE_FOUND, message)
@@ -37,7 +37,7 @@ export const redirectWithMessage = <E extends { Bindings: Bindings }>(
 export const redirectWithError = <E extends { Bindings: Bindings }>(
   c: Context<E>,
   redirectUrl: string,
-  errorMessage: string
+  errorMessage: string,
 ): Response => {
   addCookie(c, COOKIES.ERROR_FOUND, errorMessage)
   return c.redirect(redirectUrl, HTML_STATUS.SEE_OTHER)

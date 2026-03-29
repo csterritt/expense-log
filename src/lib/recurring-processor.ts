@@ -48,7 +48,7 @@ export const advanceByPeriod = (dateStr: string, period: string): string => {
  */
 export const processRecurringExpenses = async (
   db: DrizzleClient,
-  today: string
+  today: string,
 ): Promise<number> => {
   const dueResult = await getDueRecurringExpenses(db, today)
   if (dueResult.isErr) {

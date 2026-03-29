@@ -45,25 +45,16 @@ const renderDeleteConfirm = () => {
           </div>
 
           <p className='text-sm text-gray-600 mb-6'>
-            This will permanently delete your account and all associated data.
-            You will not be able to recover your account or sign in with these
-            credentials again.
+            This will permanently delete your account and all associated data. You will not be able
+            to recover your account or sign in with these credentials again.
           </p>
 
           <div className='card-actions justify-between'>
-            <a
-              href={PATHS.PROFILE}
-              className='btn btn-ghost'
-              data-testid='cancel-delete-action'
-            >
+            <a href={PATHS.PROFILE} className='btn btn-ghost' data-testid='cancel-delete-action'>
               Cancel
             </a>
             <form method='post' action={PATHS.PROFILE_DELETE}>
-              <button
-                type='submit'
-                className='btn btn-error'
-                data-testid='confirm-delete-action'
-              >
+              <button type='submit' className='btn btn-error' data-testid='confirm-delete-action'>
                 Delete This Account
               </button>
             </form>
@@ -86,6 +77,6 @@ export const buildDeleteConfirm = (app: Hono<{ Bindings: Bindings }>): void => {
     (c: Context) => {
       setupNoCacheHeaders(c)
       return c.render(useLayout(c, renderDeleteConfirm()))
-    }
+    },
   )
 }

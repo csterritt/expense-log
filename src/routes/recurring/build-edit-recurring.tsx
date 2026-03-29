@@ -98,10 +98,18 @@ const renderEditRecurring = (item: RecurringExpense, categories: Category[]) => 
                   className='select select-bordered'
                   data-testid='recurring-period-select'
                 >
-                  <option value='daily' selected={item.period === 'daily'}>Daily</option>
-                  <option value='weekly' selected={item.period === 'weekly'}>Weekly</option>
-                  <option value='monthly' selected={item.period === 'monthly'}>Monthly</option>
-                  <option value='yearly' selected={item.period === 'yearly'}>Yearly</option>
+                  <option value='daily' selected={item.period === 'daily'}>
+                    Daily
+                  </option>
+                  <option value='weekly' selected={item.period === 'weekly'}>
+                    Weekly
+                  </option>
+                  <option value='monthly' selected={item.period === 'monthly'}>
+                    Monthly
+                  </option>
+                  <option value='yearly' selected={item.period === 'yearly'}>
+                    Yearly
+                  </option>
                 </select>
               </div>
 
@@ -134,11 +142,7 @@ const renderEditRecurring = (item: RecurringExpense, categories: Category[]) => 
                 >
                   <option value=''>— none —</option>
                   {categories.map((cat) => (
-                    <option
-                      key={cat.id}
-                      value={cat.id}
-                      selected={cat.id === item.categoryId}
-                    >
+                    <option key={cat.id} value={cat.id} selected={cat.id === item.categoryId}>
                       {cat.name}
                     </option>
                   ))}
@@ -206,6 +210,6 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
       const categories = categoriesResult.isOk ? categoriesResult.value : []
 
       return c.render(useLayout(c, renderEditRecurring(item, categories)))
-    }
+    },
   )
 }

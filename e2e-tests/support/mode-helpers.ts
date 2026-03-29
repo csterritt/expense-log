@@ -15,11 +15,7 @@ export const detectSignUpMode = async (): Promise<SignUpMode> => {
     const response = await fetch('http://localhost:3000/test/sign-up-mode')
 
     if (!response.ok) {
-      console.error(
-        'Failed to fetch sign-up mode:',
-        response.status,
-        response.statusText
-      )
+      console.error('Failed to fetch sign-up mode:', response.status, response.statusText)
       // Default to OPEN_SIGN_UP if endpoint fails
       return 'OPEN_SIGN_UP'
     }
@@ -38,11 +34,7 @@ export const detectSignUpMode = async (): Promise<SignUpMode> => {
     } else if (mode === 'BOTH_SIGN_UP') {
       return 'BOTH_SIGN_UP'
     } else {
-      console.warn(
-        'Unknown sign-up mode returned:',
-        mode,
-        'defaulting to OPEN_SIGN_UP'
-      )
+      console.warn('Unknown sign-up mode returned:', mode, 'defaulting to OPEN_SIGN_UP')
       return 'OPEN_SIGN_UP'
     }
   } catch (error) {
@@ -61,10 +53,7 @@ export const skipIfNotMode = async (expectedMode: SignUpMode) => {
 
   // BOTH_SIGN_UP mode supports gated and interest sign-up tests
   if (currentMode === 'BOTH_SIGN_UP') {
-    if (
-      expectedMode === 'GATED_SIGN_UP' ||
-      expectedMode === 'INTEREST_SIGN_UP'
-    ) {
+    if (expectedMode === 'GATED_SIGN_UP' || expectedMode === 'INTEREST_SIGN_UP') {
       return // Don't skip - BOTH mode supports these tests
     }
   }
@@ -72,7 +61,7 @@ export const skipIfNotMode = async (expectedMode: SignUpMode) => {
   if (currentMode !== expectedMode) {
     test.skip(
       true,
-      `Skipping test - requires ${expectedMode} mode, currently in ${currentMode} mode`
+      `Skipping test - requires ${expectedMode} mode, currently in ${currentMode} mode`,
     )
   }
 }
@@ -98,7 +87,7 @@ export const skipIfNotExactMode = async (expectedMode: SignUpMode) => {
   if (currentMode !== expectedMode) {
     test.skip(
       true,
-      `Skipping test - requires exactly ${expectedMode} mode, currently in ${currentMode} mode`
+      `Skipping test - requires exactly ${expectedMode} mode, currently in ${currentMode} mode`,
     )
   }
 }

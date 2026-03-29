@@ -14,5 +14,5 @@ test(
 
     // Verify the URL is the await verification page
     expect(page.url()).toContain('/auth/await-verification')
-  })
+  }),
 )

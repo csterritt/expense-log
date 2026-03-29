@@ -1,14 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 import { clickLink, isElementVisible } from '../support/finders'
-import {
-  verifyOnForgotPasswordPage,
-  verifyOnSignInPage,
-} from '../support/page-verifiers'
-import {
-  navigateToSignIn,
-  navigateToForgotPassword,
-} from '../support/navigation-helpers'
+import { verifyOnForgotPasswordPage, verifyOnSignInPage } from '../support/page-verifiers'
+import { navigateToSignIn, navigateToForgotPassword } from '../support/navigation-helpers'
 
 test('can access forgot password page from sign-in page', async ({ page }) => {
   // Start on the sign-in page
@@ -27,14 +21,10 @@ test('can access forgot password page from sign-in page', async ({ page }) => {
   expect(await isElementVisible(page, 'back-to-sign-in-action')).toBe(true)
 
   // Verify page title
-  expect(await page.locator('h2').textContent()).toContain(
-    'Reset Your Password'
-  )
+  expect(await page.locator('h2').textContent()).toContain('Reset Your Password')
 })
 
-test('can navigate back to sign-in from forgot password page', async ({
-  page,
-}) => {
+test('can navigate back to sign-in from forgot password page', async ({ page }) => {
   // Navigate directly to forgot password page
   await navigateToForgotPassword(page)
 

@@ -8,10 +8,7 @@ import {
 } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
 import { skipIfNotMode } from '../support/mode-helpers'
-import {
-  navigateToSignUp,
-  navigateToSignIn,
-} from '../support/navigation-helpers'
+import { navigateToSignUp, navigateToSignIn } from '../support/navigation-helpers'
 import { submitSignUpForm, submitSignInForm } from '../support/form-helpers'
 import { BASE_URLS } from '../support/test-data'
 
@@ -52,7 +49,7 @@ test(
     await verifyOnAwaitVerificationPage(page)
     await verifyAlert(
       page,
-      'Please verify your email address before signing in. Check your email for a verification link.'
+      'Please verify your email address before signing in. Check your email for a verification link.',
     )
 
     // Try to access private page again after failed sign-in attempt
@@ -61,5 +58,5 @@ test(
     // Should still be redirected back to sign-in page with access denied message
     await verifyOnSignInPage(page)
     await verifyAlert(page, 'You must sign in to visit that page')
-  })
+  }),
 )

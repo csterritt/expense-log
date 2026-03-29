@@ -142,11 +142,7 @@ const renderRecurringForm = (categories: Category[]) => (
     </div>
 
     <div className='card-actions'>
-      <button
-        type='submit'
-        className='btn btn-primary'
-        data-testid='create-recurring-action'
-      >
+      <button type='submit' className='btn btn-primary' data-testid='create-recurring-action'>
         Add Recurring Expense
       </button>
     </div>
@@ -246,14 +242,12 @@ export const buildRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
               </a>
             </div>
             <div className='card bg-base-100 shadow-xl mb-6'>
-              <div className='card-body'>
-                {renderRecurringForm(categories)}
-              </div>
+              <div className='card-body'>{renderRecurringForm(categories)}</div>
             </div>
             {renderRecurringList(items)}
-          </div>
-        )
+          </div>,
+        ),
       )
-    }
+    },
   )
 }

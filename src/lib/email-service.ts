@@ -17,11 +17,7 @@ import type { Bindings } from '../local-types'
  * Escape HTML special characters to prevent XSS in email templates
  */
 const escapeHtml = (str: string): string =>
-  str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+  str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 /**
  * Configuration for email service
@@ -139,7 +135,7 @@ export const sendConfirmationEmail = async (
   email: string,
   name: string,
   confirmationUrl: string,
-  token: string
+  token: string,
 ): Promise<void> => {
   void token
   try {
@@ -201,7 +197,7 @@ export const sendPasswordResetEmail = async (
   email: string,
   name: string,
   resetUrl: string,
-  token: string
+  token: string,
 ): Promise<void> => {
   void token
   try {

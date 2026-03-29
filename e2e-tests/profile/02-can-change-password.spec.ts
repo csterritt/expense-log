@@ -8,10 +8,7 @@ import {
 } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
 import { navigateToProfile } from '../support/navigation-helpers'
-import {
-  submitChangePasswordForm,
-  submitSignInForm,
-} from '../support/form-helpers'
+import { submitChangePasswordForm, submitSignInForm } from '../support/form-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 test(
@@ -64,9 +61,9 @@ test(
     await verifyOnSignInPage(page)
     await verifyAlert(
       page,
-      'Invalid email or password. Please check your credentials and try again.'
+      'Invalid email or password. Please check your credentials and try again.',
     )
-  })
+  }),
 )
 
 test(
@@ -88,7 +85,7 @@ test(
     // Should stay on profile page with error message
     await verifyOnProfilePage(page)
     await verifyAlert(page, 'Current password is incorrect. Please try again.')
-  })
+  }),
 )
 
 test(
@@ -112,7 +109,7 @@ test(
     // Should stay on profile page with error message
     await verifyOnProfilePage(page)
     await verifyAlert(page, 'New passwords do not match. Please try again.')
-  })
+  }),
 )
 
 test(
@@ -134,5 +131,5 @@ test(
     // Should stay on profile page with error message
     await verifyOnProfilePage(page)
     await verifyAlert(page, 'Password must be at least 8 characters long.')
-  })
+  }),
 )

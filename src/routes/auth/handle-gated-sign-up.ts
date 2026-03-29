@@ -16,31 +16,19 @@ import { processGatedSignUp, GatedSignUpData } from '../../lib/sign-up-utils'
  * Processes registration via better-auth only after validating and consuming single-use code
  */
 export const handleGatedSignUp = (app: Hono<{ Bindings: Bindings }>): void => {
-  app.post(
-    PATHS.AUTH.SIGN_UP,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    async (c) => {
-      try {
-        const body = await c.req.parseBody()
-        const [ok, data, err] = validateRequest(body, GatedSignUpFormSchema)
+  app.post(PATHS.AUTH.SIGN_UP, secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+    try {
+      const body = await c.req.parseBody()
+      const [ok, data, err] = validateRequest(body, GatedSignUpFormSchema)
 
-        if (!ok) {
-          return redirectWithError(
-            c,
-            PATHS.AUTH.SIGN_UP,
-            err || MESSAGES.INVALID_INPUT
-          )
-        }
-
-        return await processGatedSignUp(c, data as GatedSignUpData)
-      } catch (error) {
-        console.error('Gated sign-up error:', error)
-        return redirectWithError(
-          c,
-          PATHS.AUTH.SIGN_UP,
-          MESSAGES.REGISTRATION_GENERIC_ERROR
-        )
+      if (!ok) {
+        return redirectWithError(c, PATHS.AUTH.SIGN_UP, err || MESSAGES.INVALID_INPUT)
       }
+
+      return await processGatedSignUp(c, data as GatedSignUpData)
+    } catch (error) {
+      console.error('Gated sign-up error:', error)
+      return redirectWithError(c, PATHS.AUTH.SIGN_UP, MESSAGES.REGISTRATION_GENERIC_ERROR)
     }
-  )
+  })
 }

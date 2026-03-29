@@ -22,13 +22,10 @@ const renderForgotPassword = () => {
     <div data-testid='forgot-password-page' className='flex justify-center'>
       <div className='card w-full max-w-md bg-base-100 shadow-xl'>
         <div className='card-body'>
-          <h2 className='card-title text-2xl font-bold mb-4'>
-            Reset Your Password
-          </h2>
+          <h2 className='card-title text-2xl font-bold mb-4'>Reset Your Password</h2>
 
           <p className='text-sm text-gray-600 mb-4'>
-            Enter your email address and we'll send you a link to reset your
-            password.
+            Enter your email address and we'll send you a link to reset your password.
           </p>
 
           {/* Forgot password form */}
@@ -88,15 +85,9 @@ const renderForgotPassword = () => {
  * Attach the forgot password route to the app.
  * @param app - Hono app instance
  */
-export const buildForgotPassword = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
-  app.get(
-    PATHS.AUTH.FORGOT_PASSWORD,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    (c) => {
-      setupNoCacheHeaders(c)
-      return c.render(useLayout(c, renderForgotPassword()))
-    }
-  )
+export const buildForgotPassword = (app: Hono<{ Bindings: Bindings }>): void => {
+  app.get(PATHS.AUTH.FORGOT_PASSWORD, secureHeaders(STANDARD_SECURE_HEADERS), (c) => {
+    setupNoCacheHeaders(c)
+    return c.render(useLayout(c, renderForgotPassword()))
+  })
 }

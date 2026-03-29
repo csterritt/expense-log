@@ -15,24 +15,18 @@ import { setupNoCacheHeaders } from '../lib/setup-no-cache-headers'
  * If the user is not signed in, redirect to sign-in page with an error message.
  * Updated for better-auth integration.
  */
-export const signedInAccess = createMiddleware<{ Bindings: Bindings }>(
-  async (c: Context, next) => {
-    // Check if user is authenticated using better-auth session context
-    const user = c.get('user')
-    const session = c.get('session')
+export const signedInAccess = createMiddleware<{ Bindings: Bindings }>(async (c: Context, next) => {
+  // Check if user is authenticated using better-auth session context
+  const user = c.get('user')
+  const session = c.get('session')
 
-    if (!user || !session) {
-      return redirectWithError(
-        c,
-        PATHS.AUTH.SIGN_IN,
-        'You must sign in to visit that page'
-      )
-    }
-
-    // Better-auth handles session expiration automatically
-    // No need to manually check expiration
-
-    setupNoCacheHeaders(c)
-    await next()
+  if (!user || !session) {
+    return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'You must sign in to visit that page')
   }
-)
+
+  // Better-auth handles session expiration automatically
+  // No need to manually check expiration
+
+  setupNoCacheHeaders(c)
+  await next()
+})

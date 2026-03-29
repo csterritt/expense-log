@@ -16,7 +16,7 @@ test(
     await expect(amountInput).toBeVisible()
     const required = await amountInput.getAttribute('required')
     expect(required).not.toBeNull()
-  })
+  }),
 )
 
 test(
@@ -31,7 +31,7 @@ test(
     await expect(dateInput).toBeVisible()
     const required = await dateInput.getAttribute('required')
     expect(required).not.toBeNull()
-  })
+  }),
 )
 
 test(
@@ -46,7 +46,7 @@ test(
     await expect(descInput).toBeVisible()
     const required = await descInput.getAttribute('required')
     expect(required).not.toBeNull()
-  })
+  }),
 )
 
 test(
@@ -63,13 +63,21 @@ test(
         const amountInput = form.querySelector('[name="amount"]') as HTMLInputElement
         const dateInput = form.querySelector('[name="date"]') as HTMLInputElement
         const descInput = form.querySelector('[name="description"]') as HTMLInputElement
-        if (amountInput) { amountInput.removeAttribute('required'); amountInput.removeAttribute('min'); amountInput.value = '-5' }
-        if (dateInput) { dateInput.value = '2025-03-01' }
-        if (descInput) { descInput.value = 'Test expense' }
+        if (amountInput) {
+          amountInput.removeAttribute('required')
+          amountInput.removeAttribute('min')
+          amountInput.value = '-5'
+        }
+        if (dateInput) {
+          dateInput.value = '2025-03-01'
+        }
+        if (descInput) {
+          descInput.value = 'Test expense'
+        }
         form.submit()
       }
     })
 
     await expect(page.getByRole('alert')).toContainText('Amount')
-  })
+  }),
 )

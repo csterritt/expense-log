@@ -27,10 +27,7 @@ const formatCents = (cents: number): string => (cents / 100).toFixed(2)
 /**
  * Render the edit expense form
  */
-const renderEditExpense = (
-  expense: ExpenseWithDetails,
-  categories: Category[]
-) => {
+const renderEditExpense = (expense: ExpenseWithDetails, categories: Category[]) => {
   const actionUrl = PATHS.EXPENSES.EDIT.replace(':id', expense.id)
   const currentTagNames = expense.tags.map((t) => t.name).join(', ')
 
@@ -113,11 +110,7 @@ const renderEditExpense = (
                 >
                   <option value=''>— none —</option>
                   {categories.map((cat) => (
-                    <option
-                      key={cat.id}
-                      value={cat.id}
-                      selected={cat.id === expense.categoryId}
-                    >
+                    <option key={cat.id} value={cat.id} selected={cat.id === expense.categoryId}>
                       {cat.name}
                     </option>
                   ))}
@@ -156,11 +149,7 @@ const renderEditExpense = (
             </div>
 
             <div className='card-actions justify-end mt-4'>
-              <button
-                type='submit'
-                className='btn btn-primary'
-                data-testid='update-expense-action'
-              >
+              <button type='submit' className='btn btn-primary' data-testid='update-expense-action'>
                 Update Expense
               </button>
             </div>
@@ -191,21 +180,12 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       ])
 
       if (expenseResult.isErr || expenseResult.value === null) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES.LIST,
-          EXPENSE_MESSAGES.EXPENSE_NOT_FOUND
-        )
+        return redirectWithError(c, PATHS.EXPENSES.LIST, EXPENSE_MESSAGES.EXPENSE_NOT_FOUND)
       }
 
       const categories = categoriesResult.isOk ? categoriesResult.value : []
 
-      return c.render(
-        useLayout(
-          c,
-          renderEditExpense(expenseResult.value, categories)
-        )
-      )
-    }
+      return c.render(useLayout(c, renderEditExpense(expenseResult.value, categories)))
+    },
   )
 }

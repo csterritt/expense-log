@@ -8,10 +8,7 @@ import {
   verifyOnResetPasswordPage,
 } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
-import {
-  navigateToForgotPassword,
-  navigateToSignIn,
-} from '../support/navigation-helpers'
+import { navigateToForgotPassword, navigateToSignIn } from '../support/navigation-helpers'
 import {
   submitForgotPasswordForm,
   submitResetPasswordForm,
@@ -46,8 +43,7 @@ const clearAllEmailsFromMailpit = async () => {
 // Helper function to extract password reset link from email HTML
 const extractPasswordResetLink = (htmlContent: string): string => {
   // Look for links that contain 'reset-password' or 'token='
-  const linkRegex =
-    /<a[^>]+href=["']([^"']*(?:reset-password|token=)[^"']*)["'][^>]*>/gi
+  const linkRegex = /<a[^>]+href=["']([^"']*(?:reset-password|token=)[^"']*)["'][^>]*>/gi
   const matches = linkRegex.exec(htmlContent)
 
   if (!matches || !matches[1]) {
@@ -81,9 +77,7 @@ test(
 
     // Retrieve the password reset email from Mailpit
     const emailData: any = await getLatestEmailFromMailpit()
-    expect(
-      emailData.To.some((recipient: any) => recipient.Address === email)
-    ).toBe(true)
+    expect(emailData.To.some((recipient: any) => recipient.Address === email)).toBe(true)
     expect(emailData.Subject).toContain('Reset Your Password')
 
     // Get the HTML content directly from the email data
@@ -132,5 +126,5 @@ test(
     // Should stay on sign-in page with error message
     await verifyOnSignInPage(page)
     await verifyAlert(page, ERROR_MESSAGES.INVALID_CREDENTIALS)
-  })
+  }),
 )

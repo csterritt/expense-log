@@ -14,11 +14,7 @@ import type { Bindings, DrizzleClient } from '../../local-types'
 import { useLayout } from '../build-layout'
 import { signedInAccess } from '../../middleware/signed-in-access'
 import { setupNoCacheHeaders } from '../../lib/setup-no-cache-headers'
-import {
-  getExpenses,
-  getAllCategories,
-  getAllTags,
-} from '../../lib/expense-db-access'
+import { getExpenses, getAllCategories, getAllTags } from '../../lib/expense-db-access'
 import type { ExpenseWithDetails } from '../../lib/expense-db-access'
 import type { Category, Tag } from '../../db/schema'
 
@@ -61,10 +57,7 @@ const getMonthBgClass = (yearMonth: string, currentYearMonth: string): string =>
 /**
  * Render the new expense form
  */
-const renderExpenseForm = (
-  categories: Category[],
-  today: string
-) => (
+const renderExpenseForm = (categories: Category[], today: string) => (
   <form method='post' action={PATHS.EXPENSES.LIST} className='flex flex-col gap-3'>
     <h2 className='text-xl font-bold'>Add Expense</h2>
     <div className='flex flex-wrap gap-3'>
@@ -168,11 +161,7 @@ const renderExpenseForm = (
     </div>
 
     <div className='card-actions'>
-      <button
-        type='submit'
-        className='btn btn-primary'
-        data-testid='create-expense-action'
-      >
+      <button type='submit' className='btn btn-primary' data-testid='create-expense-action'>
         Add Expense
       </button>
     </div>
@@ -190,7 +179,7 @@ const renderExpenseHistory = (
   descFilter: string,
   sortAsc: boolean,
   categories: Category[],
-  tags: Tag[]
+  tags: Tag[],
 ) => {
   const currentYearMonth = getYearMonth(today)
 
@@ -207,11 +196,7 @@ const renderExpenseHistory = (
             >
               <option value=''>All categories</option>
               {categories.map((cat) => (
-                <option
-                  key={cat.id}
-                  value={cat.id}
-                  selected={cat.id === categoryFilter}
-                >
+                <option key={cat.id} value={cat.id} selected={cat.id === categoryFilter}>
                   {cat.name}
                 </option>
               ))}
@@ -241,11 +226,7 @@ const renderExpenseHistory = (
               data-testid='filter-description-input'
             />
           </div>
-          <button
-            type='submit'
-            className='btn btn-sm btn-outline'
-            data-testid='filter-action'
-          >
+          <button type='submit' className='btn btn-sm btn-outline' data-testid='filter-action'>
             Filter
           </button>
           <a
@@ -298,10 +279,7 @@ const renderExpenseHistory = (
                       >
                         Edit
                       </a>
-                      <form
-                        method='post'
-                        action={PATHS.EXPENSES.DELETE.replace(':id', exp.id)}
-                      >
+                      <form method='post' action={PATHS.EXPENSES.DELETE.replace(':id', exp.id)}>
                         <button
                           type='submit'
                           className='btn btn-xs btn-error btn-outline'
@@ -333,13 +311,11 @@ const renderExpensesPage = (
   categoryFilter: string,
   tagFilter: string,
   descFilter: string,
-  sortAsc: boolean
+  sortAsc: boolean,
 ) => (
   <div data-testid='expenses-page' className='w-full'>
     <div className='card bg-base-100 shadow-xl mb-6'>
-      <div className='card-body'>
-        {renderExpenseForm(categories, today)}
-      </div>
+      <div className='card-body'>{renderExpenseForm(categories, today)}</div>
     </div>
 
     {renderExpenseHistory(
@@ -350,7 +326,7 @@ const renderExpensesPage = (
       descFilter,
       sortAsc,
       categories,
-      tags
+      tags,
     )}
   </div>
 )
@@ -400,10 +376,10 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
             categoryFilter,
             tagFilter,
             descFilter,
-            sortAsc
-          )
-        )
+            sortAsc,
+          ),
+        ),
       )
-    }
+    },
   )
 }

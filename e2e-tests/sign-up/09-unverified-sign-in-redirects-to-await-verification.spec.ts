@@ -45,7 +45,7 @@ test(
     await verifyOnAwaitVerificationPage(page)
     await verifyAlert(
       page,
-      'Please verify your email address before signing in. Check your email for a verification link.'
+      'Please verify your email address before signing in. Check your email for a verification link.',
     )
-  })
+  }),
 )

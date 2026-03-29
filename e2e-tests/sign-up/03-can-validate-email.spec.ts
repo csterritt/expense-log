@@ -9,10 +9,7 @@ import {
 } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
 import { skipIfNotMode } from '../support/mode-helpers'
-import {
-  navigateToSignUp,
-  navigateToSignIn,
-} from '../support/navigation-helpers'
+import { navigateToSignUp, navigateToSignIn } from '../support/navigation-helpers'
 import { submitSignUpForm, submitSignInForm } from '../support/form-helpers'
 
 // Helper function to get the latest email from Mailpit
@@ -27,8 +24,7 @@ const getLatestEmailFromMailpit = async () => {
 // Helper function to extract verification link from email HTML
 const extractVerificationLink = (htmlContent: string): string => {
   // Look for links that contain 'verify-email' or 'token='
-  const linkRegex =
-    /<a[^>]+href=["']([^"']*(?:verify-email|token=)[^"']*)["'][^>]*>/gi
+  const linkRegex = /<a[^>]+href=["']([^"']*(?:verify-email|token=)[^"']*)["'][^>]*>/gi
   const matches = linkRegex.exec(htmlContent)
 
   if (!matches || !matches[1]) {
@@ -65,9 +61,7 @@ test(
 
     // Retrieve the verification email from Mailpit
     const emailData: any = await getLatestEmailFromMailpit()
-    expect(
-      emailData.To.some((recipient: any) => recipient.Address === newEmail)
-    ).toBe(true)
+    expect(emailData.To.some((recipient: any) => recipient.Address === newEmail)).toBe(true)
     expect(emailData.Subject).toContain('Confirm Your Email Address')
 
     // Get the HTML content directly from the email data
@@ -84,10 +78,7 @@ test(
     await page.waitForTimeout(1000)
 
     await verifyOnSignInPage(page)
-    await verifyAlert(
-      page,
-      'Your email has been verified successfully. You may now sign in.'
-    )
+    await verifyAlert(page, 'Your email has been verified successfully. You may now sign in.')
 
     // Now try to sign in with the verified credentials
     await navigateToSignIn(page)
@@ -98,5 +89,5 @@ test(
     // Should be successfully signed in and redirected to protected page
     await verifyOnProtectedPage(page)
     await verifyAlert(page, 'Welcome! You have been signed in successfully.')
-  })
+  }),
 )

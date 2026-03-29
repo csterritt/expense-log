@@ -27,7 +27,11 @@ const renderCategoriesPage = (categories: Category[]) => (
   <div data-testid='categories-page' className='w-full'>
     <div className='flex items-center justify-between mb-6'>
       <h1 className='text-2xl font-bold'>Categories</h1>
-      <a href={PATHS.EXPENSES.LIST} className='btn btn-outline btn-sm' data-testid='back-to-expenses-action'>
+      <a
+        href={PATHS.EXPENSES.LIST}
+        className='btn btn-outline btn-sm'
+        data-testid='back-to-expenses-action'
+      >
         Back to Expenses
       </a>
     </div>
@@ -78,10 +82,7 @@ const renderCategoriesPage = (categories: Category[]) => (
                     </form>
                   </td>
                   <td>
-                    <form
-                      method='post'
-                      action={PATHS.CATEGORIES.DELETE.replace(':id', cat.id)}
-                    >
+                    <form method='post' action={PATHS.CATEGORIES.DELETE.replace(':id', cat.id)}>
                       <button
                         type='submit'
                         className='btn btn-sm btn-error btn-outline'
@@ -117,6 +118,6 @@ export const buildCategories = (app: Hono<{ Bindings: Bindings }>): void => {
       const categories = categoriesResult.isOk ? categoriesResult.value : []
 
       return c.render(useLayout(c, renderCategoriesPage(categories)))
-    }
+    },
   )
 }

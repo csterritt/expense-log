@@ -9,13 +9,7 @@
 import Result from 'true-myth/result'
 import { eq, desc, asc, inArray } from 'drizzle-orm'
 
-import {
-  category,
-  tag,
-  expense,
-  expenseTag,
-  recurringExpense,
-} from '../db/schema'
+import { category, tag, expense, expenseTag, recurringExpense } from '../db/schema'
 import type {
   Category,
   Tag,
@@ -74,9 +68,7 @@ export interface RecurringExpenseData {
 // Category CRUD
 // ---------------------------------------------------------------------------
 
-export const getAllCategories = async (
-  db: DrizzleClient
-): Promise<Result<Category[], Error>> => {
+export const getAllCategories = async (db: DrizzleClient): Promise<Result<Category[], Error>> => {
   try {
     const rows = await db.select().from(category).orderBy(asc(category.name))
     return Result.ok(rows)
@@ -87,13 +79,10 @@ export const getAllCategories = async (
 
 export const getCategoryByName = async (
   db: DrizzleClient,
-  name: string
+  name: string,
 ): Promise<Result<Category[], Error>> => {
   try {
-    const rows = await db
-      .select()
-      .from(category)
-      .where(eq(category.name, name))
+    const rows = await db.select().from(category).where(eq(category.name, name))
     return Result.ok(rows)
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
@@ -102,17 +91,14 @@ export const getCategoryByName = async (
 
 export const createCategory = async (
   db: DrizzleClient,
-  name: string
+  name: string,
 ): Promise<Result<Category, Error>> => {
   try {
     const id = crypto.randomUUID()
     const now = new Date()
     const newCategory: NewCategory = { id, name, createdAt: now }
     await db.insert(category).values(newCategory)
-    const rows = await db
-      .select()
-      .from(category)
-      .where(eq(category.id, id))
+    const rows = await db.select().from(category).where(eq(category.id, id))
     if (rows.length === 0) {
       return Result.err(new Error('Failed to retrieve created category'))
     }
@@ -125,13 +111,10 @@ export const createCategory = async (
 export const updateCategory = async (
   db: DrizzleClient,
   id: string,
-  name: string
+  name: string,
 ): Promise<Result<boolean, Error>> => {
   try {
-    const result = await db
-      .update(category)
-      .set({ name })
-      .where(eq(category.id, id))
+    const result = await db.update(category).set({ name }).where(eq(category.id, id))
     const rowsUpdated = result.meta?.changes ?? 0
     return Result.ok(rowsUpdated >= 1)
   } catch (e) {
@@ -141,7 +124,7 @@ export const updateCategory = async (
 
 export const deleteCategory = async (
   db: DrizzleClient,
-  id: string
+  id: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db.delete(category).where(eq(category.id, id))
@@ -156,9 +139,7 @@ export const deleteCategory = async (
 // Tag CRUD
 // ---------------------------------------------------------------------------
 
-export const getAllTags = async (
-  db: DrizzleClient
-): Promise<Result<Tag[], Error>> => {
+export const getAllTags = async (db: DrizzleClient): Promise<Result<Tag[], Error>> => {
   try {
     const rows = await db.select().from(tag).orderBy(asc(tag.name))
     return Result.ok(rows)
@@ -169,7 +150,7 @@ export const getAllTags = async (
 
 export const getTagByName = async (
   db: DrizzleClient,
-  name: string
+  name: string,
 ): Promise<Result<Tag[], Error>> => {
   try {
     const rows = await db.select().from(tag).where(eq(tag.name, name))
@@ -179,10 +160,7 @@ export const getTagByName = async (
   }
 }
 
-export const createTag = async (
-  db: DrizzleClient,
-  name: string
-): Promise<Result<Tag, Error>> => {
+export const createTag = async (db: DrizzleClient, name: string): Promise<Result<Tag, Error>> => {
   try {
     const id = crypto.randomUUID()
     const now = new Date()
@@ -201,7 +179,7 @@ export const createTag = async (
 export const updateTag = async (
   db: DrizzleClient,
   id: string,
-  name: string
+  name: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db.update(tag).set({ name }).where(eq(tag.id, id))
@@ -212,10 +190,7 @@ export const updateTag = async (
   }
 }
 
-export const deleteTag = async (
-  db: DrizzleClient,
-  id: string
-): Promise<Result<boolean, Error>> => {
+export const deleteTag = async (db: DrizzleClient, id: string): Promise<Result<boolean, Error>> => {
   try {
     const result = await db.delete(tag).where(eq(tag.id, id))
     const rowsDeleted = result.meta?.changes ?? 0
@@ -231,7 +206,7 @@ export const deleteTag = async (
 
 export const createExpense = async (
   db: DrizzleClient,
-  data: ExpenseData
+  data: ExpenseData,
 ): Promise<Result<Expense, Error>> => {
   try {
     const id = crypto.randomUUID()
@@ -259,7 +234,7 @@ export const createExpense = async (
 
 export const getExpenses = async (
   db: DrizzleClient,
-  filters?: ExpenseFilters
+  filters?: ExpenseFilters,
 ): Promise<Result<ExpenseWithDetails[], Error>> => {
   try {
     const sortOrder = filters?.sortAsc ? asc(expense.date) : desc(expense.date)
@@ -286,23 +261,18 @@ export const getExpenses = async (
     let filteredRows = baseRows
     if (filters?.descriptionSearch) {
       const search = filters.descriptionSearch.toLowerCase()
-      filteredRows = filteredRows.filter((r) =>
-        r.description.toLowerCase().includes(search)
-      )
+      filteredRows = filteredRows.filter((r) => r.description.toLowerCase().includes(search))
     }
 
     // Apply category filter
     if (filters?.categoryId) {
-      filteredRows = filteredRows.filter(
-        (r) => r.categoryId === filters.categoryId
-      )
+      filteredRows = filteredRows.filter((r) => r.categoryId === filters.categoryId)
     }
 
     // For each expense, load its tags
     const expenseIds = filteredRows.map((r) => r.id)
 
-    let tagsByExpenseId: Record<string, Array<{ id: string; name: string }>> =
-      {}
+    let tagsByExpenseId: Record<string, Array<{ id: string; name: string }>> = {}
 
     if (expenseIds.length > 0) {
       const tagRows = await db
@@ -319,14 +289,17 @@ export const getExpenses = async (
         if (!tagsByExpenseId[row.expenseId]) {
           tagsByExpenseId[row.expenseId] = []
         }
-        tagsByExpenseId[row.expenseId].push({ id: row.tagId, name: row.tagName })
+        tagsByExpenseId[row.expenseId].push({
+          id: row.tagId,
+          name: row.tagName,
+        })
       }
     }
 
     // Apply tag filter after loading tags
     if (filters?.tagId) {
       filteredRows = filteredRows.filter((r) =>
-        (tagsByExpenseId[r.id] ?? []).some((t) => t.id === filters.tagId)
+        (tagsByExpenseId[r.id] ?? []).some((t) => t.id === filters.tagId),
       )
     }
 
@@ -343,7 +316,7 @@ export const getExpenses = async (
 
 export const getExpenseById = async (
   db: DrizzleClient,
-  id: string
+  id: string,
 ): Promise<Result<ExpenseWithDetails | null, Error>> => {
   try {
     const rows = await db
@@ -385,7 +358,7 @@ export const getExpenseById = async (
 export const updateExpense = async (
   db: DrizzleClient,
   id: string,
-  data: Partial<ExpenseData>
+  data: Partial<ExpenseData>,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db
@@ -401,7 +374,7 @@ export const updateExpense = async (
 
 export const deleteExpense = async (
   db: DrizzleClient,
-  id: string
+  id: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db.delete(expense).where(eq(expense.id, id))
@@ -419,7 +392,7 @@ export const deleteExpense = async (
 export const setExpenseTags = async (
   db: DrizzleClient,
   expenseId: string,
-  tagIds: string[]
+  tagIds: string[],
 ): Promise<Result<boolean, Error>> => {
   try {
     await db.delete(expenseTag).where(eq(expenseTag.expenseId, expenseId))
@@ -439,7 +412,7 @@ export const setExpenseTags = async (
 
 export const createRecurringExpense = async (
   db: DrizzleClient,
-  data: RecurringExpenseData
+  data: RecurringExpenseData,
 ): Promise<Result<RecurringExpense, Error>> => {
   try {
     const id = crypto.randomUUID()
@@ -457,10 +430,7 @@ export const createRecurringExpense = async (
       updatedAt: now,
     }
     await db.insert(recurringExpense).values(newRecurring)
-    const rows = await db
-      .select()
-      .from(recurringExpense)
-      .where(eq(recurringExpense.id, id))
+    const rows = await db.select().from(recurringExpense).where(eq(recurringExpense.id, id))
     if (rows.length === 0) {
       return Result.err(new Error('Failed to retrieve created recurring expense'))
     }
@@ -471,13 +441,10 @@ export const createRecurringExpense = async (
 }
 
 export const getRecurringExpenses = async (
-  db: DrizzleClient
+  db: DrizzleClient,
 ): Promise<Result<RecurringExpense[], Error>> => {
   try {
-    const rows = await db
-      .select()
-      .from(recurringExpense)
-      .orderBy(asc(recurringExpense.nextRunDate))
+    const rows = await db.select().from(recurringExpense).orderBy(asc(recurringExpense.nextRunDate))
     return Result.ok(rows)
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
@@ -487,7 +454,7 @@ export const getRecurringExpenses = async (
 export const updateRecurringExpense = async (
   db: DrizzleClient,
   id: string,
-  data: Partial<RecurringExpenseData>
+  data: Partial<RecurringExpenseData>,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db
@@ -503,12 +470,10 @@ export const updateRecurringExpense = async (
 
 export const deleteRecurringExpense = async (
   db: DrizzleClient,
-  id: string
+  id: string,
 ): Promise<Result<boolean, Error>> => {
   try {
-    const result = await db
-      .delete(recurringExpense)
-      .where(eq(recurringExpense.id, id))
+    const result = await db.delete(recurringExpense).where(eq(recurringExpense.id, id))
     const rowsDeleted = result.meta?.changes ?? 0
     return Result.ok(rowsDeleted >= 1)
   } catch (e) {
@@ -518,13 +483,10 @@ export const deleteRecurringExpense = async (
 
 export const getDueRecurringExpenses = async (
   db: DrizzleClient,
-  today: string
+  today: string,
 ): Promise<Result<RecurringExpense[], Error>> => {
   try {
-    const rows = await db
-      .select()
-      .from(recurringExpense)
-      .where(eq(recurringExpense.isActive, true))
+    const rows = await db.select().from(recurringExpense).where(eq(recurringExpense.isActive, true))
     const due = rows.filter((r) => r.nextRunDate <= today)
     return Result.ok(due)
   } catch (e) {
@@ -535,7 +497,7 @@ export const getDueRecurringExpenses = async (
 export const advanceRecurringExpenseDate = async (
   db: DrizzleClient,
   id: string,
-  nextDate: string
+  nextDate: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db

@@ -163,14 +163,12 @@ export const MESSAGES = {
   VERIFY_EMAIL_BEFORE_SIGN_IN:
     'Please verify your email address before signing in. Check your email for a verification link.',
   GENERIC_ERROR_TRY_AGAIN: 'Something went wrong. Please try again.',
-  REGISTRATION_GENERIC_ERROR:
-    'Something went wrong during registration. Please try again.',
+  REGISTRATION_GENERIC_ERROR: 'Something went wrong during registration. Please try again.',
   RESET_PASSWORD_MESSAGE:
     "If an account with that email exists, we've sent you a password reset link.",
   ACCOUNT_ALREADY_EXISTS:
     'An account with this email already exists. Please check your email for a verification link or sign in if you have already verified your account.',
-  NEW_VERIFICATION_EMAIL:
-    'A new verification email has been sent. Please check your inbox.',
+  NEW_VERIFICATION_EMAIL: 'A new verification email has been sent. Please check your inbox.',
 } as const
 
 export const EXPENSE_MESSAGES = {
@@ -295,10 +293,7 @@ export const ALLOW_SCRIPTS_SECURE_HEADERS: SecureHeadersConfig = {
     ...STANDARD_SECURE_HEADERS.contentSecurityPolicy,
     sandbox: ['allow-same-origin', 'allow-scripts', 'allow-forms'],
     // Allow service worker registration script in renderer
-    scriptSrc: [
-      "'self'",
-      "'sha256-Asl+hSRidxWRtKpu19jWjIcBvpFh6jTQGDIPAHY4Ilk='",
-    ],
+    scriptSrc: ["'self'", "'sha256-Asl+hSRidxWRtKpu19jWjIcBvpFh6jTQGDIPAHY4Ilk='"],
   },
 }
 

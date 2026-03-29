@@ -30,7 +30,7 @@ const parseCents = (amount: string): number => {
 const resolveCategory = async (
   db: DrizzleClient,
   categoryId: string | undefined,
-  newCategoryName: string | undefined
+  newCategoryName: string | undefined,
 ): Promise<string | null> => {
   if (newCategoryName && newCategoryName.trim()) {
     const name = newCategoryName.trim()
@@ -69,7 +69,8 @@ export const handleUpdateRecurring = (app: Hono<{ Bindings: Bindings }>): void =
 
         if (!ok) {
           const commaSpot = err?.indexOf(',') ?? -1
-          const errorMsg = commaSpot > -1 ? err!.substring(0, commaSpot) : (err ?? MESSAGES.INVALID_INPUT)
+          const errorMsg =
+            commaSpot > -1 ? err!.substring(0, commaSpot) : (err ?? MESSAGES.INVALID_INPUT)
           return redirectWithError(c, editPath, errorMsg)
         }
 
@@ -107,6 +108,6 @@ export const handleUpdateRecurring = (app: Hono<{ Bindings: Bindings }>): void =
         console.error('Update recurring expense handler error:', error)
         return redirectWithError(c, PATHS.RECURRING.LIST, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
-    }
+    },
   )
 }

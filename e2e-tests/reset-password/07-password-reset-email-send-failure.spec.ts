@@ -31,5 +31,5 @@ test(
 
     // Reset SMTP configuration for other tests
     await request.post('http://localhost:3000/test/reset-smtp-config')
-  })
+  }),
 )

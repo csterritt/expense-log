@@ -17,7 +17,7 @@ test.describe('Interest Sign-Up Mode: Valid Email Tests', () => {
     testWithDatabase(async ({ page }) => {
       // Complete the entire interest sign-up flow
       await completeInterestSignUpFlow(page)
-    })
+    }),
   )
 
   test(
@@ -25,6 +25,6 @@ test.describe('Interest Sign-Up Mode: Valid Email Tests', () => {
     testWithDatabase(async ({ page }) => {
       // Test the complete duplicate interest sign-up flow
       await testDuplicateInterestSignUpFlow(page)
-    })
+    }),
   )
 })

@@ -41,9 +41,7 @@ test(
     // Verify the success message is displayed
     const pageText = await page.textContent('body')
     if (!pageText?.includes(ERROR_MESSAGES.SIGN_OUT_SUCCESS)) {
-      throw new Error(
-        `Expected to find "${ERROR_MESSAGES.SIGN_OUT_SUCCESS}" on sign-out page`
-      )
+      throw new Error(`Expected to find "${ERROR_MESSAGES.SIGN_OUT_SUCCESS}" on sign-out page`)
     }
 
     // Click the Home button
@@ -60,5 +58,5 @@ test(
 
     // Should show the access denied message
     await verifyAlert(page, ERROR_MESSAGES.MUST_SIGN_IN)
-  })
+  }),
 )
