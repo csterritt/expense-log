@@ -22,7 +22,7 @@ const renderRoot = () => {
         <div id='container' className='card-body'>
           <h2 className='card-title text-2xl font-bold'>Welcome!</h2>
           <h3 id='heading' className='text-lg text-gray-600 mb-4'>
-            Worker, D1, Drizzle Project
+            Expense Log
           </h3>
           <div className='card-actions'>
             <a href={PATHS.PRIVATE} className='btn btn-primary' data-testid='visit-private-action'>

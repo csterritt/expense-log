@@ -1,10 +1,8 @@
-### Basic CloudFlare worker+d1+drizzle app with username and password authentication
+## Basic CloudFlare worker+d1+drizzle+tailwind+daisyui app for tracking expenses
+
+(In spite of the name, it's for tracking expenses as they happen, not planned ones.)
 
 Standard sign in, and password reset via email routes are provided.
-
-**Note:** This is the "styled" version of this project (See Styling section below).
-There is a [sibling project](https://github.com/csterritt/worker-d1-drizzle) that is unstyled. It is functionally
-identical, just with minimal styling that can be removed by deleting two files, and their references.
 
 #### Sign up modes
 

@@ -29,13 +29,13 @@ for i in `/bin/ls drizzle/*.sql` ; do
 done
 
 if [[ "${local}" = "TRUE" ]] ; then
-  wrangler d1 execute worker-d1-drizzle --file=./schema.sql
+  wrangler d1 execute pl-exp-log-db --file=./schema.sql
 else
   yes_or_no "Really update the remote database?"
   if [[ -n $? ]] ; then
     echo "Updating remote database in 5 seconds..."
     sleep 5
     echo "Updating remote database"
-    wrangler d1 execute worker-d1-drizzle --file=./schema-prod.sql --remote
+    wrangler d1 execute pl-exp-log-db --file=./schema-prod.sql --remote
   fi
 fi
