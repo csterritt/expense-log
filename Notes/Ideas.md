@@ -25,3 +25,7 @@ The main ideas here are:
 - It does not need to be able to run offline.
 - You have to sign in to use the app.
 - You can see all expenses and manage them, as well as all categories and tags.
+- Uses the existing auth system.
+- Uses the existing database system.
+- Uses the existing email system.
+- Uses tailwindcss and daisyui for styling.
