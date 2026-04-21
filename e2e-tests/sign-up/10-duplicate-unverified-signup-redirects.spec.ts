@@ -1,10 +1,7 @@
 import { test } from '@playwright/test'
 
 import { fillInput, clickLink, verifyAlert } from '../support/finders'
-import {
-  verifyOnSignUpPage,
-  verifyOnAwaitVerificationPage,
-} from '../support/page-verifiers'
+import { verifyOnSignUpPage, verifyOnAwaitVerificationPage } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
 import { skipIfNotMode } from '../support/mode-helpers'
 
@@ -45,7 +42,7 @@ test(
     await verifyOnAwaitVerificationPage(page)
     await verifyAlert(
       page,
-      'An account with this email already exists. Please check your email for a verification link or sign in if you have already verified your account.'
+      'An account with this email already exists. Please check your email for a verification link or sign in if you have already verified your account.',
     )
-  })
+  }),
 )

@@ -20,18 +20,14 @@ describe('sendOtpToUserViaEmail', () => {
       fromAddress: string,
       toAddress: string,
       subject: string,
-      content: string
+      content: string,
     ): Promise<void> => {
       capturedArgs = { fromAddress, toAddress, subject, content }
       return Promise.resolve()
     }
 
     // Call the function with our mock
-    const result = await sendOtpToUserViaEmail(
-      testEmail,
-      testOtp,
-      mockEmailAgent
-    )
+    const result = await sendOtpToUserViaEmail(testEmail, testOtp, mockEmailAgent)
 
     // Verify result is successful
     assert.strictEqual(isOk(result), true)
@@ -40,17 +36,12 @@ describe('sendOtpToUserViaEmail', () => {
     assert.notStrictEqual(capturedArgs, null)
     assert.strictEqual(capturedArgs?.fromAddress, 'noreply@cls.cloud')
     assert.strictEqual(capturedArgs?.toAddress, testEmail)
-    assert.strictEqual(
-      capturedArgs?.subject,
-      'Your Mini-Auth Verification Code'
-    )
+    assert.strictEqual(capturedArgs?.subject, 'Your Mini-Auth Verification Code')
 
     // Verify email content contains the OTP
     assert.ok(capturedArgs?.content.includes(`<strong>${testOtp}</strong>`))
     assert.ok(capturedArgs?.content.includes('<h1>Verification Code</h1>'))
-    assert.ok(
-      capturedArgs?.content.includes('This code will expire in 15 minutes')
-    )
+    assert.ok(capturedArgs?.content.includes('This code will expire in 15 minutes'))
   })
 
   it('handles email sending failure', async () => {
@@ -64,11 +55,7 @@ describe('sendOtpToUserViaEmail', () => {
     }
 
     // Call the function with our failing mock
-    const result = await sendOtpToUserViaEmail(
-      testEmail,
-      testOtp,
-      mockFailingEmailAgent
-    )
+    const result = await sendOtpToUserViaEmail(testEmail, testOtp, mockFailingEmailAgent)
 
     // Verify result is an error
     assert.strictEqual(result.isErr, true)

@@ -25,8 +25,5 @@ test('cannot sign in with unknown email', async ({ page }) => {
   // Should show an error message indicating the email is not found
   // The exact error message may vary based on your auth implementation
   // Common messages might be "Invalid credentials" or "User not found"
-  await verifyAlert(
-    page,
-    'Invalid email or password. Please check your credentials and try again.'
-  )
+  await verifyAlert(page, 'Invalid email or password. Please check your credentials and try again.')
 })

@@ -2,10 +2,7 @@ import { test } from '@playwright/test'
 
 import { testWithDatabase } from '../support/test-helpers'
 import { skipIfNotMode } from '../support/mode-helpers'
-import {
-  completeGatedSignUpFlow,
-  testDuplicateGatedSignUpFlow,
-} from '../support/workflow-helpers'
+import { completeGatedSignUpFlow, testDuplicateGatedSignUpFlow } from '../support/workflow-helpers'
 
 test.describe('Gated Sign-Up Mode: Valid Code Tests', () => {
   test.beforeEach(async () => {
@@ -17,7 +14,7 @@ test.describe('Gated Sign-Up Mode: Valid Code Tests', () => {
     testWithDatabase(async ({ page }) => {
       // Complete the entire gated sign-up flow with default code and user
       await completeGatedSignUpFlow(page)
-    })
+    }),
   )
 
   test(
@@ -25,6 +22,6 @@ test.describe('Gated Sign-Up Mode: Valid Code Tests', () => {
     testWithDatabase(async ({ page }) => {
       // Use workflow helper for complete duplicate gated sign-up flow testing
       await testDuplicateGatedSignUpFlow(page)
-    })
+    }),
   )
 })

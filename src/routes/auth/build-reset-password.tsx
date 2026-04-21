@@ -23,13 +23,10 @@ const renderResetPassword = (token: string) => {
     <div data-testid='reset-password-page' className='flex justify-center'>
       <div className='card w-full max-w-md bg-base-100 shadow-xl'>
         <div className='card-body'>
-          <h2 className='card-title text-2xl font-bold mb-4'>
-            Set New Password
-          </h2>
+          <h2 className='card-title text-2xl font-bold mb-4'>Set New Password</h2>
 
           <p className='text-sm text-gray-600 mb-4'>
-            Enter your new password below. Make sure it's at least 8 characters
-            long.
+            Enter your new password below. Make sure it's at least 8 characters long.
           </p>
 
           {/* Reset password form */}
@@ -118,8 +115,8 @@ const renderInvalidToken = () => {
             <div>
               <h2 className='font-bold text-lg'>Invalid Reset Link</h2>
               <p>
-                This password reset link is invalid or has expired. Please
-                request a new password reset link.
+                This password reset link is invalid or has expired. Please request a new password
+                reset link.
               </p>
             </div>
           </div>
@@ -155,18 +152,14 @@ const renderInvalidToken = () => {
  * @param app - Hono app instance
  */
 export const buildResetPassword = (app: Hono<{ Bindings: Bindings }>): void => {
-  app.get(
-    PATHS.AUTH.RESET_PASSWORD,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    (c) => {
-      setupNoCacheHeaders(c)
+  app.get(PATHS.AUTH.RESET_PASSWORD, secureHeaders(STANDARD_SECURE_HEADERS), (c) => {
+    setupNoCacheHeaders(c)
 
-      const token = c.req.query('token')
-      if (!token) {
-        return c.render(useLayout(c, renderInvalidToken()))
-      }
-
-      return c.render(useLayout(c, renderResetPassword(token)))
+    const token = c.req.query('token')
+    if (!token) {
+      return c.render(useLayout(c, renderInvalidToken()))
     }
-  )
+
+    return c.render(useLayout(c, renderResetPassword(token)))
+  })
 }

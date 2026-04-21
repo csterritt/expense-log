@@ -10,11 +10,7 @@ import { Context } from 'hono'
 
 import { redirectWithError, redirectWithMessage } from './redirects'
 import { addCookie } from './cookie-support'
-import {
-  getUserIdByEmail,
-  updateAccountTimestamp,
-  claimSingleUseCode,
-} from './db-access'
+import { getUserIdByEmail, updateAccountTimestamp, claimSingleUseCode } from './db-access'
 import { createAuth } from './auth'
 import { createDbClient } from '../db/client'
 import { PATHS, COOKIES, MESSAGES, LOG_MESSAGES } from '../constants'
@@ -66,13 +62,9 @@ interface SyntheticDuplicateResponse {
  * instead of throwing an error.
  */
 export const isSyntheticDuplicateResponse = (
-  response: unknown
+  response: unknown,
 ): response is SyntheticDuplicateResponse => {
-  if (
-    typeof response !== 'object' ||
-    response === null ||
-    response instanceof Response
-  ) {
+  if (typeof response !== 'object' || response === null || response instanceof Response) {
     return false
   }
 
@@ -86,9 +78,7 @@ export const isSyntheticDuplicateResponse = (
   )
 }
 
-const isErrorResponse = (
-  response: unknown
-): response is SignUpErrorResponse => {
+const isErrorResponse = (response: unknown): response is SignUpErrorResponse => {
   return (
     typeof response === 'object' &&
     response !== null &&
@@ -123,11 +113,10 @@ export const isDuplicateEmailError = (errorMessage: string): boolean => {
   const lowerMessage = errorMessage.toLowerCase()
 
   const hasDuplicatePattern = DUPLICATE_EMAIL_PATTERNS.some((pattern) =>
-    lowerMessage.includes(pattern)
+    lowerMessage.includes(pattern),
   )
 
-  const hasEmailExists =
-    lowerMessage.includes('email') && lowerMessage.includes('exists')
+  const hasEmailExists = lowerMessage.includes('email') && lowerMessage.includes('exists')
 
   return hasDuplicatePattern || hasEmailExists
 }
@@ -139,9 +128,7 @@ export const isDuplicateEmailError = (errorMessage: string): boolean => {
  */
 export const isConstraintError = (errorMessage: string): boolean => {
   const lowerMessage = errorMessage.toLowerCase()
-  return CONSTRAINT_ERROR_PATTERNS.some((pattern) =>
-    lowerMessage.includes(pattern)
-  )
+  return CONSTRAINT_ERROR_PATTERNS.some((pattern) => lowerMessage.includes(pattern))
 }
 
 /**
@@ -169,7 +156,7 @@ export const handleSignUpResponseError = (
   c: Context<{ Bindings: Bindings }>,
   response: unknown,
   email: string,
-  fallbackPath: string
+  fallbackPath: string,
 ): Response | null => {
   if (!isErrorResponse(response)) {
     return null
@@ -180,11 +167,7 @@ export const handleSignUpResponseError = (
 
   if (isDuplicateEmailError(errorMessage)) {
     addCookie(c, COOKIES.EMAIL_ENTERED, email)
-    return redirectWithMessage(
-      c,
-      PATHS.AUTH.AWAIT_VERIFICATION,
-      MESSAGES.ACCOUNT_ALREADY_EXISTS
-    )
+    return redirectWithMessage(c, PATHS.AUTH.AWAIT_VERIFICATION, MESSAGES.ACCOUNT_ALREADY_EXISTS)
   }
 
   return redirectWithError(c, fallbackPath, MESSAGES.REGISTRATION_GENERIC_ERROR)
@@ -202,7 +185,7 @@ export const handleSignUpApiError = (
   c: Context<{ Bindings: Bindings }>,
   error: unknown,
   email: string,
-  fallbackPath: string
+  fallbackPath: string,
 ): Response => {
   console.error('Better-auth sign-up API error:', error)
 
@@ -210,11 +193,7 @@ export const handleSignUpApiError = (
 
   if (isDuplicateEmailError(errorMessage) || isConstraintError(errorMessage)) {
     addCookie(c, COOKIES.EMAIL_ENTERED, email)
-    return redirectWithMessage(
-      c,
-      PATHS.AUTH.AWAIT_VERIFICATION,
-      MESSAGES.ACCOUNT_ALREADY_EXISTS
-    )
+    return redirectWithMessage(c, PATHS.AUTH.AWAIT_VERIFICATION, MESSAGES.ACCOUNT_ALREADY_EXISTS)
   }
 
   return redirectWithError(c, fallbackPath, MESSAGES.REGISTRATION_GENERIC_ERROR)
@@ -227,16 +206,13 @@ export const handleSignUpApiError = (
  */
 export const updateAccountTimestampAfterSignUp = async (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<void> => {
   try {
     const userIdResult = await getUserIdByEmail(db, email)
 
     if (userIdResult.isOk && userIdResult.value.length > 0) {
-      const updateResult = await updateAccountTimestamp(
-        db,
-        userIdResult.value[0].id
-      )
+      const updateResult = await updateAccountTimestamp(db, userIdResult.value[0].id)
 
       if (updateResult.isErr) {
         console.error(LOG_MESSAGES.DB_UPDATE_ACCOUNT_TS, updateResult.error)
@@ -253,10 +229,7 @@ export const updateAccountTimestampAfterSignUp = async (
  * @param email - User email for cookie
  * @returns Redirect response
  */
-export const redirectToAwaitVerification = (
-  c: Context,
-  email: string
-): Response => {
+export const redirectToAwaitVerification = (c: Context, email: string): Response => {
   addCookie(c, COOKIES.EMAIL_ENTERED, email)
   return redirectWithMessage(c, PATHS.AUTH.AWAIT_VERIFICATION, '')
 }
@@ -270,7 +243,7 @@ export const redirectToAwaitVerification = (
  */
 export const processGatedSignUp = async (
   c: Context<{ Bindings: Bindings }>,
-  data: GatedSignUpData
+  data: GatedSignUpData,
 ): Promise<Response> => {
   const { code, name, email, password } = data
   const trimmedCode = code.trim()
@@ -281,18 +254,14 @@ export const processGatedSignUp = async (
 
   if (claimResult.isErr) {
     console.error('Database error claiming sign-up code:', claimResult.error)
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_UP,
-      MESSAGES.GENERIC_ERROR_TRY_AGAIN
-    )
+    return redirectWithError(c, PATHS.AUTH.SIGN_UP, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
   }
 
   if (!claimResult.value) {
     return redirectWithError(
       c,
       PATHS.AUTH.SIGN_UP,
-      'Invalid or expired sign-up code. Please check your code and try again.'
+      'Invalid or expired sign-up code. Please check your code and try again.',
     )
   }
 
@@ -310,19 +279,10 @@ export const processGatedSignUp = async (
     })
 
     if (!signUpResponse) {
-      return redirectWithError(
-        c,
-        PATHS.AUTH.SIGN_UP,
-        'Failed to create account. Please try again.'
-      )
+      return redirectWithError(c, PATHS.AUTH.SIGN_UP, 'Failed to create account. Please try again.')
     }
 
-    const errorResponse = handleSignUpResponseError(
-      c,
-      signUpResponse,
-      email,
-      PATHS.AUTH.SIGN_UP
-    )
+    const errorResponse = handleSignUpResponseError(c, signUpResponse, email, PATHS.AUTH.SIGN_UP)
 
     if (errorResponse) {
       return errorResponse
@@ -330,20 +290,12 @@ export const processGatedSignUp = async (
 
     if (isSyntheticDuplicateResponse(signUpResponse)) {
       addCookie(c, COOKIES.EMAIL_ENTERED, email)
-      return redirectWithMessage(
-        c,
-        PATHS.AUTH.AWAIT_VERIFICATION,
-        MESSAGES.ACCOUNT_ALREADY_EXISTS
-      )
+      return redirectWithMessage(c, PATHS.AUTH.AWAIT_VERIFICATION, MESSAGES.ACCOUNT_ALREADY_EXISTS)
     }
 
     const responseStatus = getResponseStatus(signUpResponse)
     if (responseStatus !== null && responseStatus !== 200) {
-      return redirectWithError(
-        c,
-        PATHS.AUTH.SIGN_UP,
-        MESSAGES.GENERIC_ERROR_TRY_AGAIN
-      )
+      return redirectWithError(c, PATHS.AUTH.SIGN_UP, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
     }
   } catch (apiError: unknown) {
     return handleSignUpApiError(c, apiError, email, PATHS.AUTH.SIGN_UP)

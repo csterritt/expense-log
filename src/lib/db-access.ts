@@ -37,7 +37,7 @@ export interface UserIdData {
  */
 const withRetry = async <T>(
   operationName: string,
-  operation: () => Promise<Result<T, Error>>
+  operation: () => Promise<Result<T, Error>>,
 ): Promise<Result<T, Error>> => {
   try {
     return await retry(async () => {
@@ -74,15 +74,13 @@ const toResult = async <T>(fn: () => Promise<T>): Promise<Result<T, Error>> => {
  */
 export const getUserWithAccountByEmail = (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<UserWithAccountData[], Error>> =>
-  withRetry('getUserWithAccountByEmail', () =>
-    getUserWithAccountByEmailActual(db, email)
-  )
+  withRetry('getUserWithAccountByEmail', () => getUserWithAccountByEmailActual(db, email))
 
 const getUserWithAccountByEmailActual = (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<UserWithAccountData[], Error>> =>
   toResult(() =>
     db
@@ -96,7 +94,7 @@ const getUserWithAccountByEmailActual = (
       .from(user)
       .leftJoin(account, eq(account.userId, user.id))
       .where(eq(user.email, email))
-      .limit(1)
+      .limit(1),
   )
 
 /**
@@ -107,17 +105,15 @@ const getUserWithAccountByEmailActual = (
  */
 export const getUserIdByEmail = (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<UserIdData[], Error>> =>
   withRetry('getUserIdByEmail', () => getUserIdByEmailActual(db, email))
 
 const getUserIdByEmailActual = (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<UserIdData[], Error>> =>
-  toResult(() =>
-    db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1)
-  )
+  toResult(() => db.select({ id: user.id }).from(user).where(eq(user.email, email)).limit(1))
 
 /**
  * Update account timestamp for rate limiting
@@ -127,21 +123,16 @@ const getUserIdByEmailActual = (
  */
 export const updateAccountTimestamp = (
   db: DrizzleClient,
-  userId: string
+  userId: string,
 ): Promise<Result<boolean, Error>> =>
-  withRetry('updateAccountTimestamp', () =>
-    updateAccountTimestampActual(db, userId)
-  )
+  withRetry('updateAccountTimestamp', () => updateAccountTimestampActual(db, userId))
 
 const updateAccountTimestampActual = async (
   db: DrizzleClient,
-  userId: string
+  userId: string,
 ): Promise<Result<boolean, Error>> => {
   try {
-    await db
-      .update(account)
-      .set({ updatedAt: new Date() })
-      .where(eq(account.userId, userId))
+    await db.update(account).set({ updatedAt: new Date() }).where(eq(account.userId, userId))
     return Result.ok(true)
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
@@ -159,16 +150,14 @@ const updateAccountTimestampActual = async (
 export const claimSingleUseCode = (
   db: DrizzleClient,
   code: string,
-  email: string
+  email: string,
 ): Promise<Result<boolean, Error>> =>
-  withRetry('claimSingleUseCode', () =>
-    claimSingleUseCodeActual(db, code, email)
-  )
+  withRetry('claimSingleUseCode', () => claimSingleUseCodeActual(db, code, email))
 
 const claimSingleUseCodeActual = async (
   db: DrizzleClient,
   code: string,
-  email: string
+  email: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db
@@ -190,7 +179,7 @@ const claimSingleUseCodeActual = async (
  */
 export const addInterestedEmail = (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<boolean, Error>> =>
   withRetry('addInterestedEmail', () => addInterestedEmailActual(db, email))
 
@@ -202,11 +191,9 @@ export const addInterestedEmail = (
  */
 export const checkInterestedEmailExists = (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<boolean, Error>> =>
-  withRetry('checkInterestedEmailExists', () =>
-    checkInterestedEmailExistsActual(db, email)
-  )
+  withRetry('checkInterestedEmailExists', () => checkInterestedEmailExistsActual(db, email))
 
 const isUniqueConstraintError = (error: unknown): boolean => {
   if (error instanceof Error) {
@@ -232,7 +219,7 @@ const isUniqueConstraintError = (error: unknown): boolean => {
 
 const addInterestedEmailActual = async (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     await db.insert(interestedEmail).values({ email })
@@ -247,7 +234,7 @@ const addInterestedEmailActual = async (
 
 const checkInterestedEmailExistsActual = async (
   db: DrizzleClient,
-  email: string
+  email: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     const existingEmails = await db
@@ -269,21 +256,19 @@ const checkInterestedEmailExistsActual = async (
  */
 export const deleteUserAccount = (
   db: DrizzleClient,
-  userId: string
+  userId: string,
 ): Promise<Result<boolean, Error>> =>
   withRetry('deleteUserAccount', () => deleteUserAccountActual(db, userId))
 
 const deleteUserAccountActual = async (
   db: DrizzleClient,
-  userId: string
+  userId: string,
 ): Promise<Result<boolean, Error>> => {
   try {
     const result = await db.delete(user).where(eq(user.id, userId))
     // D1 returns changes in meta.changes, but fallback to rowsAffected for compatibility
     const rowsDeleted =
-      result.meta?.changes ??
-      (result as { rowsAffected?: number }).rowsAffected ??
-      0
+      result.meta?.changes ?? (result as { rowsAffected?: number }).rowsAffected ?? 0
     return Result.ok(rowsDeleted >= 1)
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))

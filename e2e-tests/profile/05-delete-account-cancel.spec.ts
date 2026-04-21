@@ -37,7 +37,7 @@ test(
     await verifyOnProfilePage(page)
     expect(page.url()).toContain('/profile')
     expect(page.url()).not.toContain('/delete-confirm')
-  })
+  }),
 )
 
 test(
@@ -68,7 +68,7 @@ test(
 
     // Should be successfully signed in
     await verifyOnProtectedPage(page)
-  })
+  }),
 )
 
 test('delete confirmation page requires authentication', async ({ page }) => {
@@ -92,5 +92,5 @@ test(
 
     // Verify delete account button is visible
     expect(await verifyElementExists(page, 'delete-account-action')).toBe(true)
-  })
+  }),
 )

@@ -30,9 +30,7 @@ export const verifyOnAwaitVerificationPage = async (page: Page) => {
 
 export const verifyOn404Page = async (page: Page) => {
   expect(await verifyElementExists(page, '404-page-banner')).toBe(true)
-  expect(await getElementText(page, '404-message')).toBe(
-    'That page does not exist.'
-  )
+  expect(await getElementText(page, '404-message')).toBe('That page does not exist.')
 }
 
 export const verifyOnForgotPasswordPage = async (page: any) => {

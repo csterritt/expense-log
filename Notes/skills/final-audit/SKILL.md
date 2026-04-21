@@ -35,12 +35,14 @@ Do not audit yet. Build a complete mental model first.
 Check for the following categories of issues across the entire implementation. For each finding, note the category, the location, a description of the problem, and a suggested fix.
 
 **Consistency**
+
 - Do all modules follow the same naming conventions as each other and as the surrounding codebase?
 - Are error types, error messages, and error handling patterns consistent across modules?
 - Are similar operations implemented in the same way everywhere, or has the same problem been solved differently in different places?
 - Are internal API contracts consistent — do callers and implementations agree on types, nullability, and failure modes?
 
 **Security**
+
 - Is user input validated and sanitised at every entry point?
 - Are authentication and authorisation checks applied consistently — not just at the API boundary but at the service layer if appropriate?
 - Is sensitive data (tokens, passwords, PII) handled consistently and never logged or exposed?
@@ -48,12 +50,14 @@ Check for the following categories of issues across the entire implementation. F
 - Are dependencies introduced by this feature up to date and free of known vulnerabilities?
 
 **Logic**
+
 - Are there race conditions or ordering assumptions that could fail under concurrent use?
 - Are all failure modes handled — network errors, partial failures, unexpected null values, empty collections?
 - Are there off-by-one errors, incorrect boundary conditions, or incorrect assumptions about data ranges?
 - Does the implementation match the acceptance criteria in every child issue, including edge cases?
 
 **Best practices**
+
 - Is there duplicated logic that should be extracted into a shared module?
 - Are there deep modules that were implemented as shallow ones — complex interfaces hiding little functionality?
 - Are there any modules that have taken on too many responsibilities and should be split?

@@ -16,10 +16,7 @@ interface GatedSignUpFormProps {
 /**
  * Reusable gated sign-up form with code, name, email, and password fields
  */
-export const GatedSignUpForm = ({
-  emailEntered = '',
-  autoFocus = true,
-}: GatedSignUpFormProps) => {
+export const GatedSignUpForm = ({ emailEntered = '', autoFocus = true }: GatedSignUpFormProps) => {
   return (
     <form
       method='post'
@@ -96,11 +93,7 @@ export const GatedSignUpForm = ({
       </div>
 
       <div className='card-actions justify-end mt-4'>
-        <button
-          type='submit'
-          className='btn btn-primary w-full'
-          data-testid='gated-signup-action'
-        >
+        <button type='submit' className='btn btn-primary w-full' data-testid='gated-signup-action'>
           Create Account
         </button>
       </div>

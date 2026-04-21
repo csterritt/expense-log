@@ -5,10 +5,7 @@ import { skipIfNotMode } from '../support/mode-helpers'
 import { checkCodeExists } from '../support/db-helpers'
 import { navigateToGatedSignUp } from '../support/navigation-helpers'
 import { submitGatedSignUpForm } from '../support/form-helpers'
-import {
-  verifyOnGatedSignUpPage,
-  verifyOnAwaitVerificationPage,
-} from '../support/page-verifiers'
+import { verifyOnGatedSignUpPage, verifyOnAwaitVerificationPage } from '../support/page-verifiers'
 import { verifyAlert } from '../support/finders'
 
 test.describe('Gated Sign-Up: Code Consumption Semantics', () => {
@@ -40,7 +37,7 @@ test.describe('Gated Sign-Up: Code Consumption Semantics', () => {
       // Verify code is now consumed (deleted)
       const existsAfter = await checkCodeExists(testCode)
       expect(existsAfter).toBe(false)
-    })
+    }),
   )
 
   test(
@@ -68,7 +65,7 @@ test.describe('Gated Sign-Up: Code Consumption Semantics', () => {
       // Code should still exist (not consumed because sign-up failed at validation)
       const existsAfter = await checkCodeExists(testCode)
       expect(existsAfter).toBe(true)
-    })
+    }),
   )
 
   test(
@@ -97,7 +94,7 @@ test.describe('Gated Sign-Up: Code Consumption Semantics', () => {
       // This prevents race conditions where two users could claim the same code.
       const existsAfter = await checkCodeExists(testCode)
       expect(existsAfter).toBe(false)
-    })
+    }),
   )
 
   test(
@@ -135,6 +132,6 @@ test.describe('Gated Sign-Up: Code Consumption Semantics', () => {
       // Now code should be consumed
       const existsAfterSecondAttempt = await checkCodeExists(testCode)
       expect(existsAfterSecondAttempt).toBe(false)
-    })
+    }),
   )
 })

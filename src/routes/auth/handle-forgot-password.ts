@@ -70,7 +70,7 @@ interface SendResetEmailResult {
 const sendPasswordResetEmail = async (
   env: Bindings,
   email: string,
-  origin: string
+  origin: string,
 ): Promise<SendResetEmailResult> => {
   try {
     const auth = createAuth(env)
@@ -85,10 +85,8 @@ const sendPasswordResetEmail = async (
   } catch (emailError) {
     console.error('Password reset email error:', emailError)
 
-    const errorMessage =
-      emailError instanceof Error ? emailError.message : String(emailError)
-    const isEmailError =
-      errorMessage.includes('Failed to send') || errorMessage.includes('email')
+    const errorMessage = emailError instanceof Error ? emailError.message : String(emailError)
+    const isEmailError = errorMessage.includes('Failed to send') || errorMessage.includes('email')
 
     return { success: false, isEmailError }
   }
@@ -99,10 +97,7 @@ const sendPasswordResetEmail = async (
  * @param db - Database client
  * @param userId - User ID to update
  */
-const updateEmailTimestamp = async (
-  db: DrizzleClient,
-  userId: string
-): Promise<void> => {
+const updateEmailTimestamp = async (db: DrizzleClient, userId: string): Promise<void> => {
   const updateResult = await updateAccountTimestamp(db, userId)
 
   if (updateResult.isErr) {
@@ -118,11 +113,7 @@ const updateEmailTimestamp = async (
  */
 const redirectToWaitingPage = (c: Context, email: string): Response => {
   addCookie(c, COOKIES.EMAIL_ENTERED, email)
-  return redirectWithMessage(
-    c,
-    PATHS.AUTH.WAITING_FOR_RESET,
-    MESSAGES.RESET_PASSWORD_MESSAGE
-  )
+  return redirectWithMessage(c, PATHS.AUTH.WAITING_FOR_RESET, MESSAGES.RESET_PASSWORD_MESSAGE)
 }
 
 /**
@@ -137,7 +128,7 @@ const processPasswordReset = async (
   c: Context<{ Bindings: Bindings }>,
   db: DrizzleClient,
   userData: UserWithAccountData,
-  email: string
+  email: string,
 ): Promise<Response> => {
   const rateLimitResult = checkRateLimit(userData.accountUpdatedAt)
 
@@ -145,7 +136,7 @@ const processPasswordReset = async (
     return redirectWithError(
       c,
       PATHS.AUTH.FORGOT_PASSWORD,
-      MESSAGE_BUILDERS.passwordResetRateLimit(rateLimitResult.remainingSeconds!)
+      MESSAGE_BUILDERS.passwordResetRateLimit(rateLimitResult.remainingSeconds!),
     )
   }
 
@@ -156,7 +147,7 @@ const processPasswordReset = async (
     return redirectWithError(
       c,
       PATHS.AUTH.FORGOT_PASSWORD,
-      'Unable to send password reset email. Please try again later.'
+      'Unable to send password reset email. Please try again later.',
     )
   }
 
@@ -171,57 +162,41 @@ const processPasswordReset = async (
  * Attach the forgot password handler to the app.
  * @param app - Hono app instance
  */
-export const handleForgotPassword = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
-  app.post(
-    PATHS.AUTH.FORGOT_PASSWORD,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    async (c) => {
-      try {
-        const body = await c.req.parseBody()
-        const [ok, data, errorMessage] = validateRequest(
-          body,
-          ForgotPasswordFormSchema
-        )
+export const handleForgotPassword = (app: Hono<{ Bindings: Bindings }>): void => {
+  app.post(PATHS.AUTH.FORGOT_PASSWORD, secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+    try {
+      const body = await c.req.parseBody()
+      const [ok, data, errorMessage] = validateRequest(body, ForgotPasswordFormSchema)
 
-        if (!ok) {
-          return redirectWithError(
-            c,
-            PATHS.AUTH.FORGOT_PASSWORD,
-            errorMessage ?? VALIDATION.EMAIL_INVALID
-          )
-        }
-
-        const email = data!.email as string
-        const db = createDbClient(c.env.PROJECT_DB)
-
-        const userWithAccountResult = await getUserWithAccountByEmail(db, email)
-
-        if (userWithAccountResult.isErr) {
-          console.error(
-            LOG_MESSAGES.DB_GET_USER_WITH_ACCOUNT,
-            userWithAccountResult.error
-          )
-          return redirectToWaitingPage(c, email)
-        }
-
-        const userWithAccount = userWithAccountResult.value
-
-        if (userWithAccount.length === 0) {
-          // Don't reveal that user doesn't exist for security
-          return redirectToWaitingPage(c, email)
-        }
-
-        return await processPasswordReset(c, db, userWithAccount[0], email)
-      } catch (error) {
-        console.error('Forgot password handler error:', error)
+      if (!ok) {
         return redirectWithError(
           c,
           PATHS.AUTH.FORGOT_PASSWORD,
-          MESSAGES.GENERIC_ERROR_TRY_AGAIN
+          errorMessage ?? VALIDATION.EMAIL_INVALID,
         )
       }
+
+      const email = data!.email as string
+      const db = createDbClient(c.env.PROJECT_DB)
+
+      const userWithAccountResult = await getUserWithAccountByEmail(db, email)
+
+      if (userWithAccountResult.isErr) {
+        console.error(LOG_MESSAGES.DB_GET_USER_WITH_ACCOUNT, userWithAccountResult.error)
+        return redirectToWaitingPage(c, email)
+      }
+
+      const userWithAccount = userWithAccountResult.value
+
+      if (userWithAccount.length === 0) {
+        // Don't reveal that user doesn't exist for security
+        return redirectToWaitingPage(c, email)
+      }
+
+      return await processPasswordReset(c, db, userWithAccount[0], email)
+    } catch (error) {
+      console.error('Forgot password handler error:', error)
+      return redirectWithError(c, PATHS.AUTH.FORGOT_PASSWORD, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
     }
-  )
+  })
 }

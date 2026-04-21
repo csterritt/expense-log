@@ -28,7 +28,7 @@ test.describe('Gated Sign-Up Name Validation', () => {
 
       await verifyOnGatedSignUpPage(page)
       await verifyAlert(page, ERROR_MESSAGES.INVALID_NAME_CHARACTERS)
-    })
+    }),
   )
 
   test(
@@ -46,7 +46,7 @@ test.describe('Gated Sign-Up Name Validation', () => {
 
       await verifyOnGatedSignUpPage(page)
       await verifyAlert(page, ERROR_MESSAGES.INVALID_NAME_CHARACTERS)
-    })
+    }),
   )
 
   test(
@@ -64,7 +64,7 @@ test.describe('Gated Sign-Up Name Validation', () => {
 
       await verifyOnGatedSignUpPage(page)
       await verifyAlert(page, ERROR_MESSAGES.INVALID_NAME_CHARACTERS)
-    })
+    }),
   )
 
   test(
@@ -82,7 +82,7 @@ test.describe('Gated Sign-Up Name Validation', () => {
 
       const url = page.url()
       test.expect(url).not.toContain('/auth/sign-up')
-    })
+    }),
   )
 
   test(
@@ -100,6 +100,6 @@ test.describe('Gated Sign-Up Name Validation', () => {
 
       const url = page.url()
       test.expect(url).not.toContain('/auth/sign-up')
-    })
+    }),
   )
 })

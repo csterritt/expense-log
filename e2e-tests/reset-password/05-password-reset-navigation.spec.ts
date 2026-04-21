@@ -8,9 +8,7 @@ import {
 } from '../support/page-verifiers'
 import { navigateToForgotPassword } from '../support/navigation-helpers'
 
-test('waiting for reset page has correct navigation options', async ({
-  page,
-}) => {
+test('waiting for reset page has correct navigation options', async ({ page }) => {
   // Navigate directly to waiting for reset page (should redirect to forgot password without email cookie)
   await page.goto('http://localhost:3000/auth/waiting-for-reset')
 
@@ -22,9 +20,7 @@ test('waiting for reset page has correct navigation options', async ({
 test('reset password page navigation works correctly', async ({ page }) => {
   // Navigate to reset password page with token
   const testToken = 'test-token-123'
-  await page.goto(
-    `http://localhost:3000/auth/reset-password?token=${testToken}`
-  )
+  await page.goto(`http://localhost:3000/auth/reset-password?token=${testToken}`)
   await verifyOnResetPasswordPage(page)
 
   // Navigate back to sign-in
@@ -38,20 +34,14 @@ test('can access forgot password page directly', async ({ page }) => {
   await navigateToForgotPassword(page)
 
   // Verify page loads correctly
-  expect(await page.locator('h2').textContent()).toContain(
-    'Reset Your Password'
-  )
+  expect(await page.locator('h2').textContent()).toContain('Reset Your Password')
   expect(await isElementVisible(page, 'forgot-email-input')).toBe(true)
 })
 
-test('reset password page shows correct content with token', async ({
-  page,
-}) => {
+test('reset password page shows correct content with token', async ({ page }) => {
   // Navigate to reset password page with token
   const testToken = 'test-token-456'
-  await page.goto(
-    `http://localhost:3000/auth/reset-password?token=${testToken}`
-  )
+  await page.goto(`http://localhost:3000/auth/reset-password?token=${testToken}`)
   await verifyOnResetPasswordPage(page)
 
   // Verify page content

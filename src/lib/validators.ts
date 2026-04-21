@@ -50,7 +50,7 @@ export const EmailSchema = pipe(
   string(VALIDATION.REQUIRED),
   minLength(1, VALIDATION.EMAIL_INVALID),
   maxLength(254, VALIDATION.EMAIL_INVALID),
-  custom(validateEmail)
+  custom(validateEmail),
 )
 
 /**
@@ -72,10 +72,7 @@ export const ForgotPasswordFormSchema = object({
  */
 export const SignInSchema = object({
   email: EmailSchema,
-  password: pipe(
-    string(VALIDATION.REQUIRED),
-    minLength(1, 'Password is required.')
-  ),
+  password: pipe(string(VALIDATION.REQUIRED), minLength(1, 'Password is required.')),
 })
 
 /**
@@ -88,14 +85,14 @@ export const SignUpFormSchema = object({
     maxLength(100, 'Name must be 100 characters or fewer'),
     custom(
       validateNameCharacters,
-      'Name can only contain letters, numbers, hyphens, underscores, and spaces.'
-    )
+      'Name can only contain letters, numbers, hyphens, underscores, and spaces.',
+    ),
   ),
   email: EmailSchema,
   password: pipe(
     string(VALIDATION.REQUIRED),
     minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
-    maxLength(128, 'Password must be at most 128 characters long')
+    maxLength(128, 'Password must be at most 128 characters long'),
   ),
 })
 
@@ -107,10 +104,7 @@ export const GatedSignUpFormSchema = object({
     string(VALIDATION.REQUIRED),
     minLength(8, 'Sign-up code must be at least 8 characters long.'),
     maxLength(64, 'Sign-up code is too long.'),
-    custom(
-      (v) => typeof v === 'string' && v.trim().length > 0,
-      'Sign-up code is required'
-    )
+    custom((v) => typeof v === 'string' && v.trim().length > 0, 'Sign-up code is required'),
   ),
   name: pipe(
     string(VALIDATION.REQUIRED),
@@ -118,14 +112,14 @@ export const GatedSignUpFormSchema = object({
     maxLength(100, 'Name must be 100 characters or fewer'),
     custom(
       validateNameCharacters,
-      'Name can only contain letters, numbers, hyphens, underscores, and spaces.'
-    )
+      'Name can only contain letters, numbers, hyphens, underscores, and spaces.',
+    ),
   ),
   email: EmailSchema,
   password: pipe(
     string(VALIDATION.REQUIRED),
     minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
-    maxLength(128, 'Password must be at most 128 characters long')
+    maxLength(128, 'Password must be at most 128 characters long'),
   ),
 })
 
@@ -143,24 +137,18 @@ export const ResetPasswordFormSchema = pipe(
   object({
     token: pipe(
       string(VALIDATION.REQUIRED),
-      minLength(
-        1,
-        'Invalid reset token. Please request a new password reset link.'
-      )
+      minLength(1, 'Invalid reset token. Please request a new password reset link.'),
     ),
-    password: pipe(
-      string(VALIDATION.REQUIRED),
-      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)
-    ),
+    password: pipe(string(VALIDATION.REQUIRED), minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)),
     confirmPassword: pipe(
       string(VALIDATION.REQUIRED),
-      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)
+      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
     ),
   }),
   custom((data) => {
     const d = data as { password: string; confirmPassword: string }
     return d && d.password === d.confirmPassword
-  }, 'Passwords do not match. Please try again.')
+  }, 'Passwords do not match. Please try again.'),
 )
 
 /**
@@ -170,15 +158,12 @@ export const ChangePasswordFormSchema = pipe(
   object({
     currentPassword: pipe(
       string(VALIDATION.REQUIRED),
-      minLength(1, 'Current password is required.')
+      minLength(1, 'Current password is required.'),
     ),
-    newPassword: pipe(
-      string(VALIDATION.REQUIRED),
-      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)
-    ),
+    newPassword: pipe(string(VALIDATION.REQUIRED), minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)),
     confirmPassword: pipe(
       string(VALIDATION.REQUIRED),
-      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)
+      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
     ),
     userInfo: optional(
       pipe(
@@ -186,17 +171,16 @@ export const ChangePasswordFormSchema = pipe(
         custom(
           (v) =>
             typeof v === 'string' &&
-            (v.trim() === '' ||
-              (/^\s*\d+\s*$/.test(v) && parseInt(v, 10) >= 0)),
-          'User information must be a non-negative number.'
-        )
-      )
+            (v.trim() === '' || (/^\s*\d+\s*$/.test(v) && parseInt(v, 10) >= 0)),
+          'User information must be a non-negative number.',
+        ),
+      ),
     ),
   }),
   custom((data) => {
     const d = data as { newPassword: string; confirmPassword: string }
     return d && d.newPassword === d.confirmPassword
-  }, 'New passwords do not match. Please try again.')
+  }, 'New passwords do not match. Please try again.'),
 )
 
 /**
@@ -206,8 +190,8 @@ export const PathSignInValidationParamSchema = object({
   validationSuccessful: optional(
     pipe(
       string(),
-      custom((v) => v === 'true', 'Invalid validation flag.')
-    )
+      custom((v) => v === 'true', 'Invalid validation flag.'),
+    ),
   ),
 })
 
@@ -217,9 +201,10 @@ export const PathSignInValidationParamSchema = object({
  * @param schema - The schema to validate against
  * @returns A tuple with [isValid, result, error]
  */
-export function validateRequest<
-  T extends BaseSchema<unknown, unknown, BaseIssue<unknown>>,
->(data: unknown, schema: T): [boolean, InferOutput<T> | null, string | null] {
+export function validateRequest<T extends BaseSchema<unknown, unknown, BaseIssue<unknown>>>(
+  data: unknown,
+  schema: T,
+): [boolean, InferOutput<T> | null, string | null] {
   const result = safeParse(schema, data)
 
   if (result.success) {
@@ -227,10 +212,7 @@ export function validateRequest<
   } else {
     // Extract human-readable error message from validation error
     let errorMessage = result.issues
-      .map(
-        (issue) =>
-          issue.message || `Invalid ${issue.path?.map((p) => p.key).join('.')}`
-      )
+      .map((issue) => issue.message || `Invalid ${issue.path?.map((p) => p.key).join('.')}`)
       .join(', ')
     if (errorMessage?.startsWith('Invalid type: Expected unknown')) {
       errorMessage = VALIDATION.EMAIL_INVALID

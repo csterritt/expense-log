@@ -15,7 +15,7 @@ const STANDARD_RETRY_OPTIONS = {
 
 const withRetry = async <T>(
   operationName: string,
-  operation: () => Promise<Result<T, Error>>
+  operation: () => Promise<Result<T, Error>>,
 ): Promise<Result<T, Error>> => {
   try {
     return await retry(async () => {
@@ -73,10 +73,7 @@ describe('withRetry function', () => {
     const result = await withRetry('test', operation)
 
     assert.strictEqual(result.isErr, true)
-    assert.strictEqual(
-      result.isErr && result.error.message,
-      'persistent failure'
-    )
+    assert.strictEqual(result.isErr && result.error.message, 'persistent failure')
     assert.strictEqual(callCount, 4) // 1 initial + 3 retries
   })
 

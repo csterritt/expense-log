@@ -34,10 +34,7 @@ async function testAuthSignUp() {
     })
 
     console.log('📋 Response status:', response.status)
-    console.log(
-      '📋 Response headers:',
-      Object.fromEntries(response.headers.entries())
-    )
+    console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()))
 
     const responseText = await response.text()
     console.log('📋 Response body:', responseText)

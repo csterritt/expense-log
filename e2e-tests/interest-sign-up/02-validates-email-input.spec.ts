@@ -1,10 +1,7 @@
 import { test } from '@playwright/test'
 
 import { fillInput, clickLink, verifyAlert } from '../support/finders'
-import {
-  verifyOnInterestSignUpPage,
-  verifyOnSignInPage,
-} from '../support/page-verifiers'
+import { verifyOnInterestSignUpPage, verifyOnSignInPage } from '../support/page-verifiers'
 import { skipIfNotMode } from '../support/mode-helpers'
 import { navigateToInterestSignUp } from '../support/navigation-helpers'
 import { submitInterestSignUpForm } from '../support/form-helpers'
@@ -69,7 +66,7 @@ test.describe('Interest Sign-Up Mode: Email Validation Tests', () => {
       await verifyOnSignInPage(page)
       await verifyAlert(
         page,
-        "Thanks! You've been added to our waitlist. We'll notify you when we start accepting new accounts."
+        "Thanks! You've been added to our waitlist. We'll notify you when we start accepting new accounts.",
       )
     }
   })

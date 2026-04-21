@@ -9,23 +9,14 @@
 import { Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
 
-import {
-  PATHS,
-  STANDARD_SECURE_HEADERS,
-  SIGN_UP_MODES,
-  MESSAGES,
-  UI_TEXT,
-} from '../../constants'
+import { PATHS, STANDARD_SECURE_HEADERS, SIGN_UP_MODES, MESSAGES, UI_TEXT } from '../../constants'
 import { Bindings } from '../../local-types'
 import { useLayout } from '../build-layout'
 import { COOKIES } from '../../constants'
 import { redirectWithMessage } from '../../lib/redirects'
 import { setupNoCacheHeaders } from '../../lib/setup-no-cache-headers'
 import { retrieveCookie } from '../../lib/cookie-support'
-import {
-  validateRequest,
-  PathSignInValidationParamSchema,
-} from '../../lib/validators'
+import { validateRequest, PathSignInValidationParamSchema } from '../../lib/validators'
 
 /**
  * Render the JSX for the sign-in page.
@@ -82,11 +73,7 @@ const renderSignIn = (emailEntered: string, signUpMode: string) => {
             </div>
 
             <div className='card-actions justify-end mt-4'>
-              <button
-                type='submit'
-                className='btn btn-primary w-full'
-                data-testid='submit'
-              >
+              <button type='submit' className='btn btn-primary w-full' data-testid='submit'>
                 Sign In
               </button>
             </div>
@@ -141,9 +128,9 @@ export const buildSignIn = (app: Hono<{ Bindings: Bindings }>): void => {
     (c) => {
       // Check if user is already signed in using better-auth session
       // Better-auth middleware sets user context, access it properly
-      const user = (c as unknown as { get: (key: string) => unknown }).get(
-        'user'
-      ) as { id: string } | null
+      const user = (c as unknown as { get: (key: string) => unknown }).get('user') as {
+        id: string
+      } | null
       if (user) {
         console.log('Already signed in')
         return redirectWithMessage(c, PATHS.PRIVATE, MESSAGES.ALREADY_SIGNED_IN)
@@ -152,24 +139,20 @@ export const buildSignIn = (app: Hono<{ Bindings: Bindings }>): void => {
       // Validate optional path flag :validationSuccessful
       const [okParams, paramData, _paramErr] = validateRequest(
         { validationSuccessful: c.req.param('validationSuccessful') },
-        PathSignInValidationParamSchema
+        PathSignInValidationParamSchema,
       )
       let extraMessage = ''
       if (okParams && paramData?.validationSuccessful === 'true') {
-        extraMessage =
-          'Your email has been verified successfully. You may now sign in.'
+        extraMessage = 'Your email has been verified successfully. You may now sign in.'
       }
 
       // No need to check for intermediate "signing in" state with better-auth
       // since it's direct username/password authentication
-      const emailEntered: string =
-        retrieveCookie(c, COOKIES.EMAIL_ENTERED) ?? ''
+      const emailEntered: string = retrieveCookie(c, COOKIES.EMAIL_ENTERED) ?? ''
 
       setupNoCacheHeaders(c)
       const signUpMode = c.env.SIGN_UP_MODE || SIGN_UP_MODES.NO_SIGN_UP
-      return c.render(
-        useLayout(c, renderSignIn(emailEntered, signUpMode), extraMessage)
-      )
-    }
+      return c.render(useLayout(c, renderSignIn(emailEntered, signUpMode), extraMessage))
+    },
   )
 }

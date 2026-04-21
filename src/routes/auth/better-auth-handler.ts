@@ -9,12 +9,7 @@
 import { Hono, Context, Next } from 'hono'
 
 import { createAuth } from '../../lib/auth'
-import type {
-  Bindings,
-  AuthUser,
-  AuthSession,
-  AuthSessionResponse,
-} from '../../local-types'
+import type { Bindings, AuthUser, AuthSession, AuthSessionResponse } from '../../local-types'
 
 // Type definitions for better-auth context variables
 export interface BetterAuthVariables {
@@ -51,9 +46,7 @@ export const setupBetterAuth = (app: Hono<{ Bindings: Bindings }>): void => {
  * Better Auth middleware to provide session and user context
  * @param app - Hono app instance
  */
-export const setupBetterAuthMiddleware = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
+export const setupBetterAuthMiddleware = (app: Hono<{ Bindings: Bindings }>): void => {
   app.use('*', async (c: AppContext, next: Next) => {
     try {
       const auth = createAuth(c.env)

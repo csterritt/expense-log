@@ -4,14 +4,8 @@ import { verifyAlert } from '../support/finders'
 import { testWithDatabase } from '../support/test-helpers'
 import { skipIfNotMode } from '../support/mode-helpers'
 import { navigateToGatedSignUp } from '../support/navigation-helpers'
-import {
-  submitGatedSignUpForm,
-  fillGatedSignUpFormPartial,
-} from '../support/form-helpers'
-import {
-  verifyOnGatedSignUpPage,
-  verifyOnAwaitVerificationPage,
-} from '../support/page-verifiers'
+import { submitGatedSignUpForm, fillGatedSignUpFormPartial } from '../support/form-helpers'
+import { verifyOnGatedSignUpPage, verifyOnAwaitVerificationPage } from '../support/page-verifiers'
 
 test.describe('Gated Sign-Up Mode: Invalid Code Tests', () => {
   test.beforeEach(async () => {
@@ -34,9 +28,9 @@ test.describe('Gated Sign-Up Mode: Invalid Code Tests', () => {
       await verifyOnGatedSignUpPage(page)
       await verifyAlert(
         page,
-        'Invalid or expired sign-up code. Please check your code and try again.'
+        'Invalid or expired sign-up code. Please check your code and try again.',
       )
-    })
+    }),
   )
 
   test(
@@ -54,11 +48,8 @@ test.describe('Gated Sign-Up Mode: Invalid Code Tests', () => {
 
       // Should stay on sign-up page with error message
       await verifyOnGatedSignUpPage(page)
-      await verifyAlert(
-        page,
-        'Sign-up code must be at least 8 characters long.'
-      )
-    })
+      await verifyAlert(page, 'Sign-up code must be at least 8 characters long.')
+    }),
   )
 
   test(
@@ -75,11 +66,8 @@ test.describe('Gated Sign-Up Mode: Invalid Code Tests', () => {
 
       // Should stay on sign-up page with error message
       await verifyOnGatedSignUpPage(page)
-      await verifyAlert(
-        page,
-        'Sign-up code must be at least 8 characters long.'
-      )
-    })
+      await verifyAlert(page, 'Sign-up code must be at least 8 characters long.')
+    }),
   )
 
   test(
@@ -110,8 +98,8 @@ test.describe('Gated Sign-Up Mode: Invalid Code Tests', () => {
       await verifyOnGatedSignUpPage(page)
       await verifyAlert(
         page,
-        'Invalid or expired sign-up code. Please check your code and try again.'
+        'Invalid or expired sign-up code. Please check your code and try again.',
       )
-    })
+    }),
   )
 })

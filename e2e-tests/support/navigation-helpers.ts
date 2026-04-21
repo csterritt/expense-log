@@ -39,8 +39,7 @@ export const navigateToSignUp = async (page: Page) => {
  */
 export const navigateToInterestSignUp = async (page: Page) => {
   const mode = await detectSignUpMode()
-  const url =
-    mode === 'INTEREST_SIGN_UP' ? BASE_URLS.INTEREST_SIGN_UP : BASE_URLS.SIGN_UP
+  const url = mode === 'INTEREST_SIGN_UP' ? BASE_URLS.INTEREST_SIGN_UP : BASE_URLS.SIGN_UP
   await page.goto(url)
   await verifyOnSignUpPage(page)
 }

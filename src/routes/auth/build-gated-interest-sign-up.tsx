@@ -9,12 +9,7 @@
 import { Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
 
-import {
-  PATHS,
-  STANDARD_SECURE_HEADERS,
-  MESSAGES,
-  COOKIES,
-} from '../../constants'
+import { PATHS, STANDARD_SECURE_HEADERS, MESSAGES, COOKIES } from '../../constants'
 import { Bindings } from '../../local-types'
 import { useLayout } from '../build-layout'
 import { redirectWithMessage } from '../../lib/redirects'
@@ -33,8 +28,8 @@ const renderGatedInterestSignUp = (emailEntered: string) => {
         <div className='card-body'>
           <h2 className='card-title text-2xl font-bold mb-2'>Create Account</h2>
           <p className='text-sm text-gray-600 mb-4'>
-            Have a sign-up code? Create your account below. Otherwise, join our
-            waitlist to be notified when we're accepting new accounts.
+            Have a sign-up code? Create your account below. Otherwise, join our waitlist to be
+            notified when we're accepting new accounts.
           </p>
 
           {/* Gated sign up form */}
@@ -50,8 +45,7 @@ const renderGatedInterestSignUp = (emailEntered: string) => {
           <div>
             <h3 className='text-lg font-semibold mb-3'>Join the Waitlist</h3>
             <p className='text-sm text-gray-600 mb-4'>
-              Don't have a code? Enter your email to be notified when we're
-              accepting new accounts.
+              Don't have a code? Enter your email to be notified when we're accepting new accounts.
             </p>
             <form
               method='post'
@@ -110,14 +104,12 @@ const renderGatedInterestSignUp = (emailEntered: string) => {
  * Attach the combined gated + interest sign-up route to the app.
  * @param app - Hono app instance
  */
-export const buildGatedInterestSignUp = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
+export const buildGatedInterestSignUp = (app: Hono<{ Bindings: Bindings }>): void => {
   app.get(PATHS.AUTH.SIGN_UP, secureHeaders(STANDARD_SECURE_HEADERS), (c) => {
     // Check if user is already signed in using better-auth session
-    const user = (c as unknown as { get: (key: string) => unknown }).get(
-      'user'
-    ) as { id: string } | null
+    const user = (c as unknown as { get: (key: string) => unknown }).get('user') as {
+      id: string
+    } | null
     if (user) {
       console.log('Already signed in')
       return redirectWithMessage(c, PATHS.PRIVATE, MESSAGES.ALREADY_SIGNED_IN)

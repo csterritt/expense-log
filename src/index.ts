@@ -39,10 +39,7 @@ import { buildProfile } from './routes/profile/build-profile'
 import { buildDeleteConfirm } from './routes/profile/build-delete-confirm'
 import { handleChangePassword } from './routes/profile/handle-change-password'
 import { handleDeleteAccount } from './routes/profile/handle-delete-account'
-import {
-  setupBetterAuth,
-  setupBetterAuthMiddleware,
-} from './routes/auth/better-auth-handler'
+import { setupBetterAuth, setupBetterAuthMiddleware } from './routes/auth/better-auth-handler'
 import { setupBetterAuthResponseInterceptor } from './routes/auth/better-auth-response-interceptor'
 
 import { Bindings } from './local-types'
@@ -80,12 +77,8 @@ const validateEnvironmentVariables = (): boolean => {
   }
 
   if (missingVars.length > 0) {
-    console.error(
-      `❌ ERROR: Missing required environment variables: ${missingVars.join(', ')}`
-    )
-    console.error(
-      'Please set these environment variables before starting the application.'
-    )
+    console.error(`❌ ERROR: Missing required environment variables: ${missingVars.join(', ')}`)
+    console.error('Please set these environment variables before starting the application.')
     return false
   }
 
@@ -149,7 +142,7 @@ app.use(
       console.log('Body limit exceeded')
       return c.text('overflow :(', HTML_STATUS.CONTENT_TOO_LARGE)
     },
-  })
+  }),
 )
 
 app.use(logger())

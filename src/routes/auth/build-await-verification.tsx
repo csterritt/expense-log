@@ -30,21 +30,15 @@ const renderAwaitVerification = (email?: string) => {
               <h2 className='font-bold text-lg'>Check Your Email</h2>
               <p>
                 We've sent a verification link to{' '}
-                {email ? (
-                  <span className='font-semibold'>{email}</span>
-                ) : (
-                  'your email address'
-                )}
-                .
+                {email ? <span className='font-semibold'>{email}</span> : 'your email address'}.
               </p>
             </div>
           </div>
 
           <div className='text-sm text-gray-600 mb-4'>
             <p className='mb-2'>
-              Please check your email and click the verification link to
-              complete your account setup. You'll need to verify your email
-              before you can sign in.
+              Please check your email and click the verification link to complete your account
+              setup. You'll need to verify your email before you can sign in.
             </p>
 
             <div className='mt-4'>
@@ -88,27 +82,21 @@ const renderAwaitVerification = (email?: string) => {
  * Attach the await verification route to the app.
  * @param app - Hono app instance
  */
-export const buildAwaitVerification = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
-  app.get(
-    PATHS.AUTH.AWAIT_VERIFICATION,
-    secureHeaders(STANDARD_SECURE_HEADERS),
-    async (c) => {
-      setupNoCacheHeaders(c)
+export const buildAwaitVerification = (app: Hono<{ Bindings: Bindings }>): void => {
+  app.get(PATHS.AUTH.AWAIT_VERIFICATION, secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+    setupNoCacheHeaders(c)
 
-      // Get email from COOKIES.EMAIL_ENTERED cookie
-      const email = retrieveCookie(c, COOKIES.EMAIL_ENTERED)
+    // Get email from COOKIES.EMAIL_ENTERED cookie
+    const email = retrieveCookie(c, COOKIES.EMAIL_ENTERED)
 
-      // If no email cookie is present, redirect to sign-in page
-      if (!email) {
-        return redirectWithMessage(c, PATHS.AUTH.SIGN_IN, '')
-      }
-
-      // Remove the email cookie after retrieving it
-      removeCookie(c, COOKIES.EMAIL_ENTERED)
-
-      return c.render(useLayout(c, renderAwaitVerification(email)))
+    // If no email cookie is present, redirect to sign-in page
+    if (!email) {
+      return redirectWithMessage(c, PATHS.AUTH.SIGN_IN, '')
     }
-  )
+
+    // Remove the email cookie after retrieving it
+    removeCookie(c, COOKIES.EMAIL_ENTERED)
+
+    return c.render(useLayout(c, renderAwaitVerification(email)))
+  })
 }

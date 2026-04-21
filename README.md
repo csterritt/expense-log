@@ -43,9 +43,9 @@ The app uses [Tailwind CSS](https://tailwindcss.com/) and [Daisy UI](https://dai
   ```bash
   npm install
   ```
-  
+
 - Install the `mailpit` SMTP sink. See the [mailpit installation documentation](https://mailpit.axllent.org/docs/install/)
-for instructions for your platform.
+  for instructions for your platform.
 
 - Set up the D1 database:
 
@@ -56,13 +56,13 @@ for instructions for your platform.
 Then set the `CLOUDFLARE_DATABASE_ID` environment variable to the ID of the database. Also set
 the "database_id" in the "d1_databases" section of the `wrangler.jsonc` file to the ID of the
 database.
-  
+
 - Set up the local D1 database schema:
 
   ```bash
   ./build-schema-update.sh
   ```
-  
+
 Also see the "Adding initial users via sqlite3" below.
 
 - Copy the `.dev.vars.all.template` to `.dev.vars.all` and fill in the values for your environment.
@@ -109,7 +109,7 @@ You'll want to use the `wrangler d1` commands to add users to the remote Cloudfl
    ```bash
    npx playwright test
    ```
-   
+
 Alternatively, you can run the `ui-tests.sh` script to bring up the UI to run the tests, and
 see the intermediate steps of each test.
 
@@ -167,4 +167,5 @@ Change the host name in the files that have the domain name as `mini-auth.exampl
 **TODO**: Document build-to-production steps.
 
 ### Licensing
+
 See LICENSE.txt

@@ -31,11 +31,9 @@ type InterceptorEnv = { Bindings: Bindings; Variables: InterceptorVariables }
 type InterceptorContext = Context<InterceptorEnv>
 
 const ERROR_MESSAGES = {
-  INVALID_CREDENTIALS:
-    'Invalid email or password. Please check your credentials and try again.',
+  INVALID_CREDENTIALS: 'Invalid email or password. Please check your credentials and try again.',
   CHECK_CREDENTIALS: 'Please check your email and password and try again.',
-  ACCOUNT_CREATED:
-    'Account created! Please check your email to verify your account.',
+  ACCOUNT_CREATED: 'Account created! Please check your email to verify your account.',
   WELCOME: 'Welcome! You have been signed in successfully.',
 } as const
 
@@ -45,32 +43,21 @@ const ERROR_MESSAGES = {
 const handleUnverifiedSignUp = (
   c: InterceptorContext,
   email: string,
-  isSignUp: boolean
+  isSignUp: boolean,
 ): Response | null => {
   if (!isSignUp) {
     return null
   }
 
   addCookie(c, COOKIES.EMAIL_ENTERED, email)
-  return redirectWithMessage(
-    c,
-    PATHS.AUTH.EMAIL_SENT,
-    ERROR_MESSAGES.ACCOUNT_CREATED
-  )
+  return redirectWithMessage(c, PATHS.AUTH.EMAIL_SENT, ERROR_MESSAGES.ACCOUNT_CREATED)
 }
 
 /**
  * Handle successful sign-in with verified email
  */
-const handleVerifiedSignIn = (
-  c: InterceptorContext,
-  response: Response
-): Response => {
-  const redirectResponse = redirectWithMessage(
-    c,
-    PATHS.PRIVATE,
-    ERROR_MESSAGES.WELCOME
-  )
+const handleVerifiedSignIn = (c: InterceptorContext, response: Response): Response => {
+  const redirectResponse = redirectWithMessage(c, PATHS.PRIVATE, ERROR_MESSAGES.WELCOME)
 
   const allCookieHeaders = response.headers.getSetCookie?.() || []
   allCookieHeaders.forEach((cookie) => {
@@ -84,18 +71,14 @@ const handleVerifiedSignIn = (
  * Handle unverified user attempting to sign in
  */
 const handleUnverifiedSignIn = (c: InterceptorContext): Response =>
-  redirectWithMessage(
-    c,
-    PATHS.AUTH.SIGN_IN,
-    MESSAGES.VERIFY_EMAIL_BEFORE_SIGN_IN
-  )
+  redirectWithMessage(c, PATHS.AUTH.SIGN_IN, MESSAGES.VERIFY_EMAIL_BEFORE_SIGN_IN)
 
 /**
  * Process successful (200) auth response
  */
 const handleSuccessResponse = async (
   c: InterceptorContext,
-  response: Response
+  response: Response,
 ): Promise<Response | null> => {
   let responseData: AuthResponseData
 
@@ -135,7 +118,7 @@ const handleSuccessResponse = async (
 const handleForbiddenResponse = async (
   c: InterceptorContext,
   response: Response,
-  capturedEmail: string | undefined
+  capturedEmail: string | undefined,
 ): Promise<Response> => {
   try {
     const responseClone = response.clone()
@@ -146,18 +129,14 @@ const handleForbiddenResponse = async (
       return redirectWithMessage(
         c,
         PATHS.AUTH.AWAIT_VERIFICATION,
-        MESSAGES.VERIFY_EMAIL_BEFORE_SIGN_IN
+        MESSAGES.VERIFY_EMAIL_BEFORE_SIGN_IN,
       )
     }
   } catch {
     // Could not parse 403 response, continue with fallback
   }
 
-  return redirectWithMessage(
-    c,
-    PATHS.AUTH.SIGN_IN,
-    MESSAGES.VERIFY_EMAIL_BEFORE_SIGN_IN
-  )
+  return redirectWithMessage(c, PATHS.AUTH.SIGN_IN, MESSAGES.VERIFY_EMAIL_BEFORE_SIGN_IN)
 }
 
 /**
@@ -166,33 +145,21 @@ const handleForbiddenResponse = async (
 const handleErrorResponse = async (
   c: InterceptorContext,
   response: Response,
-  capturedEmail: string | undefined
+  capturedEmail: string | undefined,
 ): Promise<Response | null> => {
   switch (response.status) {
     case 401:
-      return redirectWithError(
-        c,
-        PATHS.AUTH.SIGN_IN,
-        ERROR_MESSAGES.INVALID_CREDENTIALS
-      )
+      return redirectWithError(c, PATHS.AUTH.SIGN_IN, ERROR_MESSAGES.INVALID_CREDENTIALS)
 
     case 403:
       return handleForbiddenResponse(c, response, capturedEmail)
 
     case 400:
-      return redirectWithError(
-        c,
-        PATHS.AUTH.SIGN_IN,
-        ERROR_MESSAGES.CHECK_CREDENTIALS
-      )
+      return redirectWithError(c, PATHS.AUTH.SIGN_IN, ERROR_MESSAGES.CHECK_CREDENTIALS)
 
     default:
       if (response.status >= 500) {
-        return redirectWithError(
-          c,
-          PATHS.AUTH.SIGN_IN,
-          MESSAGES.GENERIC_ERROR_TRY_AGAIN
-        )
+        return redirectWithError(c, PATHS.AUTH.SIGN_IN, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
       }
 
       return null
@@ -202,10 +169,7 @@ const handleErrorResponse = async (
 /**
  * Middleware to capture email from sign-in requests
  */
-const captureEmailMiddleware = async (
-  c: InterceptorContext,
-  next: Next
-): Promise<void> => {
+const captureEmailMiddleware = async (c: InterceptorContext, next: Next): Promise<void> => {
   try {
     const clonedRequest = c.req.raw.clone()
     const formData = await clonedRequest.formData()
@@ -224,9 +188,7 @@ const captureEmailMiddleware = async (
 /**
  * Convert form data request to JSON request for better-auth
  */
-const convertFormDataToJsonRequest = async (
-  request: Request
-): Promise<Request> => {
+const convertFormDataToJsonRequest = async (request: Request): Promise<Request> => {
   const contentType = request.headers.get('content-type') || ''
 
   // If already JSON, return as-is
@@ -265,10 +227,7 @@ const convertFormDataToJsonRequest = async (
 /**
  * Main sign-in handler that intercepts better-auth responses
  */
-const signInHandler = async (
-  c: InterceptorContext,
-  next: Next
-): Promise<Response | void> => {
+const signInHandler = async (c: InterceptorContext, next: Next): Promise<Response | void> => {
   try {
     const capturedEmail = c.get('signInEmail')
     const auth = createAuth(c.env)
@@ -296,20 +255,14 @@ const signInHandler = async (
     return response
   } catch (error) {
     console.error('Better-auth response interceptor error:', error)
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_IN,
-      MESSAGES.GENERIC_ERROR_TRY_AGAIN
-    )
+    return redirectWithError(c, PATHS.AUTH.SIGN_IN, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
   }
 }
 
 /**
  * Better-auth response interceptor to convert JSON responses to user-friendly redirects
  */
-export const setupBetterAuthResponseInterceptor = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
+export const setupBetterAuthResponseInterceptor = (app: Hono<{ Bindings: Bindings }>): void => {
   app.use(PATHS.AUTH.SIGN_IN_EMAIL_API, captureEmailMiddleware)
   app.on(['POST'], PATHS.AUTH.SIGN_IN_EMAIL_API, signInHandler)
 }

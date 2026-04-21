@@ -20,9 +20,7 @@ import { removeCookie } from '../../lib/cookie-support'
  * Attach the delete account handler to the app.
  * @param app - Hono app instance
  */
-export const handleDeleteAccount = (
-  app: Hono<{ Bindings: Bindings }>
-): void => {
+export const handleDeleteAccount = (app: Hono<{ Bindings: Bindings }>): void => {
   app.post(
     PATHS.PROFILE_DELETE,
     secureHeaders(STANDARD_SECURE_HEADERS),
@@ -34,11 +32,7 @@ export const handleDeleteAccount = (
 
         if (!user || !user.id) {
           console.error('Delete account: No user found in session')
-          return redirectWithError(
-            c,
-            PATHS.AUTH.SIGN_IN,
-            'Please sign in to delete your account.'
-          )
+          return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Please sign in to delete your account.')
         }
 
         const userId = user.id
@@ -51,17 +45,13 @@ export const handleDeleteAccount = (
           return redirectWithError(
             c,
             PATHS.PROFILE,
-            'An error occurred while deleting your account. Please try again.'
+            'An error occurred while deleting your account. Please try again.',
           )
         }
 
         if (!result.value) {
           console.error('Delete account: User not found in database')
-          return redirectWithError(
-            c,
-            PATHS.PROFILE,
-            'Unable to delete account. Please try again.'
-          )
+          return redirectWithError(c, PATHS.PROFILE, 'Unable to delete account. Please try again.')
         }
 
         console.log('Account deleted successfully for user:', user.email)
@@ -74,16 +64,12 @@ export const handleDeleteAccount = (
         return redirectWithMessage(
           c,
           PATHS.AUTH.SIGN_IN,
-          'Your account has been successfully deleted.'
+          'Your account has been successfully deleted.',
         )
       } catch (error) {
         console.error('Delete account handler error:', error)
-        return redirectWithError(
-          c,
-          PATHS.PROFILE,
-          'An error occurred. Please try again.'
-        )
+        return redirectWithError(c, PATHS.PROFILE, 'An error occurred. Please try again.')
       }
-    }
+    },
   )
 }

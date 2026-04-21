@@ -20,7 +20,7 @@ import { Bindings } from '../local-types'
  */
 export const retrieveCookie = <E extends { Bindings: Bindings }>(
   c: Context<E>,
-  name: string
+  name: string,
 ): string | undefined => {
   return getCookie(c, name)
 }
@@ -36,7 +36,7 @@ export const addCookie = <E extends { Bindings: Bindings }>(
   c: Context<E>,
   name: string,
   value: string,
-  extraOptions?: Record<string, unknown>
+  extraOptions?: Record<string, unknown>,
 ): void => {
   let options = COOKIES.STANDARD_COOKIE_OPTIONS
   if (extraOptions) {
@@ -53,7 +53,7 @@ export const addCookie = <E extends { Bindings: Bindings }>(
  */
 export const removeCookie = <E extends { Bindings: Bindings }>(
   c: Context<E>,
-  name: string
+  name: string,
 ): void => {
   deleteCookie(c, name, COOKIES.STANDARD_COOKIE_OPTIONS)
 }

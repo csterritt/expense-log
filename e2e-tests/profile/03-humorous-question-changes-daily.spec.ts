@@ -27,7 +27,7 @@ test(
     // Question should be the same (deterministic based on date)
     const question2 = await getElementText(page, 'humorous-question')
     expect(question2).toBe(question1)
-  })
+  }),
 )
 
 test(
@@ -61,5 +61,5 @@ test(
 
     // Verify it's one of the expected questions
     expect(expectedQuestions).toContain(question)
-  })
+  }),
 )

@@ -13,10 +13,7 @@ export const verifyAlert = async (page: Page, expectedText: string) => {
   // return page.getByTestId('alert-close').click()
 }
 
-export const verifyElementExists = async (
-  page: Page,
-  testId: string
-): Promise<boolean> => {
+export const verifyElementExists = async (page: Page, testId: string): Promise<boolean> => {
   try {
     const element = page.getByTestId(testId)
     await element.waitFor()
@@ -26,10 +23,7 @@ export const verifyElementExists = async (
   }
 }
 
-export const getElementText = async (
-  page: Page,
-  testId: string
-): Promise<string | null> => {
+export const getElementText = async (page: Page, testId: string): Promise<string | null> => {
   try {
     const element = page.getByTestId(testId)
     await element.waitFor()
@@ -39,10 +33,7 @@ export const getElementText = async (
   }
 }
 
-export const isElementVisible = async (
-  page: Page,
-  testId: string
-): Promise<boolean> => {
+export const isElementVisible = async (page: Page, testId: string): Promise<boolean> => {
   return page
     .locator(`[data-testid="${testId}"]`)
     .isVisible()

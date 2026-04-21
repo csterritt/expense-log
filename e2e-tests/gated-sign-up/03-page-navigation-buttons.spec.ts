@@ -1,15 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 import { clickLink, isElementVisible } from '../support/finders'
-import {
-  verifyOnSignInPage,
-  verifyOnGatedSignUpPage,
-} from '../support/page-verifiers'
+import { verifyOnSignInPage, verifyOnGatedSignUpPage } from '../support/page-verifiers'
 import { skipIfNotMode } from '../support/mode-helpers'
-import {
-  navigateToSignIn,
-  navigateToGatedSignUp,
-} from '../support/navigation-helpers'
+import { navigateToSignIn, navigateToGatedSignUp } from '../support/navigation-helpers'
 
 test.describe('Gated Sign-Up Mode: Page Navigation Tests', () => {
   test.beforeEach(async () => {
@@ -19,15 +13,11 @@ test.describe('Gated Sign-Up Mode: Page Navigation Tests', () => {
   test('sign-in page shows Create Account button', async ({ page }) => {
     await navigateToSignIn(page)
     expect(await isElementVisible(page, 'go-to-sign-up-action')).toBe(true)
-    const buttonText = await page
-      .locator('[data-testid="go-to-sign-up-action"]')
-      .textContent()
+    const buttonText = await page.locator('[data-testid="go-to-sign-up-action"]').textContent()
     expect(buttonText).toContain('Create Account')
   })
 
-  test('can navigate between sign-in and gated sign-up pages', async ({
-    page,
-  }) => {
+  test('can navigate between sign-in and gated sign-up pages', async ({ page }) => {
     await navigateToSignIn(page)
 
     await clickLink(page, 'go-to-sign-up-action')
@@ -44,9 +34,7 @@ test.describe('Gated Sign-Up Mode: Page Navigation Tests', () => {
 
     expect(await isElementVisible(page, 'gated-signup-name-input')).toBe(true)
     expect(await isElementVisible(page, 'gated-signup-email-input')).toBe(true)
-    expect(await isElementVisible(page, 'gated-signup-password-input')).toBe(
-      true
-    )
+    expect(await isElementVisible(page, 'gated-signup-password-input')).toBe(true)
     expect(await isElementVisible(page, 'gated-signup-code-input')).toBe(true)
     expect(await isElementVisible(page, 'gated-signup-action')).toBe(true)
     expect(await isElementVisible(page, 'go-to-sign-in-action')).toBe(true)

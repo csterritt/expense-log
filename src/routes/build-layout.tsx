@@ -23,7 +23,7 @@ import { version } from '../version'
 export const useLayout = (
   c: Context,
   children: HtmlEscapedString | Promise<HtmlEscapedString>,
-  extraMessage?: string
+  extraMessage?: string,
 ) => {
   // Get message and error cookies
   const message = retrieveCookie(c, COOKIES.MESSAGE_FOUND) || extraMessage
@@ -49,11 +49,7 @@ export const useLayout = (
         </div>
         <div className='navbar-end flex items-center'>
           {!c.get('user') && (
-            <a
-              href={PATHS.AUTH.SIGN_IN}
-              className='btn btn-primary'
-              data-testid='sign-in-action'
-            >
+            <a href={PATHS.AUTH.SIGN_IN} className='btn btn-primary' data-testid='sign-in-action'>
               Sign in
             </a>
           )}
@@ -61,8 +57,7 @@ export const useLayout = (
           {c.get('user') && (
             <div className='flex items-center gap-4'>
               <span className='text-sm'>
-                Welcome, {c.get('user')?.name || c.get('user')?.email || 'User'}
-                !
+                Welcome, {c.get('user')?.name || c.get('user')?.email || 'User'}!
               </span>
               <a
                 href={PATHS.PROFILE}

@@ -42,10 +42,7 @@ describe('validateCallbackUrl function', () => {
   })
 
   it('should allow same-origin absolute URLs and return pathname', () => {
-    const result = validateCallbackUrl(
-      'https://example.com/dashboard',
-      TEST_ORIGIN
-    )
+    const result = validateCallbackUrl('https://example.com/dashboard', TEST_ORIGIN)
     assert.strictEqual(result, '/dashboard')
   })
 
@@ -77,10 +74,7 @@ describe('validateCallbackUrl function', () => {
   })
 
   it('should preserve query and hash in same-origin absolute URLs', () => {
-    const result = validateCallbackUrl(
-      'https://example.com/page?foo=bar#section',
-      TEST_ORIGIN
-    )
+    const result = validateCallbackUrl('https://example.com/page?foo=bar#section', TEST_ORIGIN)
     assert.strictEqual(result, '/page?foo=bar#section')
   })
 })

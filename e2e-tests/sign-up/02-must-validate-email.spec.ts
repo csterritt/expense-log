@@ -8,10 +8,7 @@ import {
 } from '../support/page-verifiers'
 import { testWithDatabase } from '../support/test-helpers'
 import { skipIfNotMode } from '../support/mode-helpers'
-import {
-  navigateToSignUp,
-  navigateToSignIn,
-} from '../support/navigation-helpers'
+import { navigateToSignUp, navigateToSignIn } from '../support/navigation-helpers'
 import { submitSignUpForm, submitSignInForm } from '../support/form-helpers'
 
 test(
@@ -47,7 +44,7 @@ test(
     await verifyOnAwaitVerificationPage(page)
     await verifyAlert(
       page,
-      'Please verify your email address before signing in. Check your email for a verification link.'
+      'Please verify your email address before signing in. Check your email for a verification link.',
     )
-  })
+  }),
 )

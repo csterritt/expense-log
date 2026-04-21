@@ -6,10 +6,7 @@ import { testWithDatabase } from '../support/test-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 test.describe('Security Headers', () => {
-  test('server sets appropriate security headers on responses', async ({
-    page,
-    request,
-  }) => {
+  test('server sets appropriate security headers on responses', async ({ page, request }) => {
     // Get the response headers - bit of a hack, the root page doesn't get automatic headers
     // in development, so we use a non-existent page
     const response = await request.get(BASE_URLS.SIGN_IN)
@@ -32,62 +29,47 @@ test.describe('Security Headers', () => {
       await navigateToHome(page)
 
       // Sign in with known email and password
-      await signInUser(
-        page,
-        TEST_USERS.KNOWN_USER.email,
-        TEST_USERS.KNOWN_USER.password
-      )
+      await signInUser(page, TEST_USERS.KNOWN_USER.email, TEST_USERS.KNOWN_USER.password)
 
       // Try to POST to the increment endpoint with an invalid Origin header
-      const invalidOriginResponse = await request.post(
-        'http://localhost:3000/increment',
-        {
-          headers: {
-            Origin: 'https://malicious-site.com', // Invalid origin
-          },
-          failOnStatusCode: false,
-        }
-      )
+      const invalidOriginResponse = await request.post('http://localhost:3000/increment', {
+        headers: {
+          Origin: 'https://malicious-site.com', // Invalid origin
+        },
+        failOnStatusCode: false,
+      })
 
       // Verify the request is rejected with a 403 Forbidden status
       expect(invalidOriginResponse.status()).toBe(403)
 
       // Try to POST without any Origin header
-      const noOriginResponse = await request.post(
-        'http://localhost:3000/increment',
-        {
-          headers: {
-            // No Origin header
-          },
-          failOnStatusCode: false,
-        }
-      )
+      const noOriginResponse = await request.post('http://localhost:3000/increment', {
+        headers: {
+          // No Origin header
+        },
+        failOnStatusCode: false,
+      })
 
       // Verify the request is rejected with a 403 Forbidden status
       expect(noOriginResponse.status()).toBe(403)
 
       // Try with a valid Origin to confirm the CSRF protection is working correctly
-      const validOriginResponse = await request.post(
-        'http://localhost:3000/increment',
-        {
-          headers: {
-            Origin: 'http://localhost:3000', // Valid origin
-          },
-          failOnStatusCode: false,
-        }
-      )
+      const validOriginResponse = await request.post('http://localhost:3000/increment', {
+        headers: {
+          Origin: 'http://localhost:3000', // Valid origin
+        },
+        failOnStatusCode: false,
+      })
 
       // This should succeed (not be rejected due to CSRF)
       expect(validOriginResponse.status()).not.toBe(403)
 
       // Sign out to clean up the authenticated session
       await signOutAndVerify(page)
-    })
+    }),
   )
 
-  test('security headers are consistent across different endpoints', async ({
-    request,
-  }) => {
+  test('security headers are consistent across different endpoints', async ({ request }) => {
     // Test multiple endpoints to ensure headers are consistent
     const endpoints = [
       '/', // Home page
@@ -95,13 +77,10 @@ test.describe('Security Headers', () => {
     ]
 
     // Store headers from the first endpoint as a reference
-    const firstResponse = await request.get(
-      `http://localhost:3000${endpoints[0]}`
-    )
+    const firstResponse = await request.get(`http://localhost:3000${endpoints[0]}`)
     const referenceHeaders = {
       'referrer-policy': firstResponse.headers()['referrer-policy'],
-      'x-content-type-options':
-        firstResponse.headers()['x-content-type-options'],
+      'x-content-type-options': firstResponse.headers()['x-content-type-options'],
       'x-frame-options': firstResponse.headers()['x-frame-options'],
       'x-xss-protection': firstResponse.headers()['x-xss-protection'],
     }
@@ -113,18 +92,10 @@ test.describe('Security Headers', () => {
       const response = await request.get(`http://localhost:3000${endpoints[i]}`)
       const headers = response.headers()
 
-      expect(headers['referrer-policy']).toBe(
-        referenceHeaders['referrer-policy']
-      )
-      expect(headers['x-content-type-options']).toBe(
-        referenceHeaders['x-content-type-options']
-      )
-      expect(headers['x-frame-options']).toBe(
-        referenceHeaders['x-frame-options']
-      )
-      expect(headers['x-xss-protection']).toBe(
-        referenceHeaders['x-xss-protection']
-      )
+      expect(headers['referrer-policy']).toBe(referenceHeaders['referrer-policy'])
+      expect(headers['x-content-type-options']).toBe(referenceHeaders['x-content-type-options'])
+      expect(headers['x-frame-options']).toBe(referenceHeaders['x-frame-options'])
+      expect(headers['x-xss-protection']).toBe(referenceHeaders['x-xss-protection'])
     }
   })
 })

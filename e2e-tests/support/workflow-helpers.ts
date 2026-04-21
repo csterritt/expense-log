@@ -34,7 +34,7 @@ import { TEST_USERS, GATED_CODES, ERROR_MESSAGES } from './test-data'
  */
 export const completeSignUpFlow = async (
   page: Page,
-  user: UserCredentials = TEST_USERS.NEW_USER
+  user: UserCredentials = TEST_USERS.NEW_USER,
 ) => {
   await navigateToSignUp(page)
   await submitSignUpForm(page, user)
@@ -47,7 +47,7 @@ export const completeSignUpFlow = async (
 export const completeGatedSignUpFlow = async (
   page: Page,
   code: string = GATED_CODES.WELCOME,
-  user: UserCredentials = TEST_USERS.GATED_USER
+  user: UserCredentials = TEST_USERS.GATED_USER,
 ) => {
   await navigateToGatedSignUp(page)
   await submitGatedSignUpForm(page, { code, ...user })
@@ -59,7 +59,7 @@ export const completeGatedSignUpFlow = async (
  */
 export const completeInterestSignUpFlow = async (
   page: Page,
-  email: string = TEST_USERS.INTERESTED_USER.email
+  email: string = TEST_USERS.INTERESTED_USER.email,
 ) => {
   await navigateToInterestSignUp(page)
   await submitInterestSignUpForm(page, email)
@@ -70,10 +70,7 @@ export const completeInterestSignUpFlow = async (
 /**
  * Complete sign-in workflow (navigate to home → sign-in → fill → submit → verify)
  */
-export const completeSignInFlow = async (
-  page: Page,
-  user = TEST_USERS.KNOWN_USER
-) => {
+export const completeSignInFlow = async (page: Page, user = TEST_USERS.KNOWN_USER) => {
   await navigateToHome(page)
   await startSignIn(page)
   await submitSignInForm(page, user)
@@ -86,7 +83,7 @@ export const completeSignInFlow = async (
  */
 export const completeForgotPasswordFlow = async (
   page: Page,
-  email: string = TEST_USERS.KNOWN_USER.email
+  email: string = TEST_USERS.KNOWN_USER.email,
 ) => {
   await navigateToForgotPassword(page)
   await submitForgotPasswordForm(page, email)
@@ -99,7 +96,7 @@ export const completeForgotPasswordFlow = async (
  */
 export const testDuplicateSignUpFlow = async (
   page: Page,
-  user: UserCredentials = TEST_USERS.DUPLICATE_USER
+  user: UserCredentials = TEST_USERS.DUPLICATE_USER,
 ) => {
   // First sign-up
   await completeSignUpFlow(page, user)
@@ -118,7 +115,7 @@ export const testDuplicateGatedSignUpFlow = async (
   page: Page,
   firstCode: string = GATED_CODES.WELCOME,
   secondCode: string = GATED_CODES.BETA,
-  user: UserCredentials = TEST_USERS.DUPLICATE_USER
+  user: UserCredentials = TEST_USERS.DUPLICATE_USER,
 ) => {
   // First sign-up with first code
   await completeGatedSignUpFlow(page, firstCode, user)
@@ -135,7 +132,7 @@ export const testDuplicateGatedSignUpFlow = async (
  */
 export const testDuplicateInterestSignUpFlow = async (
   page: Page,
-  email: string = TEST_USERS.DUPLICATE_USER.email
+  email: string = TEST_USERS.DUPLICATE_USER.email,
 ) => {
   // First submission
   await completeInterestSignUpFlow(page, email)
@@ -152,7 +149,7 @@ export const testDuplicateInterestSignUpFlow = async (
  */
 export const signUpThenAttemptUnverifiedSignIn = async (
   page: Page,
-  user: UserCredentials = TEST_USERS.NEW_USER
+  user: UserCredentials = TEST_USERS.NEW_USER,
 ) => {
   // Complete sign-up
   await completeSignUpFlow(page, user)

@@ -12,8 +12,6 @@ test.describe('No Sign-Up Mode: Sign-In Page', () => {
     await navigateToSignIn(page)
 
     // In NO_SIGN_UP mode, the sign-up button should NOT be visible
-    expect(
-      await page.locator('[data-testid="go-to-sign-up-action"]').count()
-    ).toBe(0)
+    expect(await page.locator('[data-testid="go-to-sign-up-action"]').count()).toBe(0)
   })
 })

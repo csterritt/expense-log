@@ -95,4 +95,5 @@ Exactly how a developer (or the AI implementing this) confirms the slice is comp
 - User story <n>: <short title>
 
 ---
+
 </issue-template>

@@ -35,10 +35,8 @@ test(
     // Check that the error message mentions waiting and contains "second"
     const alertText = await alertElement.textContent()
     expect(alertText).toMatch(/Please wait \d+ more second/i)
-    expect(alertText).toContain(
-      'before requesting another password reset email'
-    )
-  })
+    expect(alertText).toContain('before requesting another password reset email')
+  }),
 )
 
 test(
@@ -71,7 +69,7 @@ test(
 
     // Verify success message is displayed
     await verifyAlert(page, ERROR_MESSAGES.RESET_LINK_SENT)
-  })
+  }),
 )
 
 test(
@@ -103,5 +101,5 @@ test(
     // Note: For non-existent users, we don't apply rate limiting since we don't have
     // an account record to track timestamps, but we still don't reveal the user doesn't exist
     expect(page.url()).toContain('/auth/waiting-for-reset')
-  })
+  }),
 )

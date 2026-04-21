@@ -34,12 +34,9 @@ export const clearDatabase = async (): Promise<void> => {
  */
 export const clearSessions = async (): Promise<void> => {
   try {
-    const response = await fetch(
-      'http://localhost:3000/test/database/clear-sessions',
-      {
-        method: 'DELETE',
-      }
-    )
+    const response = await fetch('http://localhost:3000/test/database/clear-sessions', {
+      method: 'DELETE',
+    })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -70,7 +67,7 @@ export const checkCodeExists = async (code: string): Promise<boolean> => {
   try {
     const response = await fetch(
       `http://localhost:3000/test/database/code-exists/${encodeURIComponent(code)}`,
-      { method: 'GET' }
+      { method: 'GET' },
     )
 
     if (!response.ok) {
@@ -122,7 +119,7 @@ export const seedDatabase = async (): Promise<void> => {
     }
 
     console.log(
-      `Database seeded successfully: ${result.usersCreated} users, ${result.accountsCreated} accounts, ${result.singleUseCodesCreated} codes`
+      `Database seeded successfully: ${result.usersCreated} users, ${result.accountsCreated} accounts, ${result.singleUseCodesCreated} codes`,
     )
   } catch (error) {
     console.error('Failed to seed database:', error)

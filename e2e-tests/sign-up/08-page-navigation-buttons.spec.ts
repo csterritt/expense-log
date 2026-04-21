@@ -1,15 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 import { clickLink, isElementVisible } from '../support/finders'
-import {
-  verifyOnSignInPage,
-  verifyOnSignUpPage,
-} from '../support/page-verifiers'
+import { verifyOnSignInPage, verifyOnSignUpPage } from '../support/page-verifiers'
 import { skipIfNotMode } from '../support/mode-helpers'
-import {
-  navigateToSignIn,
-  navigateToSignUp,
-} from '../support/navigation-helpers'
+import { navigateToSignIn, navigateToSignUp } from '../support/navigation-helpers'
 
 test.describe('Open Sign-Up Mode: Page Navigation Tests', () => {
   test.beforeEach(async () => {
@@ -19,9 +13,7 @@ test.describe('Open Sign-Up Mode: Page Navigation Tests', () => {
   test('sign-in page shows Create Account button', async ({ page }) => {
     await navigateToSignIn(page)
     expect(await isElementVisible(page, 'go-to-sign-up-action')).toBe(true)
-    const buttonText = await page
-      .locator('[data-testid="go-to-sign-up-action"]')
-      .textContent()
+    const buttonText = await page.locator('[data-testid="go-to-sign-up-action"]').textContent()
     expect(buttonText).toContain('Create Account')
   })
 
@@ -52,9 +44,7 @@ test.describe('Open Sign-Up Mode: Page Navigation Tests', () => {
     expect(await page.locator('h2').textContent()).toContain('Create Account')
   })
 
-  test('sign-in page has correct form elements and navigation', async ({
-    page,
-  }) => {
+  test('sign-in page has correct form elements and navigation', async ({ page }) => {
     // Navigate to sign-in page
     await navigateToSignIn(page)
 

@@ -1,21 +1,11 @@
 import { test, expect } from '@playwright/test'
 
 import { fillInput, clickLink, verifyAlert } from '../support/finders'
-import {
-  verifyOnInterestSignUpPage,
-  verifyOnProtectedPage,
-} from '../support/page-verifiers'
-import {
-  skipIfNotExactMode,
-  skipIfNotMode,
-  detectSignUpMode,
-} from '../support/mode-helpers'
+import { verifyOnInterestSignUpPage, verifyOnProtectedPage } from '../support/page-verifiers'
+import { skipIfNotExactMode, skipIfNotMode, detectSignUpMode } from '../support/mode-helpers'
 import { signInUser } from '../support/auth-helpers'
 import { testWithDatabase } from '../support/test-helpers'
-import {
-  navigateToInterestSignUp,
-  navigateToHome,
-} from '../support/navigation-helpers'
+import { navigateToInterestSignUp, navigateToHome } from '../support/navigation-helpers'
 import { TEST_USERS, BASE_URLS } from '../support/test-data'
 
 /**
@@ -31,20 +21,14 @@ test.describe('Interest Sign-Up Mode: UI Tests', () => {
     await navigateToInterestSignUp(page)
 
     const explanation = page.getByTestId('no-new-accounts-message')
-    await expect(explanation).toContainText(
-      "We're not accepting new accounts at the moment"
-    )
+    await expect(explanation).toContainText("We're not accepting new accounts at the moment")
   })
 
   test('interest sign-up page has correct button texts', async ({ page }) => {
     await navigateToInterestSignUp(page)
 
-    await expect(page.locator('[data-testid="interest-action"]')).toHaveText(
-      'Join Waitlist'
-    )
-    await expect(
-      page.locator('[data-testid="go-to-sign-in-action"]')
-    ).toHaveText('Sign In Instead')
+    await expect(page.locator('[data-testid="interest-action"]')).toHaveText('Join Waitlist')
+    await expect(page.locator('[data-testid="go-to-sign-in-action"]')).toHaveText('Sign In Instead')
   })
 })
 
@@ -60,25 +44,18 @@ test.describe('Interest Sign-Up Mode: Behavior Tests', () => {
     'redirects to protected page when already authenticated',
     testWithDatabase(async ({ page }) => {
       await navigateToHome(page)
-      await signInUser(
-        page,
-        TEST_USERS.KNOWN_USER.email,
-        TEST_USERS.KNOWN_USER.password
-      )
+      await signInUser(page, TEST_USERS.KNOWN_USER.email, TEST_USERS.KNOWN_USER.password)
       await verifyOnProtectedPage(page)
 
       // Try to navigate to interest sign-up page while authenticated
       const mode = await detectSignUpMode()
-      const url =
-        mode === 'INTEREST_SIGN_UP'
-          ? BASE_URLS.INTEREST_SIGN_UP
-          : BASE_URLS.SIGN_UP
+      const url = mode === 'INTEREST_SIGN_UP' ? BASE_URLS.INTEREST_SIGN_UP : BASE_URLS.SIGN_UP
       await page.goto(url)
 
       // Should be redirected back to protected page
       await verifyOnProtectedPage(page)
       expect(page.url()).toContain('/private')
-    })
+    }),
   )
 
   test('preserves email in form when validation fails', async ({ page }) => {

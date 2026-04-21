@@ -62,13 +62,7 @@ export const GATED_CODES = {
 } as const
 
 export const INVALID_DATA = {
-  EMAILS: [
-    'invalid-email',
-    'not-an-email',
-    '@invalid.com',
-    'user@',
-    'user@.com',
-  ],
+  EMAILS: ['invalid-email', 'not-an-email', '@invalid.com', 'user@', 'user@.com'],
   PASSWORDS: [
     '', // empty
     '123', // too short
@@ -79,8 +73,7 @@ export const INVALID_DATA = {
 
 export const ERROR_MESSAGES = {
   // Authentication errors
-  INVALID_CREDENTIALS:
-    'Invalid email or password. Please check your credentials and try again.',
+  INVALID_CREDENTIALS: 'Invalid email or password. Please check your credentials and try again.',
   EMAIL_NOT_VERIFIED:
     'Please verify your email address before signing in. Check your email for a verification link.',
   MUST_SIGN_IN: 'You must sign in to visit that page',
@@ -99,8 +92,7 @@ export const ERROR_MESSAGES = {
   // Sign-up errors
   DUPLICATE_EMAIL:
     'An account with this email already exists. Please check your email for a verification link or sign in if you have already verified your account.',
-  INVALID_CODE:
-    'Invalid or expired sign-up code. Please check your code and try again.',
+  INVALID_CODE: 'Invalid or expired sign-up code. Please check your code and try again.',
 
   // Interest sign-up messages
   WAITLIST_SUCCESS:
@@ -109,8 +101,7 @@ export const ERROR_MESSAGES = {
     "Thanks! Your email is already on our waitlist. We'll notify you when we're accepting new accounts.",
 
   // Reset password messages
-  RESET_LINK_SENT:
-    "If an account with that email exists, we've sent you a password reset link.",
+  RESET_LINK_SENT: "If an account with that email exists, we've sent you a password reset link.",
   PASSWORD_RESET_SUCCESS:
     'Your password has been successfully reset. You can now sign in with your new password.',
 

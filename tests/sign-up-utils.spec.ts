@@ -20,9 +20,7 @@ const DUPLICATE_EMAIL_PATTERNS = [
 
 const isDuplicateEmailError = (message: string): boolean => {
   const lowerMessage = message.toLowerCase()
-  return DUPLICATE_EMAIL_PATTERNS.some((pattern) =>
-    lowerMessage.includes(pattern)
-  )
+  return DUPLICATE_EMAIL_PATTERNS.some((pattern) => lowerMessage.includes(pattern))
 }
 
 // Simulates the error handling logic from handleSignUpResponseError
@@ -83,7 +81,7 @@ describe('sign-up error message sanitization', () => {
       assert.strictEqual(
         result,
         MESSAGES.REGISTRATION_GENERIC_ERROR,
-        `Expected generic message for: ${error}`
+        `Expected generic message for: ${error}`,
       )
       // Verify none of the sensitive details leak through
       assert.ok(!result.includes('D1_ERROR'))

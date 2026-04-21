@@ -3,20 +3,12 @@ import { clearDatabase, clearSessions, seedDatabase } from './db-helpers'
 /**
  * Wrapper type for Playwright test function
  */
-type PlaywrightTestFunction = ({
-  page,
-  request,
-}: {
-  page: any
-  request: any
-}) => Promise<void>
+type PlaywrightTestFunction = ({ page, request }: { page: any; request: any }) => Promise<void>
 /**
  * Enhanced test wrapper that provides database isolation
  * Clears and seeds database before each test, cleans up after
  */
-export const testWithDatabase = (
-  testFn: PlaywrightTestFunction
-): PlaywrightTestFunction => {
+export const testWithDatabase = (testFn: PlaywrightTestFunction): PlaywrightTestFunction => {
   return async ({ page, request }) => {
     try {
       // Setup: Clear and seed database

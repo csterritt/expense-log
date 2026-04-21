@@ -9,12 +9,7 @@
 import { Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
 
-import {
-  PATHS,
-  STANDARD_SECURE_HEADERS,
-  MESSAGES,
-  COOKIES,
-} from '../../constants'
+import { PATHS, STANDARD_SECURE_HEADERS, MESSAGES, COOKIES } from '../../constants'
 import { Bindings } from '../../local-types'
 import { useLayout } from '../build-layout'
 import { redirectWithMessage } from '../../lib/redirects'
@@ -63,9 +58,9 @@ export const buildGatedSignUp = (app: Hono<{ Bindings: Bindings }>): void => {
   app.get(PATHS.AUTH.SIGN_UP, secureHeaders(STANDARD_SECURE_HEADERS), (c) => {
     // Check if user is already signed in using better-auth session
     // Better-auth middleware sets user context, access it properly
-    const user = (c as unknown as { get: (key: string) => unknown }).get(
-      'user'
-    ) as { id: string } | null
+    const user = (c as unknown as { get: (key: string) => unknown }).get('user') as {
+      id: string
+    } | null
     if (user) {
       console.log('Already signed in')
       return redirectWithMessage(c, PATHS.PRIVATE, MESSAGES.ALREADY_SIGNED_IN)

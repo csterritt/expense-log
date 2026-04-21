@@ -14,11 +14,7 @@ test.describe('Body size limit', () => {
       await navigateToHome(page)
 
       // Sign in with known email and password
-      await signInUser(
-        page,
-        TEST_USERS.KNOWN_USER.email,
-        TEST_USERS.KNOWN_USER.password
-      )
+      await signInUser(page, TEST_USERS.KNOWN_USER.email, TEST_USERS.KNOWN_USER.password)
 
       // Create a large payload (2KB)
       const largePayload = { data: 'X'.repeat(2000) }
@@ -43,7 +39,7 @@ test.describe('Body size limit', () => {
 
       // Sign out to clean up the authenticated session
       await signOutAndVerify(page)
-    })
+    }),
   )
 
   test(
@@ -53,11 +49,7 @@ test.describe('Body size limit', () => {
       await navigateToHome(page)
 
       // Sign in with known email and password
-      await signInUser(
-        page,
-        TEST_USERS.KNOWN_USER.email,
-        TEST_USERS.KNOWN_USER.password
-      )
+      await signInUser(page, TEST_USERS.KNOWN_USER.email, TEST_USERS.KNOWN_USER.password)
 
       // Create form data with a large value (2KB)
       const formData = {
@@ -85,7 +77,7 @@ test.describe('Body size limit', () => {
 
       // Sign out to clean up the authenticated session
       await signOutAndVerify(page)
-    })
+    }),
   )
 
   test(
@@ -95,27 +87,20 @@ test.describe('Body size limit', () => {
       await navigateToHome(page)
 
       // Sign in with known email and password
-      await signInUser(
-        page,
-        TEST_USERS.KNOWN_USER.email,
-        TEST_USERS.KNOWN_USER.password
-      )
+      await signInUser(page, TEST_USERS.KNOWN_USER.email, TEST_USERS.KNOWN_USER.password)
 
       // Create a payload just under the limit (1023 bytes)
       const justUnderLimitPayload = { data: 'X'.repeat(1023 - 10) } // Subtract 10 bytes to account for JSON formatting
 
       // Attempt to POST with payload just under the limit
-      const underLimitResponse = await request.post(
-        'http://localhost:3000/increment',
-        {
-          data: justUnderLimitPayload,
-          headers: {
-            Origin: 'http://localhost:3000',
-            'Content-Type': 'application/json',
-          },
-          failOnStatusCode: false,
-        }
-      )
+      const underLimitResponse = await request.post('http://localhost:3000/increment', {
+        data: justUnderLimitPayload,
+        headers: {
+          Origin: 'http://localhost:3000',
+          'Content-Type': 'application/json',
+        },
+        failOnStatusCode: false,
+      })
 
       // This should succeed (either 200 OK or 303 redirect)
       expect(underLimitResponse.status()).toBe(200)
@@ -124,17 +109,14 @@ test.describe('Body size limit', () => {
       const justOverLimitPayload = { data: 'X'.repeat(1025 - 10) } // Subtract 10 bytes to account for JSON formatting
 
       // Attempt to POST with payload just over the limit
-      const overLimitResponse = await request.post(
-        'http://localhost:3000/increment',
-        {
-          data: justOverLimitPayload,
-          headers: {
-            Origin: 'http://localhost:3000',
-            'Content-Type': 'application/json',
-          },
-          failOnStatusCode: false,
-        }
-      )
+      const overLimitResponse = await request.post('http://localhost:3000/increment', {
+        data: justOverLimitPayload,
+        headers: {
+          Origin: 'http://localhost:3000',
+          'Content-Type': 'application/json',
+        },
+        failOnStatusCode: false,
+      })
 
       // This should fail with 413 Content Too Large
       expect(overLimitResponse.status()).toBe(HTML_STATUS.CONTENT_TOO_LARGE)
@@ -145,6 +127,6 @@ test.describe('Body size limit', () => {
 
       // Sign out to clean up the authenticated session
       await signOutAndVerify(page)
-    })
+    }),
   )
 })

@@ -91,9 +91,7 @@ const compareTwoFiles = (file1: string, file2: string): void => {
   const result = compareFiles(file1, file2)
 
   if (result.same) {
-    console.log(
-      'Files are identical (ignoring class/className attributes and whitespace)'
-    )
+    console.log('Files are identical (ignoring class/className attributes and whitespace)')
   } else {
     console.log(`First difference: ${result.difference}`)
   }
@@ -103,9 +101,7 @@ const main = (): void => {
   const args = process.argv.slice(2)
 
   if (args.length !== 2) {
-    console.error(
-      'Usage: npx tsx scripts/compare-without-classes.ts <path1> <path2>'
-    )
+    console.error('Usage: npx tsx scripts/compare-without-classes.ts <path1> <path2>')
     console.error('  Paths can be two directories or two files')
     process.exit(1)
   }

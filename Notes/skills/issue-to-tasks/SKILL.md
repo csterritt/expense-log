@@ -81,6 +81,7 @@ Parent PRD: #<prd-issue-number>
 <A short paragraph describing exactly what to do. Written as an instruction to the AI that will execute it. Include: which files to touch, which pattern to follow, which existing code to use as reference. Do NOT include code snippets — describe intent, not implementation.>
 
 ---
+
 </task-file-template>
 
 Do NOT modify the parent issue or the parent PRD.

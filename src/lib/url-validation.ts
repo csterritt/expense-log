@@ -18,7 +18,7 @@ import { PATHS } from '../constants'
  */
 export const validateCallbackUrl = (
   callbackUrl: string | undefined,
-  requestOrigin: string
+  requestOrigin: string,
 ): string => {
   const defaultUrl = PATHS.AUTH.SIGN_IN
 
