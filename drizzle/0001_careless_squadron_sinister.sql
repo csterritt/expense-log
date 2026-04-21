@@ -1,0 +1,1 @@
+ALTER TABLE `singleUseCode` ADD `email` text;
