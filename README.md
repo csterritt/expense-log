@@ -1,6 +1,6 @@
 ## Basic CloudFlare worker+d1+drizzle+tailwind+daisyui app for tracking expenses
 
-(In spite of the name, it's for tracking expenses as they happen, not planned ones.)
+(This tracks expenses as they happen, not planned ones.)
 
 Standard sign in, and password reset via email routes are provided.
 

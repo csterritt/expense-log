@@ -1,5 +1,5 @@
 {
-  "name": "planned-expense-log",
+  "name": "expense-log",
   "private": true,
   "type": "module",
   "scripts": {

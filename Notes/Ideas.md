@@ -1,4 +1,4 @@
-## Planned Expense Log
+## Expense Log
 
 The main ideas here are:
 
