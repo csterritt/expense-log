@@ -120,14 +120,17 @@ After signing in, users land on an expense log page where they can enter new exp
 - **Owner**: developer
   - **Question**: Should the `baseDate` for a recurring expense default to today at creation time, or should the user explicitly pick it?
   - **Suggested resolution**: Default to today; user can override. This aligns with the regular expense date defaulting to today.
+  - Decision: Use the Suggested resolution.
 
 - **Owner**: developer
   - **Question**: Should the `/summaries` page include a summary by date that is grouped by day, or only by calendar month?
   - **Suggested resolution**: Group by calendar month only; "date" summary means monthly aggregation. Daily granularity can be added later if needed.
+  - Decision: Use the Suggested resolution.
 
 - **Owner**: developer
   - **Question**: How should the cron endpoint be exposed in the Cloudflare Worker? As a separate cron handler or as a standard HTTP route triggered by a Cloudflare Cron Trigger?
   - **Suggested resolution**: Use a Cloudflare Cron Trigger bound to a standard HTTP route (e.g., `/api/cron/recurring`). This keeps the handler testable via HTTP and fits the existing Hono routing pattern.
+  - Decision: Use the Suggested resolution.
 
 ## Further Notes
 
@@ -135,4 +138,4 @@ After signing in, users land on an expense log page where they can enter new exp
 - The existing `buildPrivate` route can be removed or replaced; `/private` should redirect to `/expenses` to preserve any bookmarks.
 - Searchable dropdowns for category and tag can reuse the existing DaisyUI `select` styling with a small JavaScript-enhanced filter script, or be rendered server-side with a datalist if simplicity is preferred. Given the requirement for "searchable" and "create new on the fly", a small inline script in the page that filters options and allows free-text submission is acceptable.
 - Recurring expense amounts and refund flags are copied to generated expenses. The generated expense date is set to the scheduled date, not the cron run date.
-- For the capping rule: the scheduled day is computed as `min(originalDay, 28)` for monthly recurrence only. Quarterly and yearly use the actual day from `baseDate`, except February 29 in non-leap years falls back to February 28.
+- For the capping rule: the scheduled day is computed as `min(originalDay, 28)` for monthly recurrence only. Quarterly and yearly use the actual day from `baseDate`, except February 29 in non-leap years falls back to February 28, and a Quarterly capping rule falls back to the last day of the quarter.
