@@ -197,7 +197,7 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
 
 ### Navigation
 
-- Update `src/routes/build-layout.tsx` to add header links: Expenses (list, which is `/`), Categories, Tags, Summary, Recurring.
+- Update `src/routes/build-layout.tsx` to add header links: Expenses (list, which is `/expenses`), Categories, Tags, Summary, Recurring.
 
 ### Recurring expenses and the cron
 
