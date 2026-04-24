@@ -51,7 +51,7 @@ export const handleGatedInterestSignUp = (app: Hono<{ Bindings: Bindings }>): vo
       id: string
     } | null
     if (user) {
-      return redirectWithMessage(c, PATHS.PRIVATE, MESSAGES.ALREADY_SIGNED_IN)
+      return redirectWithMessage(c, PATHS.EXPENSES, MESSAGES.ALREADY_SIGNED_IN)
     }
 
     // Get form data and validate

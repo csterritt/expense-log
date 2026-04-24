@@ -25,7 +25,7 @@ const renderRoot = () => {
             Expense Log
           </h3>
           <div className='card-actions'>
-            <a href={PATHS.PRIVATE} className='btn btn-primary' data-testid='visit-private-action'>
+            <a href={PATHS.EXPENSES} className='btn btn-primary' data-testid='visit-expenses-action'>
               Protected Content
             </a>
           </div>

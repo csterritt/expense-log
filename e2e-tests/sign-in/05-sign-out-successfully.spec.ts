@@ -51,7 +51,7 @@ test(
     await verifyOnStartupPage(page)
 
     // Try to access the private page again - should be redirected to sign-in
-    await page.goto(BASE_URLS.PRIVATE)
+    await page.goto(BASE_URLS.EXPENSES)
 
     // Should be redirected to sign-in page
     await verifyOnSignInPage(page)

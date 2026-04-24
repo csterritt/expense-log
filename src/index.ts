@@ -13,7 +13,6 @@ import { showRoutes } from 'hono/dev' // PRODUCTION:REMOVE
 import { HTML_STATUS, SIGN_UP_MODES } from './constants'
 import { renderer } from './renderer'
 import { buildRoot } from './routes/build-root' // PRODUCTION:REMOVE
-import { buildPrivate } from './routes/build-private'
 import { buildExpenses } from './routes/expenses/build-expenses'
 import { buildCategories } from './routes/build-categories'
 import { buildTags } from './routes/build-tags'
@@ -172,7 +171,6 @@ setupBetterAuth(app)
 
 // Route declarations
 buildRoot(app) // PRODUCTION:REMOVE
-buildPrivate(app)
 buildExpenses(app)
 buildCategories(app)
 buildTags(app)

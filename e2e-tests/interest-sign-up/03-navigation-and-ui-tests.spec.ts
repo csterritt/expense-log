@@ -54,7 +54,7 @@ test.describe('Interest Sign-Up Mode: Behavior Tests', () => {
 
       // Should be redirected back to protected page
       await verifyOnProtectedPage(page)
-      expect(page.url()).toContain('/private')
+      expect(page.url()).toContain('/expenses')
     }),
   )
 
