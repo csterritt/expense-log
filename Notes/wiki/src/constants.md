@@ -20,7 +20,6 @@ Centralized constants file. All configuration values that would otherwise be mag
 Route paths used throughout the application.
 
 - `ROOT` — `/`
-- `PRIVATE` — `/private`
 - `AUTH.API_BASE` — `/api/auth`
 - `AUTH.SIGN_IN_EMAIL_API` — `/api/auth/sign-in/email`
 - `AUTH.SIGN_IN` — `/auth/sign-in`
@@ -41,6 +40,11 @@ Route paths used throughout the application.
 - `PROFILE` — `/profile`
 - `PROFILE_DELETE_CONFIRM` — `/profile/delete-confirm`
 - `PROFILE_DELETE` — `/profile/delete`
+- `EXPENSES` — `/expenses`
+- `CATEGORIES` — `/categories`
+- `TAGS` — `/tags`
+- `SUMMARY` — `/summary`
+- `RECURRING` — `/recurring`
 
 ### `COOKIES`
 

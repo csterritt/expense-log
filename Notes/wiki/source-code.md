@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (61 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (65 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
@@ -52,8 +52,17 @@ Catalog of all source files under `src/` (61 files total), organized by category
 
 - [src/routes/build-404.tsx](./src/routes/build-404.md) — 404 page builder (returns HTTP 200 with "Page Not Found" content per project convention).
 - [src/routes/build-layout.tsx](./src/routes/build-layout.md) — Shared layout wrapper component for all pages (navbar, footer, flash messages).
-- [src/routes/build-private.tsx](./src/routes/build-private.md) — Protected "private" landing page builder.
-- [src/routes/build-root.tsx](./src/routes/build-root.md) — Root / page builder (dev-only; PRODUCTION:REMOVE).
+- [src/routes/build-root.tsx](./src/routes/build-root.md) — Root `/` page builder (dev-only landing page linking into `/expenses`; PRODUCTION:REMOVE).
+
+### Expense feature pages
+
+All five routes are signed-in-only via the `signedInAccess` middleware. Four are placeholder pages awaiting feature implementation.
+
+- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list page (`/expenses`); currently shows an empty-state placeholder.
+- [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Categories placeholder page (`/categories`).
+- [src/routes/build-tags.tsx](./src/routes/build-tags.md) — Tags placeholder page (`/tags`).
+- [src/routes/build-summary.tsx](./src/routes/build-summary.md) — Summary placeholder page (`/summary`).
+- [src/routes/build-recurring.tsx](./src/routes/build-recurring.md) — Recurring placeholder page (`/recurring`).
 
 ### Auth pages (JSX builders)
 

@@ -49,8 +49,12 @@ Routes are registered based on `SIGN_UP_MODE`:
 
 Always registered regardless of mode:
 
-- `buildRoot` — `/`
-- `buildPrivate` — `/private`
+- `buildRoot` — `/` (PRODUCTION:REMOVE)
+- `buildExpenses` — `/expenses` (signed-in only)
+- `buildCategories` — `/categories` (signed-in only)
+- `buildTags` — `/tags` (signed-in only)
+- `buildSummary` — `/summary` (signed-in only)
+- `buildRecurring` — `/recurring` (signed-in only)
 - `buildSignIn` — `/auth/sign-in`
 - `buildForgotPassword` — `/auth/forgot-password`
 - `buildWaitingForReset` — `/auth/waiting-for-reset`

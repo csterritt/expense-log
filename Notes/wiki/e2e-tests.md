@@ -1,6 +1,6 @@
 # E2E Tests Catalog
 
-Catalog of all Playwright end-to-end tests under `e2e-tests/` (47 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
+Catalog of all Playwright end-to-end tests under `e2e-tests/` (50 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
 
 ## Support utilities (`e2e-tests/support/`)
 
@@ -31,6 +31,9 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (47 spec files + 1
 - [e2e-tests/general/03-test-body-size-limit.spec.ts](./e2e-tests/general/03-test-body-size-limit.spec.md) — Large request bodies are rejected with 413.
 - [e2e-tests/general/04-test-secure-headers.spec.ts](./e2e-tests/general/04-test-secure-headers.spec.md) — Security headers are present on responses.
 - [e2e-tests/general/05-sign-in-page-elements.spec.ts](./e2e-tests/general/05-sign-in-page-elements.spec.md) — Sign-in page contains expected fields and buttons.
+- [e2e-tests/general/06-expense-routes-require-auth.spec.ts](./e2e-tests/general/06-expense-routes-require-auth.spec.md) — All expense feature routes (`/expenses`, `/categories`, `/tags`, `/summary`, `/recurring`) redirect unauthenticated visitors to sign-in.
+- [e2e-tests/general/07-expense-routes-signed-in.spec.ts](./e2e-tests/general/07-expense-routes-signed-in.spec.md) — Signed-in users see correct headings on each expense feature route, and `/expenses` shows the empty-state message.
+- [e2e-tests/general/08-expense-nav-links.spec.ts](./e2e-tests/general/08-expense-nav-links.spec.md) — Header nav links for the expense feature appear only when signed in and navigate to the correct pages.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 
@@ -70,7 +73,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (47 spec files + 1
 - [e2e-tests/sign-in/01-cant-sign-in-with-unknown-email.spec.ts](./e2e-tests/sign-in/01-cant-sign-in-with-unknown-email.spec.md) — Unknown email is rejected.
 - [e2e-tests/sign-in/02-can-sign-in-with-known-email.spec.ts](./e2e-tests/sign-in/02-can-sign-in-with-known-email.spec.md) — Known email and correct password succeed.
 - [e2e-tests/sign-in/03-cant-sign-in-with-wrong-password.spec.ts](./e2e-tests/sign-in/03-cant-sign-in-with-wrong-password.spec.md) — Wrong password is rejected.
-- [e2e-tests/sign-in/04-cant-visit-protected-page-signed-out.spec.ts](./e2e-tests/sign-in/04-cant-visit-protected-page-signed-out.spec.md) — Unauthenticated users are redirected from /private.
+- [e2e-tests/sign-in/04-cant-visit-protected-page-signed-out.spec.ts](./e2e-tests/sign-in/04-cant-visit-protected-page-signed-out.spec.md) — Unauthenticated users are redirected from `/expenses`.
 - [e2e-tests/sign-in/05-sign-out-successfully.spec.ts](./e2e-tests/sign-in/05-sign-out-successfully.spec.md) — Sign-out flow clears session and redirects.
 
 ## Sign-up (`e2e-tests/sign-up/`)
@@ -78,7 +81,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (47 spec files + 1
 - [e2e-tests/sign-up/01-sign-up-with-good-email-and-password.spec.ts](./e2e-tests/sign-up/01-sign-up-with-good-email-and-password.spec.md) — Successful open sign-up.
 - [e2e-tests/sign-up/02-must-validate-email.spec.ts](./e2e-tests/sign-up/02-must-validate-email.spec.md) — Email must be verified before full access.
 - [e2e-tests/sign-up/03-can-validate-email.spec.ts](./e2e-tests/sign-up/03-can-validate-email.spec.md) — Clicking verification link confirms email.
-- [e2e-tests/sign-up/04-cannot-access-private-before-verification.spec.ts](./e2e-tests/sign-up/04-cannot-access-private-before-verification.spec.md) — Unverified users cannot access /private.
+- [e2e-tests/sign-up/04-cannot-access-private-before-verification.spec.ts](./e2e-tests/sign-up/04-cannot-access-private-before-verification.spec.md) — Unverified users cannot access `/expenses`.
 - [e2e-tests/sign-up/05-can-resend-verification-email.spec.ts](./e2e-tests/sign-up/05-can-resend-verification-email.spec.md) — Resend verification email functionality.
 - [e2e-tests/sign-up/06-resend-email-rate-limiting.spec.ts](./e2e-tests/sign-up/06-resend-email-rate-limiting.spec.md) — Rate limiting on resend requests.
 - [e2e-tests/sign-up/07-cannot-access-await-verification-without-email-cookie.spec.ts](./e2e-tests/sign-up/07-cannot-access-await-verification-without-email-cookie.spec.md) — Direct access to await-verification page is guarded.

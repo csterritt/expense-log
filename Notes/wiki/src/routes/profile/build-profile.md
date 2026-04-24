@@ -20,6 +20,7 @@ Middleware chain:
 ### Page content
 
 - User info card showing email and name
+- "Back" link to `/expenses` — `data-testid='go-back-action'`
 - **Change Password** form (`POST /profile`):
   - Current password — `data-testid='current-password-input'`
   - New password — `data-testid='new-password-input'`

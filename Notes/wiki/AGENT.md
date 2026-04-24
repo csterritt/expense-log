@@ -1,6 +1,6 @@
 # Wiki Agent Schema
 
-Schema and conventions for maintaining the `daisy-tw-worker-d1-drizzle` project wiki.
+Schema and conventions for maintaining the `expense-log` project wiki.
 
 ## Role
 
@@ -60,4 +60,4 @@ Periodically health-check the wiki:
 
 ## Scope
 
-This wiki covers the `daisy-tw-worker-d1-drizzle` project: a Cloudflare Worker authentication app using Hono, Drizzle ORM, Better Auth, Tailwind CSS, and DaisyUI.
+This wiki covers the `expense-log` project: a Cloudflare Worker expense-tracking app (with built-in authentication) using Hono, Drizzle ORM, Better Auth, Tailwind CSS, and DaisyUI.

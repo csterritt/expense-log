@@ -12,7 +12,7 @@ Verifies successful sign-in with seeded credentials and redirect to the protecte
 - Navigates to home, clicks sign-in
 - Fills `TEST_USERS.KNOWN_USER` credentials
 - Submits and verifies `'Welcome! You have been signed in successfully.'` alert
-- Verifies we are redirected to the protected (`/private`) page
+- Verifies we are redirected to the protected (`/expenses`) page
 
 ---
 

@@ -83,9 +83,90 @@ Waitlist emails for interest sign-up mode.
 | ------- | ---- | ------------------ |
 | `email` | text | primaryKey, unique |
 
+### `category`
+
+Expense categories. Names are unique.
+
+| Column      | Type                | Constraints     |
+| ----------- | ------------------- | --------------- |
+| `id`        | text                | primaryKey      |
+| `name`      | text                | notNull, unique |
+| `createdAt` | integer (timestamp) | notNull         |
+| `updatedAt` | integer (timestamp) | notNull         |
+
+### `tag`
+
+Expense tags. Names are unique.
+
+| Column      | Type                | Constraints     |
+| ----------- | ------------------- | --------------- |
+| `id`        | text                | primaryKey      |
+| `name`      | text                | notNull, unique |
+| `createdAt` | integer (timestamp) | notNull         |
+| `updatedAt` | integer (timestamp) | notNull         |
+
+### `recurring`
+
+Recurring expense templates that materialize into `expense` rows over time.
+
+| Column         | Type                | Constraints                                |
+| -------------- | ------------------- | ------------------------------------------ |
+| `id`           | text                | primaryKey                                 |
+| `description`  | text                | notNull                                    |
+| `amountCents`  | integer             | notNull                                    |
+| `categoryId`   | text                | notNull, references category.id (restrict) |
+| `recurrence`   | text                | notNull                                    |
+| `anchorDate`   | text                | notNull                                    |
+| `createdAt`    | integer (timestamp) | notNull                                    |
+| `updatedAt`    | integer (timestamp) | notNull                                    |
+
+### `expense`
+
+Individual expense records, optionally linked to a `recurring` template.
+
+| Column            | Type                | Constraints                                |
+| ----------------- | ------------------- | ------------------------------------------ |
+| `id`              | text                | primaryKey                                 |
+| `description`    | text                | notNull                                    |
+| `amountCents`    | integer             | notNull                                    |
+| `categoryId`     | text                | notNull, references category.id (restrict) |
+| `date`            | text                | notNull                                    |
+| `recurringId`    | text                | references recurring.id (set null)         |
+| `occurrenceDate` | text                |                                            |
+| `createdAt`      | integer (timestamp) | notNull                                    |
+| `updatedAt`      | integer (timestamp) | notNull                                    |
+
+Includes a partial unique index `expense_recurring_occurrence_unique` on `(recurringId, occurrenceDate)` filtered to rows where `recurringId IS NOT NULL`. This enforces at most one materialized expense per (template, occurrence) while leaving manual expenses unconstrained.
+
+### `expenseTag`
+
+Join table between `expense` and `tag`.
+
+| Column      | Type | Constraints                                |
+| ----------- | ---- | ------------------------------------------ |
+| `expenseId` | text | notNull, references expense.id (cascade)   |
+| `tagId`     | text | notNull, references tag.id (restrict)      |
+
+Composite primary key `(expenseId, tagId)`.
+
+### `recurringTag`
+
+Join table between `recurring` and `tag`.
+
+| Column        | Type | Constraints                                  |
+| ------------- | ---- | -------------------------------------------- |
+| `recurringId` | text | notNull, references recurring.id (cascade)   |
+| `tagId`       | text | notNull, references tag.id (restrict)        |
+
+Composite primary key `(recurringId, tagId)`.
+
+## Schema export
+
+`schema` re-exports all twelve tables: `user`, `session`, `account`, `verification`, `interestedEmail`, `singleUseCode`, `category`, `tag`, `expense`, `expenseTag`, `recurring`, `recurringTag`.
+
 ## Inferred types
 
-For each table: `User`, `NewUser`, `Session`, `NewSession`, `Account`, `NewAccount`, `Verification`, `NewVerification`, `SingleUseCode`, `NewSingleUseCode`, `InterestedEmail`, `NewInterestedEmail`.
+For each table: `User`, `NewUser`, `Session`, `NewSession`, `Account`, `NewAccount`, `Verification`, `NewVerification`, `SingleUseCode`, `NewSingleUseCode`, `InterestedEmail`, `NewInterestedEmail`, `Category`, `NewCategory`, `Tag`, `NewTag`, `Expense`, `NewExpense`, `ExpenseTag`, `NewExpenseTag`, `Recurring`, `NewRecurring`, `RecurringTag`, `NewRecurringTag`.
 
 ---
 

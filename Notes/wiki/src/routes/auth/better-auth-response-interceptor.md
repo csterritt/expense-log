@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Intercepts requests to `/api/auth/sign-in/email` to convert better-auth's JSON responses into user-friendly redirects with flash messages. Handles unverified sign-ins, invalid credentials, rate limits, and other error states.
+Intercepts requests to `/api/auth/sign-in/email` to convert better-auth's JSON responses into user-friendly redirects with flash messages. On a successful verified sign-in, redirects the user to `/expenses` (the post-sign-in landing page) with the welcome flash. Also handles unverified sign-ins, invalid credentials, rate limits, and other error states.
 
 ## Export
 

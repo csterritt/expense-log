@@ -14,7 +14,7 @@ Route: `GET /auth/sign-in/:validationSuccessful?`
 
 ### Behavior
 
-1. Already-authenticated users are redirected to `/private` with `'You are already signed in.'`
+1. Already-authenticated users are redirected to `/expenses` with `'You are already signed in.'`
 2. If `validationSuccessful` path param is `'true'`, renders a success banner: `'Your email has been verified! Please sign in.'`
 3. Otherwise renders the standard sign-in form
 

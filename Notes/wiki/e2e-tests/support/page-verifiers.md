@@ -30,7 +30,7 @@ Alias for `verifyOnSignUpPage`.
 
 ### `verifyOnProtectedPage(page): Promise<void>`
 
-Asserts `private-page-banner` element exists.
+Asserts `expenses-page` element exists. (Used after sign-in or any redirect that should land on the protected `/expenses` landing page.)
 
 ### `verifyOnAwaitVerificationPage(page): Promise<void>`
 

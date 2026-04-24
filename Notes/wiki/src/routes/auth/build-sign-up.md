@@ -14,7 +14,7 @@ Route: `GET /auth/sign-up`
 
 ### Behavior
 
-1. Already-authenticated users are redirected to `/private` with `'You are already signed in.'`
+1. Already-authenticated users are redirected to `/expenses` with `'You are already signed in.'`
 2. Renders the open sign-up form
 
 ### Sign-up form fields

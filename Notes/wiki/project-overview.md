@@ -1,10 +1,10 @@
 # Project Overview
 
-`daisy-tw-worker-d1-drizzle` is a Cloudflare Worker-based authentication application with multiple sign-up modes.
+`expense-log` is a Cloudflare Worker-based personal expense-tracking application with built-in authentication and multiple sign-up modes.
 
 ## Purpose
 
-Provides username/password authentication with email verification, password reset, and configurable sign-up gating. Designed to be deployed as a Cloudflare Worker with a D1 SQLite database.
+Forked from the `daisy-tw-worker-d1-drizzle` auth template, this project layers an expense-logging feature on top: signed-in users can record expenses, organize them with categories and tags, view summaries, and define recurring expense templates. Authentication retains username/password sign-in with email verification, password reset, and configurable sign-up gating. Deployed as a Cloudflare Worker with a D1 SQLite database.
 
 ## Technology stack
 
@@ -39,7 +39,9 @@ The app runs in one of four modes controlled by the `SIGN_UP_MODE` environment v
   - `routes/` — Route builders (`build-*.tsx`) and handlers (`handle-*.ts`).
     - `auth/` — Authentication-related routes and handlers.
     - `profile/` — Profile and account management routes.
+    - `expenses/` — Expense list page builder.
     - `test/` — Dev-only test endpoints (PRODUCTION:REMOVE).
+    - Top-level placeholder builders for `categories`, `tags`, `summary`, and `recurring` pages.
 - `e2e-tests/` — Playwright end-to-end tests organized by feature.
 - `tests/` — Unit tests for isolated utilities.
 
@@ -51,6 +53,20 @@ The app runs in one of four modes controlled by the `SIGN_UP_MODE` environment v
 - Email verification required before sign-in.
 - Password reset via time-limited token emails.
 - Dev-only routes and test endpoints are marked with `// PRODUCTION:REMOVE` comments and removed by `clean-for-production.rb` during deployment.
+
+### Expense feature
+
+Five signed-in-only routes form the expense feature scaffold. Each is rendered through `useLayout` and protected by the `signedInAccess` middleware:
+
+- `GET /expenses` — list page (currently shows an `expenses-empty-state` placeholder).
+- `GET /categories` — placeholder "Categories" page.
+- `GET /tags` — placeholder "Tags" page.
+- `GET /summary` — placeholder "Summary" page.
+- `GET /recurring` — placeholder "Recurring" page.
+
+The header navbar exposes `expenses-nav`, `categories-nav`, `tags-nav`, `summary-nav`, and `recurring-nav` links when the user is authenticated. The previous `/private` route and its `buildPrivate` builder were removed; `/expenses` is now the post-sign-in landing page.
+
+The Drizzle schema adds tables for `category`, `tag`, `expense`, `expenseTag`, `recurring`, and `recurringTag`, including a unique partial index `expense_recurring_occurrence_unique` on `(recurringId, occurrenceDate)` (where `recurringId IS NOT NULL`).
 
 ### Notable design decisions
 

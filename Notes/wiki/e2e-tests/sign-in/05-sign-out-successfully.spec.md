@@ -12,7 +12,7 @@ Verifies the complete sign-out flow: sign in, sign out, verify redirect, and con
 - Signs in with `TEST_USERS.KNOWN_USER`
 - Clicks sign-out and verifies redirect to sign-out success page
 - Clicks home button and verifies landing on startup page
-- Tries to access `/private` again and is redirected to sign-in with `'You must sign in to visit that page'`
+- Tries to access `/expenses` again (via `BASE_URLS.EXPENSES`) and is redirected to sign-in with `'You must sign in to visit that page'`
 
 ---
 

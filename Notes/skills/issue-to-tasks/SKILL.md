@@ -36,6 +36,7 @@ Label each task with its type:
 - **TEST**: write or update tests
 - **MIGRATE**: schema or data migration
 - **CONFIG**: environment, tooling, or infrastructure change
+- **DOCUMENT**: update docs, READMEs, the wiki in Notes/wiki (see Notes/wiki/wiki-rules.md for details) or other non-code artifacts
 - **WALKTHROUGH**: using showboat (run `uvx showboat --help` for details) create a walkthrough of the implementation, making a new directory under Notes/walkthroughs named with the TASK-ID, put the files it generates there
 - **REVIEW**: human decision required before proceeding
 

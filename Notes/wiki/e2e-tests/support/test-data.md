@@ -35,7 +35,7 @@ Constant strings for all expected flash/alert messages: invalid credentials, ema
 
 ### `BASE_URLS`
 
-All application URLs used in tests.
+All application URLs used in tests, including `HOME`, `SIGN_IN`, `SIGN_UP`, `INTEREST_SIGN_UP`, `FORGOT_PASSWORD`, `AWAIT_VERIFICATION`, `EXPENSES` (`/expenses` — the protected landing page; replaces the previous `PRIVATE` entry), `WAITING_FOR_RESET`, `SIGN_OUT`, `PROFILE`, and `PROFILE_DELETE_CONFIRM`.
 
 ---
 

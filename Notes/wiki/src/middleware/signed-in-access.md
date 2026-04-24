@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Protects private routes by requiring an active Better Auth session.
+Protects authenticated-only routes (`/expenses`, `/categories`, `/tags`, `/summary`, `/recurring`, `/profile`, `/profile/delete-confirm`) by requiring an active Better Auth session.
 
 ## Export
 
