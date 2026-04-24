@@ -15,7 +15,7 @@ Build out `/tags` as the tag analogue of Issue 9: alphabetical list, create/rena
 
 Blocked by Issue 6 (not Issue 1) because tag references from expenses only become exercisable once the tag-attachment path exists.
 
-See PRD sections *Category/tag semantics*, *Management: tags*, user stories 48, 49, 50.
+See PRD sections _Category/tag semantics_, _Management: tags_, user stories 48, 49, 50.
 
 ### How to verify
 

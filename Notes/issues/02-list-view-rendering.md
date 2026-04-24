@@ -13,7 +13,7 @@ With data seeded via an existing test database route, render the `/expenses` lis
 
 Introduce the `src/lib/money.ts` module (`formatCents` only in this slice) and `src/lib/et-date.ts` module (`todayEt`, `defaultRangeEt`, `isValidYmd`), both with unit tests. Add `expense-repo.listExpenses(filters)` supporting only the date-range filter for now.
 
-See PRD sections *Dates and timezone*, *Money*, *List (default page)*, and the `money` / `et-date` / `expense-repo` module specs.
+See PRD sections _Dates and timezone_, _Money_, _List (default page)_, and the `money` / `et-date` / `expense-repo` module specs.
 
 ### How to verify
 

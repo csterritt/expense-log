@@ -24,7 +24,7 @@ Extend `expense-repo.summarize(grouping, granularity, filters)` with unit tests 
 
 Add `et-date.monthKeyEt` and `yearKeyEt` for Date grouping; tests include DST boundary dates.
 
-See PRD section *Summaries*, user stories 34–41.
+See PRD section _Summaries_, user stories 34–41.
 
 ### How to verify
 

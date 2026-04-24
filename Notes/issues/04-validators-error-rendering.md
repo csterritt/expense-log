@@ -13,7 +13,7 @@ Create `src/lib/expense-validators.ts` with valibot schemas for expense create (
 
 Error cases covered: description empty or > 200 chars; amount missing / non-numeric / zero / negative / > 2 decimals / malformed commas after normalization; date missing or not a valid calendar date; category missing.
 
-See PRD sections *Forms and validation*, user stories 15, 16, 17 (subset applicable without inline create), 19, 20.
+See PRD sections _Forms and validation_, user stories 15, 16, 17 (subset applicable without inline create), 19, 20.
 
 ### How to verify
 

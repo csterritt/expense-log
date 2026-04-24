@@ -59,6 +59,29 @@ export const useLayout = (
               <span className='text-sm'>
                 Welcome, {c.get('user')?.name || c.get('user')?.email || 'User'}!
               </span>
+              <a href={PATHS.EXPENSES} className='btn btn-ghost btn-sm' data-testid='expenses-nav'>
+                Expenses
+              </a>
+              <a
+                href={PATHS.CATEGORIES}
+                className='btn btn-ghost btn-sm'
+                data-testid='categories-nav'
+              >
+                Categories
+              </a>
+              <a href={PATHS.TAGS} className='btn btn-ghost btn-sm' data-testid='tags-nav'>
+                Tags
+              </a>
+              <a href={PATHS.SUMMARY} className='btn btn-ghost btn-sm' data-testid='summary-nav'>
+                Summary
+              </a>
+              <a
+                href={PATHS.RECURRING}
+                className='btn btn-ghost btn-sm'
+                data-testid='recurring-nav'
+              >
+                Recurring
+              </a>
               <a
                 href={PATHS.PROFILE}
                 className='btn btn-outline btn-sm'

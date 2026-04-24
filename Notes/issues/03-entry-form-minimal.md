@@ -13,7 +13,7 @@ Add the expense entry form at the top of `/expenses`. Fields: description (text,
 
 Extend `src/lib/money.ts` with `parseAmount`, handling trim, comma stripping, lenient positive-decimal regex with ≤ 2 decimal places, rejecting zero and negative. Add unit tests covering `1234.56`, `1,234.56`, `1234`, `.50`, malformed commas, trailing/leading whitespace, zero, negative, too many decimals, and non-numeric.
 
-See PRD sections *Money*, *Forms and validation*, and user stories 1–5, 13.
+See PRD sections _Money_, _Forms and validation_, and user stories 1–5, 13.
 
 ### How to verify
 

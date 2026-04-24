@@ -16,7 +16,7 @@ Two vanilla-JS modules served as static assets and auto-initialized on DOM eleme
 
 Both inputs degrade gracefully: without JS, the existing no-JS inputs from Issues 5 and 6 remain functional unchanged. The server-side confirmation/create flow is identical for both paths.
 
-See PRD section *Client JS (progressive enhancement)*, user stories 5 (full searchable), 7 (full chip picker), 8.
+See PRD section _Client JS (progressive enhancement)_, user stories 5 (full searchable), 7 (full chip picker), 8.
 
 ### How to verify
 

@@ -8,7 +8,7 @@ Parent PRD: `Notes/PRD-expense-log.md`
 ### 1. Add expense-feature tables to schema and generate migration
 
 **Type**: MIGRATE
-**Output**: `src/db/schema.ts` defines `category`, `tag`, `expense`, `expenseTag`, `recurring`, `recurringTag` with all FKs, `onDelete` actions, and timestamps per the PRD *Data model* section; the `schema` export and `$inferSelect`/`$inferInsert` type exports are extended in the same style as the existing tables; a Drizzle-generated migration in `drizzle/` creates all six tables and the partial unique index on `expense(recurringId, occurrenceDate) WHERE recurringId IS NOT NULL`.
+**Output**: `src/db/schema.ts` defines `category`, `tag`, `expense`, `expenseTag`, `recurring`, `recurringTag` with all FKs, `onDelete` actions, and timestamps per the PRD _Data model_ section; the `schema` export and `$inferSelect`/`$inferInsert` type exports are extended in the same style as the existing tables; a Drizzle-generated migration in `drizzle/` creates all six tables and the partial unique index on `expense(recurringId, occurrenceDate) WHERE recurringId IS NOT NULL`.
 **Depends on**: none
 
 Follow the existing pattern in `src/db/schema.ts` (sqliteTable, `text`/`integer`, `.references(() => …, { onDelete: … })`, `schema` export, type exports). Use integer cents for amounts, `YYYY-MM-DD` text for dates, ULID-shaped `text` primary keys, and `integer('…', { mode: 'timestamp' })` for `createdAt`/`updatedAt`. Generate the migration using the existing drizzle tooling (see `build-schema-update.sh`). Drizzle may not express the partial unique index directly; if not, hand-edit the generated SQL to add `CREATE UNIQUE INDEX … ON expense(recurringId, occurrenceDate) WHERE recurringId IS NOT NULL`. Do not modify the better-auth tables.
@@ -61,7 +61,7 @@ Use helpers in `e2e-tests/support/` in the same style as the existing `e2e-tests
 **Output**: `src/routes/expenses/build-expenses.tsx` exports `buildExpenses(app)` that registers `GET /expenses` gated by `signedInAccess`, rendering a heading "Expenses" and the empty-state message "No expenses yet" with `data-testid="expenses-empty-state"`. Wired into `src/index.ts`.
 **Depends on**: 4
 
-Same skeleton as the placeholders from task 4. Do not add the entry form, list, filters, or any DB reads — those are out of scope for this issue. Place the file in an `expenses/` subdirectory per the PRD *Route modules* section.
+Same skeleton as the placeholders from task 4. Do not add the entry form, list, filters, or any DB reads — those are out of scope for this issue. Place the file in an `expenses/` subdirectory per the PRD _Route modules_ section.
 
 ---
 
@@ -108,7 +108,7 @@ Run `uvx showboat --help` first to confirm current flags, then generate into the
 ### 11. Final human review
 
 **Type**: REVIEW
-**Output**: User confirms all manual verification steps from the issue's *How to verify* section pass and that every acceptance-criteria checkbox is satisfied, before merge.
+**Output**: User confirms all manual verification steps from the issue's _How to verify_ section pass and that every acceptance-criteria checkbox is satisfied, before merge.
 **Depends on**: 10
 
 ---

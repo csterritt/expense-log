@@ -1,34 +1,34 @@
 # Cascade Chat Conversation
 
-  Note: _This is purely the output of the chat conversation and does not contain any raw data, codebase snippets, etc. used to generate the output._
+Note: _This is purely the output of the chat conversation and does not contain any raw data, codebase snippets, etc. used to generate the output._
 
 ### User Input
 
-Read through the SKILLS.md file in @[Notes/skills/write-a-prd] and do what it says. The description of the problem is @[Notes/Ideas.md] 
+Read through the SKILLS.md file in @[Notes/skills/write-a-prd] and do what it says. The description of the problem is @[Notes/Ideas.md]
 
-*Viewed [SKILL.md](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/write-a-prd/SKILL.md) *
+_Viewed [SKILL.md](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/write-a-prd/SKILL.md) _
 
-*Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) *
+_Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) _
 
-*Listed directory [expense-log](file:///Users/chris/hacks/expenses/expense-log) *
+_Listed directory [expense-log](file:///Users/chris/hacks/expenses/expense-log) _
 
-*Listed directory [src](file:///Users/chris/hacks/expenses/expense-log/src) *
+_Listed directory [src](file:///Users/chris/hacks/expenses/expense-log/src) _
 
-*Viewed [README.md](file:///Users/chris/hacks/expenses/expense-log/README.md) *
+_Viewed [README.md](file:///Users/chris/hacks/expenses/expense-log/README.md) _
 
-*Listed directory [routes](file:///Users/chris/hacks/expenses/expense-log/src/routes) *
+_Listed directory [routes](file:///Users/chris/hacks/expenses/expense-log/src/routes) _
 
-*Listed directory [db](file:///Users/chris/hacks/expenses/expense-log/src/db) *
+_Listed directory [db](file:///Users/chris/hacks/expenses/expense-log/src/db) _
 
-*Listed directory [lib](file:///Users/chris/hacks/expenses/expense-log/src/lib) *
+_Listed directory [lib](file:///Users/chris/hacks/expenses/expense-log/src/lib) _
 
-*Viewed [schema.ts](file:///Users/chris/hacks/expenses/expense-log/src/db/schema.ts) *
+_Viewed [schema.ts](file:///Users/chris/hacks/expenses/expense-log/src/db/schema.ts) _
 
-*Viewed [index.ts](file:///Users/chris/hacks/expenses/expense-log/src/index.ts) *
+_Viewed [index.ts](file:///Users/chris/hacks/expenses/expense-log/src/index.ts) _
 
-*Searched filesystem*
+_Searched filesystem_
 
-*Searched filesystem*
+_Searched filesystem_
 
 ### Planner Response
 
@@ -43,20 +43,23 @@ Please answer all of these — they gate everything else.
 **1. PRD file location and format.** Where should I save it, and what filename/extension? (e.g. `Notes/PRD-expense-log.md`?)
 
 **2. Multi-user model.** [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md:0:0-0:0) says "You can see all expenses and manage them." Does that mean:
-   - (a) Each signed-in user sees only **their own** expenses/categories/tags (isolated per-user), or
-   - (b) Any signed-in user sees **everyone's** data (shared pool), or
-   - (c) Role-based: regular users see their own, an admin sees all?
+
+- (a) Each signed-in user sees only **their own** expenses/categories/tags (isolated per-user), or
+- (b) Any signed-in user sees **everyone's** data (shared pool), or
+- (c) Role-based: regular users see their own, an admin sees all?
 
 **3. Categories and tags scope.** Are categories and tags:
-   - (a) Per-user (each user has their own list), or
-   - (b) Global/shared across all users?
-   
-   (This depends on #2.)
+
+- (a) Per-user (each user has their own list), or
+- (b) Global/shared across all users?
+
+(This depends on #2.)
 
 **4. Amount representation.**
-   - Currency: single currency only? Which (USD)? Or multi-currency per expense?
-   - Precision: 2 decimal places (cents)?
-   - Negative amounts allowed (e.g. refunds), or only positive?
+
+- Currency: single currency only? Which (USD)? Or multi-currency per expense?
+- Precision: 2 decimal places (cents)?
+- Negative amounts allowed (e.g. refunds), or only positive?
 
 **5. Date vs date+time.** Is an expense recorded with just a calendar date (user's local date), or with a timestamp? If just a date, which timezone defines "today" for the default?
 
@@ -65,9 +68,10 @@ Please answer all of these — they gate everything else.
 **7. Tags per expense.** Any limit on how many tags can be attached? Max tag-name length? Max category-name length?
 
 **8. Category deletion semantics.** Category is required on an expense. If a user deletes a category that's in use:
-   - (a) Block deletion while expenses reference it, or
-   - (b) Reassign those expenses to a fallback/"Uncategorized", or
-   - (c) Cascade-delete those expenses?
+
+- (a) Block deletion while expenses reference it, or
+- (b) Reassign those expenses to a fallback/"Uncategorized", or
+- (c) Cascade-delete those expenses?
 
 **9. Tag deletion semantics.** Same question for tags (they're optional, so cascade-unlink is natural — confirm?).
 
@@ -75,7 +79,7 @@ Please answer all of these — they gate everything else.
 
 Once these are answered I'll drill into search/filter semantics, summary shapes, forms, and module boundaries.
 
-*Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) *
+_Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) _
 
 ### User Input
 
@@ -92,7 +96,6 @@ Answers:
 9. Block deletion of tags that are referenced by expenses
 10. Default to the recent-expenses list, with the entry form at the top
 
-
 ### Planner Response
 
 Great, all clear. Moving to Round 2.
@@ -100,9 +103,10 @@ Great, all clear. Moving to Round 2.
 ## Round 2: Recent list, search, filter
 
 **11. Recent-expenses default view.** "Last three calendar months" — does that mean:
-   - (a) The current calendar month plus the two previous (e.g. on Apr 22, show Feb 1 – Apr 22), or
-   - (b) A rolling 90 days, or
-   - (c) Exactly 3 months back from today (Jan 22 – Apr 22)?
+
+- (a) The current calendar month plus the two previous (e.g. on Apr 22, show Feb 1 – Apr 22), or
+- (b) A rolling 90 days, or
+- (c) Exactly 3 months back from today (Jan 22 – Apr 22)?
 
 **12. Sort order of the list.** Newest date first? Ties broken by created-at, or by id?
 
@@ -119,9 +123,10 @@ Great, all clear. Moving to Round 2.
 ## Round 3: Summaries
 
 **18. Summary views.** "Summaries by category, tag, or date, optionally filtered by date range." For each grouping:
-   - What columns? (e.g. group name, count, total amount, % of total)
-   - Sorted by total descending by default?
-   - "By date" — grouped by day, month, or user-selectable granularity (day/week/month/year)?
+
+- What columns? (e.g. group name, count, total amount, % of total)
+- Sorted by total descending by default?
+- "By date" — grouped by day, month, or user-selectable granularity (day/week/month/year)?
 
 **19. Summary output format.** Just a table, or also a chart (bar/pie)? If chart, which library — or plain HTML/CSS since this app is server-rendered with no client JS besides the sign-out handler?
 
@@ -130,24 +135,27 @@ Great, all clear. Moving to Round 2.
 ## Round 4: Entry form and dropdowns
 
 **21. "Searchable dropdown that allows new entries."** The app currently serves **no client JS** except `buildRoot.tsx`'s sign-out handler. A searchable, creatable combobox typically needs JS. Options:
-   - (a) Add a small amount of client JS (e.g. a plain `<input list>` datalist for search + separate "add new" flow, or a lightweight custom combobox), or
-   - (b) Use native `<datalist>` only (browser-native search, user types a new value freely, and the server creates it on submit if unknown), or
-   - (c) Two-step: a plain `<select>` plus a separate "Manage categories/tags" page for creation.
-   
-   Which do you want?
+
+- (a) Add a small amount of client JS (e.g. a plain `<input list>` datalist for search + separate "add new" flow, or a lightweight custom combobox), or
+- (b) Use native `<datalist>` only (browser-native search, user types a new value freely, and the server creates it on submit if unknown), or
+- (c) Two-step: a plain `<select>` plus a separate "Manage categories/tags" page for creation.
+
+Which do you want?
 
 **22. Tag input.** If tags can be many per expense, how should the user enter them? Comma-separated in one textbox? A repeated datalist input with "+ add tag" button? Checkboxes?
 
 **23. Inline creation policy.** If the user types a brand-new category/tag name in the entry form and submits:
-   - (a) Auto-create it silently, or
-   - (b) Show a "Create 'Foo'?" confirmation step, or
-   - (c) Reject and force them to create it on the management page first?
+
+- (a) Auto-create it silently, or
+- (b) Show a "Create 'Foo'?" confirmation step, or
+- (c) Reject and force them to create it on the management page first?
 
 **24. Amount input format.** Does the user type dollars.cents (e.g. `12.34`) or cents? Accept `$`, commas? Validation rules?
 
 **25. Entry form on the recent-list page.** You said "entry form at the top of the recent-expenses list." After a successful submit:
-   - (a) Redirect back to the same page (PRG) with the form cleared and the new row visible, or
-   - (b) Keep the form values (e.g. same category/date) for rapid entry of similar expenses?
+
+- (a) Redirect back to the same page (PRG) with the form cleared and the new row visible, or
+- (b) Keep the form values (e.g. same category/date) for rapid entry of similar expenses?
 
 ## Round 5: CRUD & management pages
 
@@ -164,19 +172,20 @@ Great, all clear. Moving to Round 2.
 **30. Tests.** Playwright e2e tests expected for this feature? Any unit-level tests for pure modules (formatting, validators, summary aggregation)?
 
 **31. Out of scope to confirm.** I'm assuming these are NOT in scope — tell me if any should be in scope:
-   - Importing expenses (CSV/bank feed)
-   - Exporting (CSV/PDF)
-   - Recurring/scheduled expenses
-   - Receipts / file attachments
-   - Budgets / planning
-   - Email notifications for anything expense-related
-   - Multi-currency
-   - Mobile-native app
-   - Offline support
+
+- Importing expenses (CSV/bank feed)
+- Exporting (CSV/PDF)
+- Recurring/scheduled expenses
+- Receipts / file attachments
+- Budgets / planning
+- Email notifications for anything expense-related
+- Multi-currency
+- Mobile-native app
+- Offline support
 
 **32. Internationalization/localization.** English-only, USD-only, US-East-only — correct?
 
-*Viewed [package.json](file:///Users/chris/hacks/expenses/expense-log/package.json) *
+_Viewed [package.json](file:///Users/chris/hacks/expenses/expense-log/package.json) _
 
 ### User Input
 
@@ -210,22 +219,25 @@ Good. Final round — a handful of edge cases, then I'll write the PRD.
 ## Round 7: Edges and module boundaries
 
 **33. Amount input, precise rules.** The user may type e.g. `1,234`, `1,234.5`, `1234.56`, `.50`, `0`. Confirm:
-   - (a) Regex something like `^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$` — must be > 0, max 2 decimals, commas must be correctly placed in thousands groups?
-   - (b) Or more lenient: strip commas, then require positive decimal with ≤ 2 decimal places?
-   - Max amount (e.g. `$99,999,999.99`)?
+
+- (a) Regex something like `^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$` — must be > 0, max 2 decimals, commas must be correctly placed in thousands groups?
+- (b) Or more lenient: strip commas, then require positive decimal with ≤ 2 decimal places?
+- Max amount (e.g. `$99,999,999.99`)?
 
 **34. Inline creation confirmation flow (Q23 follow-up).** Concretely:
-   - User fills the expense form, types a new category name `Foo`, submits.
-   - Server detects unknown category, re-renders a **confirmation page** showing the full form values with a "Create category 'Foo' and save expense?" prompt.
-   - On confirm → create category + expense atomically.
-   - On cancel → return to form with values preserved.
-   - Same pattern for each new tag on the same submit. Correct?
+
+- User fills the expense form, types a new category name `Foo`, submits.
+- Server detects unknown category, re-renders a **confirmation page** showing the full form values with a "Create category 'Foo' and save expense?" prompt.
+- On confirm → create category + expense atomically.
+- On cancel → return to form with values preserved.
+- Same pattern for each new tag on the same submit. Correct?
 
 **35. Tag chip widget.** For the accumulating-chip tag picker:
-   - Enter or click-from-list adds a chip.
-   - X on chip removes it.
-   - Duplicate tags silently ignored.
-   - The underlying form field is a hidden input with the comma-separated (or JSON) list, posted on submit. OK?
+
+- Enter or click-from-list adds a chip.
+- X on chip removes it.
+- Duplicate tags silently ignored.
+- The underlying form field is a hidden input with the comma-separated (or JSON) list, posted on submit. OK?
 
 **36. Recent list — show when empty?** If no expenses in the last 3 calendar months, just show the entry form and an empty-state message?
 
@@ -255,9 +267,9 @@ Any modules to add, merge, or rename? Any module you explicitly want **not** tes
 
 **43. Navigation.** Where do "Categories", "Tags", and "Summary" links live — in the existing layout header/nav? Any changes needed to `@/Users/chris/hacks/expenses/expense-log/src/routes/build-layout.tsx`?
 
-*Edited relevant file*
+_Edited relevant file_
 
-*Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) *
+_Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) _
 
 ### User Input
 
@@ -279,7 +291,7 @@ Answers:
 
 All clear. Writing the PRD now.
 
-*Edited relevant file*
+_Edited relevant file_
 
 ### Planner Response
 
@@ -292,11 +304,11 @@ PRD written to `@/Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.m
 - Captured one inferred decision worth flagging: on rename-to-existing-name I encoded **merge with confirmation** (based on your Q39 answer). If you meant something else (e.g. block instead), tell me and I'll adjust — it's in the "Implementation Decisions → Category/tag semantics" and stories 45/49.
 - No open questions remain.
 
-*Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) *
+_Viewed [Ideas.md](file:///Users/chris/hacks/expenses/expense-log/Notes/Ideas.md) _
 
 ### User Input
 
-I updated the @[Notes/Ideas.md] to add recurring expenses. please update the @[Notes/PRD-expense-log.md] per the SKILL.md file in @[Notes/skills/write-a-prd] 
+I updated the @[Notes/Ideas.md] to add recurring expenses. please update the @[Notes/PRD-expense-log.md] per the SKILL.md file in @[Notes/skills/write-a-prd]
 
 ### Planner Response
 
@@ -305,72 +317,84 @@ Read the updated ideas. New branch: recurring expenses. A handful of questions b
 ## Recurring expenses
 
 **R1. Fields on a recurring template.** Same as an expense (description, amount, category, tags) plus:
-   - (a) just `recurrence` ∈ {Monthly, Quarterly, Yearly}, or
-   - (b) also an explicit **anchor date** (the `YYYY-MM-DD` that defines the day-of-month for Monthly, and the month-and-day for Quarterly/Yearly)?
-   
-   Without an anchor date there's no way to know *which* day a recurrence fires. I assume (b) — confirm.
+
+- (a) just `recurrence` ∈ {Monthly, Quarterly, Yearly}, or
+- (b) also an explicit **anchor date** (the `YYYY-MM-DD` that defines the day-of-month for Monthly, and the month-and-day for Quarterly/Yearly)?
+
+Without an anchor date there's no way to know _which_ day a recurrence fires. I assume (b) — confirm.
 
 **R2. Quarterly semantics.** Given an anchor of, say, Feb 5:
-   - (a) Every 3 months from the anchor: Feb 5, May 5, Aug 5, Nov 5, or
-   - (b) Fixed calendar quarters: Jan 1, Apr 1, Jul 1, Oct 1 (ignoring anchor day)?
+
+- (a) Every 3 months from the anchor: Feb 5, May 5, Aug 5, Nov 5, or
+- (b) Fixed calendar quarters: Jan 1, Apr 1, Jul 1, Oct 1 (ignoring anchor day)?
 
 **R3. Yearly semantics.** Fires once per year on the anchor's month+day? (E.g., anchor Mar 15 → Mar 15 every year.)
 
 **R4. The "past the 28th" rule — scope.**
-   - Monthly: anchor day 29/30/31 → fires on the 28th every month. Clear.
-   - Quarterly: does the same rule apply (shift to 28th) when a quarterly occurrence would land on 29/30/31?
-   - Yearly: does it apply? E.g., anchor Feb 29 on leap year — shift to Feb 28 every year? Or anchor May 31 → May 28?
+
+- Monthly: anchor day 29/30/31 → fires on the 28th every month. Clear.
+- Quarterly: does the same rule apply (shift to 28th) when a quarterly occurrence would land on 29/30/31?
+- Yearly: does it apply? E.g., anchor Feb 29 on leap year — shift to Feb 28 every year? Or anchor May 31 → May 28?
 
 **R5. End condition.** A recurring template:
-   - (a) runs forever until the user deletes it, or
-   - (b) has an optional end date, or
-   - (c) has an optional "stop after N occurrences"?
+
+- (a) runs forever until the user deletes it, or
+- (b) has an optional end date, or
+- (c) has an optional "stop after N occurrences"?
 
 **R6. Start date.** Does a template have an explicit **start date** too? (E.g., "this rent starts Jun 5, 2026" — don't generate anything before then.) Or does it start the moment it's created?
 
 **R7. Materialization model.** When the cron fires, does it:
-   - (a) Insert a normal row into `expense` with no special marker — indistinguishable from manual entries, or
-   - (b) Insert into `expense` **with** a `recurringId` FK back to the template, so we can show "generated from X" and prevent duplicates?
-   
-   I strongly recommend (b) for duplicate-prevention. Confirm.
+
+- (a) Insert a normal row into `expense` with no special marker — indistinguishable from manual entries, or
+- (b) Insert into `expense` **with** a `recurringId` FK back to the template, so we can show "generated from X" and prevent duplicates?
+
+I strongly recommend (b) for duplicate-prevention. Confirm.
 
 **R8. Duplicate prevention.** Given (b), dedupe key is `(recurringId, occurrenceDate)` — a unique constraint — so re-runs of the cron never double-insert. OK?
 
 **R9. Catch-up / backfill.** If the cron hasn't run for 3 days (outage, deployment gap, or the template was created today with an anchor day in the past of this month), on the next run should it:
-   - (a) Generate every missed occurrence up to today, or
-   - (b) Only generate today's occurrence, skipping missed ones, or
-   - (c) Only generate the most-recent missed occurrence per template?
+
+- (a) Generate every missed occurrence up to today, or
+- (b) Only generate today's occurrence, skipping missed ones, or
+- (c) Only generate the most-recent missed occurrence per template?
 
 **R10. Newly-created template with today-or-earlier occurrence.** If I create a Monthly template today (Apr 22) with anchor day 5, does it immediately generate an Apr 5 occurrence? Or wait until next month (May 5)?
 
 **R11. Editing the template.** If I change the amount/category/description/tags/recurrence/anchor of a template:
-   - (a) Affects only **future** occurrences; past generated rows stay as they were, or
-   - (b) Prompts the user ("also update past occurrences?"), or
-   - (c) Always rewrites future and leaves past alone, silently?
+
+- (a) Affects only **future** occurrences; past generated rows stay as they were, or
+- (b) Prompts the user ("also update past occurrences?"), or
+- (c) Always rewrites future and leaves past alone, silently?
 
 **R12. Deleting the template.** Past generated rows:
-   - (a) Remain in `expense` (orphaned of `recurringId`, or with `recurringId` nulled), or
-   - (b) Are cascade-deleted along with the template, or
-   - (c) Delete is blocked while any generated rows exist?
+
+- (a) Remain in `expense` (orphaned of `recurringId`, or with `recurringId` nulled), or
+- (b) Are cascade-deleted along with the template, or
+- (c) Delete is blocked while any generated rows exist?
 
 **R13. Editing a generated expense.** Can the user edit/delete an individual generated expense row independently of the template?
-   - (a) Yes, fully — it becomes detached from the template conceptually but keeps the link for provenance, or
-   - (b) Yes for edit and delete, but the link is severed on edit, or
-   - (c) Read-only; must edit the template.
+
+- (a) Yes, fully — it becomes detached from the template conceptually but keeps the link for provenance, or
+- (b) Yes for edit and delete, but the link is severed on edit, or
+- (c) Read-only; must edit the template.
 
 **R14. Display in the list.** Generated expenses appear in the normal list alongside manual ones?
-   - Visually marked (small badge like "↻")? Or indistinguishable?
+
+- Visually marked (small badge like "↻")? Or indistinguishable?
 
 **R15. Management UI.** Recurring templates are managed on a dedicated page, e.g. `/recurring`:
-   - List all templates (fields + next occurrence date).
-   - Full CRUD using the same inline-create flow for category/tags.
-   - Add a header nav link "Recurring".
-   - Confirm.
+
+- List all templates (fields + next occurrence date).
+- Full CRUD using the same inline-create flow for category/tags.
+- Add a header nav link "Recurring".
+- Confirm.
 
 **R16. Cron mechanism.** Cloudflare Workers cron triggers:
-   - Schedule: nightly at, e.g., 01:00 America/New_York (adjusting for DST). Cloudflare crons are UTC-only; we'd pick 05:00 UTC (winter EST) or 05:00 UTC year-round accepting a 1-hour drift in DST, or run multiple times. Preference?
-   - On failure: log via the existing logger and optionally Pushover notify?
-   - Idempotent: safe to trigger twice in the same day (because of the dedupe key in R8).
+
+- Schedule: nightly at, e.g., 01:00 America/New_York (adjusting for DST). Cloudflare crons are UTC-only; we'd pick 05:00 UTC (winter EST) or 05:00 UTC year-round accepting a 1-hour drift in DST, or run multiple times. Preference?
+- On failure: log via the existing logger and optionally Pushover notify?
+- Idempotent: safe to trigger twice in the same day (because of the dedupe key in R8).
 
 **R17. Manual "run now" dev route.** Add a `// PRODUCTION:REMOVE` test route to trigger the cron logic for e2e tests? (Recommended for testability — cron can't realistically be exercised in Playwright otherwise.)
 
@@ -406,25 +430,25 @@ R19. yes
 
 Updating the PRD with recurring expenses.
 
-*Viewed [PRD-expense-log.md](file:///Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md) *
+_Viewed [PRD-expense-log.md](file:///Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md) _
 
-*Edited relevant file*
+_Edited relevant file_
 
-*Viewed [PRD-expense-log.md](file:///Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md) *
+_Viewed [PRD-expense-log.md](file:///Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md) _
 
-*Edited relevant file*
+_Edited relevant file_
 
 ### Planner Response
 
 Now add Recurring section after Navigation, and update Implementation Decisions + Modules + Testing + Out-of-Scope.
 
-*Edited relevant file*
+_Edited relevant file_
 
 ### Planner Response
 
 Now update Implementation Decisions (schema, add Recurring subsection), Modules, Testing, and Out-of-Scope.
 
-*Edited relevant file*
+_Edited relevant file_
 
 ### Planner Response
 
@@ -442,4 +466,4 @@ PRD updated. `@/Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md`
 
 One call I made on your behalf worth flagging: on **template delete**, I encoded **`ON DELETE SET NULL`** on `expense.recurringId` (your R12 answer was "(a) remain"). Tell me if you'd rather keep the `recurringId` link on those orphan rows instead of nulling it.
 
-----
+---

@@ -13,7 +13,7 @@ Each list row gains a single "Edit" button that navigates to an edit page pre-po
 
 The edit page also has a "Delete" button that navigates to a delete-confirmation page showing the expense being deleted (description, amount, date, category, tags). Confirming invokes `expense-repo.deleteExpense` and redirects to `/expenses`.
 
-See PRD sections *Forms and validation*, *Edit / delete expense*, user stories 26, 51, 52, 53, 54.
+See PRD sections _Forms and validation_, _Edit / delete expense_, user stories 26, 51, 52, 53, 54.
 
 ### How to verify
 

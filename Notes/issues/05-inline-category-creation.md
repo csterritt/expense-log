@@ -9,7 +9,7 @@
 
 ### What to build
 
-Replace the native category `<select>` with a plain `<input>` (for now; combobox JS comes in Issue 7). If the submitted category name does not match any existing category (case-insensitive), the POST handler does *not* create the expense directly; instead it renders a consolidated confirmation page listing:
+Replace the native category `<select>` with a plain `<input>` (for now; combobox JS comes in Issue 7). If the submitted category name does not match any existing category (case-insensitive), the POST handler does _not_ create the expense directly; instead it renders a consolidated confirmation page listing:
 
 - The new category name to be created.
 - The full expense data (description, amount, date, category).
@@ -19,7 +19,7 @@ Confirm: one atomic transaction creates the category (lowercase-normalized) and 
 
 Validate that a new category name, after trimming, is non-empty and ≤ 20 characters; otherwise surface a field-level error on the original form rather than showing the confirmation page.
 
-See PRD sections *Category/tag semantics*, *Forms and validation*, *Client JS (progressive enhancement)* (no-JS fallback requirement), user stories 6, 11 (single-creation subset), 12, 14 (category side), 17, 18 (category side).
+See PRD sections _Category/tag semantics_, _Forms and validation_, _Client JS (progressive enhancement)_ (no-JS fallback requirement), user stories 6, 11 (single-creation subset), 12, 14 (category side), 17, 18 (category side).
 
 ### How to verify
 

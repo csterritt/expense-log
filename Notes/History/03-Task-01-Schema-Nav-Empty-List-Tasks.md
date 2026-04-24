@@ -1,44 +1,44 @@
 # Cascade Chat Conversation
 
-  Note: _This is purely the output of the chat conversation and does not contain any raw data, codebase snippets, etc. used to generate the output._
+Note: _This is purely the output of the chat conversation and does not contain any raw data, codebase snippets, etc. used to generate the output._
 
 ### User Input
 
-Read the file SKILL.md under @[Notes/skills/issue-to-tasks] and do what it says. the issue to write tasks for is @[Notes/issues/01-schema-nav-empty-list.md] 
+Read the file SKILL.md under @[Notes/skills/issue-to-tasks] and do what it says. the issue to write tasks for is @[Notes/issues/01-schema-nav-empty-list.md]
 
-*Viewed [SKILL.md](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/issue-to-tasks/SKILL.md) *
+_Viewed [SKILL.md](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/issue-to-tasks/SKILL.md) _
 
-*Viewed [01-schema-nav-empty-list.md](file:///Users/chris/hacks/expenses/expense-log/Notes/issues/01-schema-nav-empty-list.md) *
+_Viewed [01-schema-nav-empty-list.md](file:///Users/chris/hacks/expenses/expense-log/Notes/issues/01-schema-nav-empty-list.md) _
 
-*Listed directory [issue-to-tasks](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/issue-to-tasks) *
+_Listed directory [issue-to-tasks](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/issue-to-tasks) _
 
-*Viewed [PRD-expense-log.md](file:///Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md) *
+_Viewed [PRD-expense-log.md](file:///Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md) _
 
-*Listed directory [src](file:///Users/chris/hacks/expenses/expense-log/src) *
+_Listed directory [src](file:///Users/chris/hacks/expenses/expense-log/src) _
 
-*Listed directory [lib](file:///Users/chris/hacks/expenses/expense-log/src/lib) *
+_Listed directory [lib](file:///Users/chris/hacks/expenses/expense-log/src/lib) _
 
-*Viewed [schema.ts](file:///Users/chris/hacks/expenses/expense-log/src/db/schema.ts) *
+_Viewed [schema.ts](file:///Users/chris/hacks/expenses/expense-log/src/db/schema.ts) _
 
-*Viewed [index.ts](file:///Users/chris/hacks/expenses/expense-log/src/index.ts) *
+_Viewed [index.ts](file:///Users/chris/hacks/expenses/expense-log/src/index.ts) _
 
-*Listed directory [routes](file:///Users/chris/hacks/expenses/expense-log/src/routes) *
+_Listed directory [routes](file:///Users/chris/hacks/expenses/expense-log/src/routes) _
 
-*Searched filesystem*
+_Searched filesystem_
 
-*Searched filesystem*
+_Searched filesystem_
 
-*Viewed [build-private.tsx](file:///Users/chris/hacks/expenses/expense-log/src/routes/build-private.tsx) *
+_Viewed [build-private.tsx](file:///Users/chris/hacks/expenses/expense-log/src/routes/build-private.tsx) _
 
-*Viewed [build-layout.tsx](file:///Users/chris/hacks/expenses/expense-log/src/routes/build-layout.tsx) *
+_Viewed [build-layout.tsx](file:///Users/chris/hacks/expenses/expense-log/src/routes/build-layout.tsx) _
 
-*Listed directory [drizzle](file:///Users/chris/hacks/expenses/expense-log/drizzle) *
+_Listed directory [drizzle](file:///Users/chris/hacks/expenses/expense-log/drizzle) _
 
-*Viewed [signed-in-access.ts](file:///Users/chris/hacks/expenses/expense-log/src/middleware/signed-in-access.ts) *
+_Viewed [signed-in-access.ts](file:///Users/chris/hacks/expenses/expense-log/src/middleware/signed-in-access.ts) _
 
-*Grep searched codebase*
+_Grep searched codebase_
 
-*Listed directory [general](file:///Users/chris/hacks/expenses/expense-log/e2e-tests/general) *
+_Listed directory [general](file:///Users/chris/hacks/expenses/expense-log/e2e-tests/general) _
 
 ### Planner Response
 
@@ -53,7 +53,7 @@ Parent PRD: `@/Users/chris/hacks/expenses/expense-log/Notes/PRD-expense-log.md`
 - **Output**: [src/db/schema.ts](file:///Users/chris/hacks/expenses/expense-log/src/db/schema.ts:0:0-0:0) defines `category`, `tag`, `expense`, `expenseTag`, `recurring`, `recurringTag` with all FKs and timestamps; Drizzle-generated migration SQL in [drizzle/](file:///Users/chris/hacks/expenses/expense-log/drizzle:0:0-0:0) creates all six tables plus the partial unique index on `expense(recurringId, occurrenceDate) WHERE recurringId IS NOT NULL`.
 - **Depends on**: none
 
-Follow the existing pattern in `@/Users/chris/hacks/expenses/expense-log/src/db/schema.ts:14-94` (sqliteTable, `text`/`integer`, `.references(() => …, { onDelete: … })`, `schema` export, `$inferSelect`/`$inferInsert` type exports). Column shapes per the PRD *Data model* section (amounts as integer cents, dates as `YYYY-MM-DD` text, ULID primary keys as `text`, timestamps as `integer` with `{ mode: 'timestamp' }`). Generate the migration via the existing drizzle tooling (see `@/Users/chris/hacks/expenses/expense-log/build-schema-update.sh`). Drizzle may not express the partial unique index; if so, hand-edit the generated SQL to add `CREATE UNIQUE INDEX … WHERE recurringId IS NOT NULL`.
+Follow the existing pattern in `@/Users/chris/hacks/expenses/expense-log/src/db/schema.ts:14-94` (sqliteTable, `text`/`integer`, `.references(() => …, { onDelete: … })`, `schema` export, `$inferSelect`/`$inferInsert` type exports). Column shapes per the PRD _Data model_ section (amounts as integer cents, dates as `YYYY-MM-DD` text, ULID primary keys as `text`, timestamps as `integer` with `{ mode: 'timestamp' }`). Generate the migration via the existing drizzle tooling (see `@/Users/chris/hacks/expenses/expense-log/build-schema-update.sh`). Drizzle may not express the partial unique index; if so, hand-edit the generated SQL to add `CREATE UNIQUE INDEX … WHERE recurringId IS NOT NULL`.
 
 ---
 
@@ -103,7 +103,7 @@ Use helpers in `e2e-tests/support/` the same way the existing `@/Users/chris/hac
 - **Output**: `src/routes/expenses/build-expenses.tsx` exports `buildExpenses(app)` that registers `GET /expenses` gated by `signedInAccess`, renders a heading "Expenses" and, because no expense data exists yet, the empty-state message "No expenses yet" with `data-testid="expenses-empty-state"`. Wired into [src/index.ts](file:///Users/chris/hacks/expenses/expense-log/src/index.ts:0:0-0:0).
 - **Depends on**: 4
 
-Same skeleton as the placeholders from task 4. Do not add the entry form, list, filters, or any DB reads — that is out of scope for this issue. Replace the placeholder `build-…` for the expenses route if task 4 created one, or leave task 4's four other files alone and add this fifth one in an `expenses/` subdirectory per the PRD *Route modules* section.
+Same skeleton as the placeholders from task 4. Do not add the entry form, list, filters, or any DB reads — that is out of scope for this issue. Replace the placeholder `build-…` for the expenses route if task 4 created one, or leave task 4's four other files alone and add this fifth one in an `expenses/` subdirectory per the PRD _Route modules_ section.
 
 ---
 
@@ -150,7 +150,7 @@ Run `uvx showboat --help` first to confirm current flags, then generate into the
 ## 11. Final human review
 
 - **Type**: REVIEW
-- **Output**: User confirms manual verification steps from the issue's *How to verify* section all pass, and that all acceptance-criteria checkboxes are satisfied, before merge.
+- **Output**: User confirms manual verification steps from the issue's _How to verify_ section all pass, and that all acceptance-criteria checkboxes are satisfied, before merge.
 - **Depends on**: 10
 
 ---
@@ -163,7 +163,7 @@ Run `uvx showboat --help` first to confirm current flags, then generate into the
 - Should the e2e specs (tasks 5, 7, 9) be one file each as I've drafted, or collapsed into a single spec file?
 - Anything else to merge, split, or reorder before I write this out to a task file? And where should I save it — `Notes/tasks/01-schema-nav-empty-list.md`?
 
-*Viewed [SKILL.md](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/issue-to-tasks/SKILL.md) *
+_Viewed [SKILL.md](file:///Users/chris/hacks/expenses/expense-log/Notes/skills/issue-to-tasks/SKILL.md) _
 
 ### User Input
 
@@ -174,7 +174,7 @@ Task 4 is fine as is
 e2e specs should be one file each
 Nothing else to merge, etc., and the file is correct
 
-*Edited relevant file*
+_Edited relevant file_
 
 ### Planner Response
 

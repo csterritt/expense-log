@@ -17,7 +17,7 @@ Wire the recurring materialization into a real Cloudflare Workers scheduled trig
 
 This slice is HITL because it touches production wrangler configuration and the deployed worker's default export surface.
 
-See PRD sub-sections *Cron trigger*, *Failure reporting*, and *Idempotency*, user stories 69 (production side), 71.
+See PRD sub-sections _Cron trigger_, _Failure reporting_, and _Idempotency_, user stories 69 (production side), 71.
 
 ### How to verify
 

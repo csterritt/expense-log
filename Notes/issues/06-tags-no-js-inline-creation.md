@@ -14,11 +14,11 @@ Add a tags input to the entry form as a single comma-separated text field (no-JS
 - Names are trimmed, lowercased, and de-duplicated silently.
 - Each name ≤ 20 chars after trim; empty-after-trim is invalid.
 - Any name that does not match an existing tag is flagged as a new tag.
-- If the submission would create one-or-more new categories *and/or* one-or-more new tags, the consolidated confirmation page lists **every** new name (categories and tags together) alongside the expense preview. One atomic transaction on Confirm creates everything plus the expense (with its `expenseTag` rows). Cancel re-renders the form with all values — including the full typed tag CSV — preserved.
+- If the submission would create one-or-more new categories _and/or_ one-or-more new tags, the consolidated confirmation page lists **every** new name (categories and tags together) alongside the expense preview. One atomic transaction on Confirm creates everything plus the expense (with its `expenseTag` rows). Cancel re-renders the form with all values — including the full typed tag CSV — preserved.
 
 List rendering: extend each list row to show the expense's tags (comma-separated, alphabetical).
 
-See PRD sections *Category/tag semantics*, *Client JS (progressive enhancement)*, user stories 7 (no-JS subset), 9, 10, 11 (full), 12 (full), 14 (full), 18 (full), 20 (full).
+See PRD sections _Category/tag semantics_, _Client JS (progressive enhancement)_, user stories 7 (no-JS subset), 9, 10, 11 (full), 12 (full), 14 (full), 18 (full), 20 (full).
 
 ### How to verify
 

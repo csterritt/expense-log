@@ -17,7 +17,7 @@ Build out `/categories` to list all categories alphabetically, each row with Ren
 
 `expense-repo` gains `listCategories`, `createCategory`, `renameCategory`, `mergeCategory`, `deleteCategory`.
 
-See PRD sections *Category/tag semantics*, *Management: categories*, user stories 42–47.
+See PRD sections _Category/tag semantics_, _Management: categories_, user stories 42–47.
 
 ### How to verify
 

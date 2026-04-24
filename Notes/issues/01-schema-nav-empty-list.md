@@ -11,7 +11,7 @@
 
 The foundational tracer slice. Add a Drizzle migration and `src/db/schema.ts` entries for all expense-feature tables: `category`, `tag`, `expense`, `expenseTag`, `recurring`, `recurringTag`, including the unique dedupe index on `expense(recurringId, occurrenceDate)`. Add header links (Expenses, Categories, Tags, Summary, Recurring) in `src/routes/build-layout.tsx`. Mount all five routes behind the existing signed-in middleware (the same pattern as `buildPrivate`). `/expenses` shows a page with the heading and an empty-state message ("No expenses yet"). `/categories`, `/tags`, `/summary`, and `/recurring` each render a minimal placeholder page behind the same auth guard so the nav does not produce broken links.
 
-See PRD sections *Data model (new tables)*, *Navigation*, and *Auth and multi-user*.
+See PRD sections _Data model (new tables)_, _Navigation_, and _Auth and multi-user_.
 
 This slice is HITL because it introduces six new tables with cross-FK relationships and a conditional unique index — the schema and migration SQL should get a human review before merge.
 

@@ -70,6 +70,13 @@ export const PATHS = {
   PROFILE: '/profile' as const,
   PROFILE_DELETE_CONFIRM: '/profile/delete-confirm' as const,
   PROFILE_DELETE: '/profile/delete' as const,
+
+  // Expense feature paths
+  EXPENSES: '/expenses' as const,
+  CATEGORIES: '/categories' as const,
+  TAGS: '/tags' as const,
+  SUMMARY: '/summary' as const,
+  RECURRING: '/recurring' as const,
 } as const
 
 // Cookie names

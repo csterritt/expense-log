@@ -16,7 +16,7 @@ The full recurring engine, exercisable via a dev-only manual-trigger route:
 - `POST /test/run-cron` — dev-only route guarded by `isTestRouteEnabledFlag`, marked `// PRODUCTION:REMOVE`, that calls `materializeRecurring(todayEt())` and returns the generated/failed counts as JSON. Intended to be combined with the existing `/test/set-clock` hook for deterministic e2e tests.
 - List rendering: rows whose `recurringId` is non-null render with description underlined and a small `↻` badge next to the description. They participate in search, filter, and summary identically to manual rows.
 
-See PRD section *Recurring expenses and the cron* (all sub-sections except *Cron trigger* and *Failure reporting* production wiring), user stories 60, 61, 62, 63, 66, 67, 68, 69, 70.
+See PRD section _Recurring expenses and the cron_ (all sub-sections except _Cron trigger_ and _Failure reporting_ production wiring), user stories 60, 61, 62, 63, 66, 67, 68, 69, 70.
 
 ### How to verify
 

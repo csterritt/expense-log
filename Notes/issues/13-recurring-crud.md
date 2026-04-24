@@ -18,7 +18,7 @@ Flesh out `/recurring`:
 
 Add `expense-repo.listRecurring`, `getRecurring`, `createRecurring`, `updateRecurring`, `deleteRecurring`.
 
-See PRD sections *Recurring expenses and the cron* (CRUD portions), *Forms and validation*, user stories 57, 58, 59, 64, 65, 72.
+See PRD sections _Recurring expenses and the cron_ (CRUD portions), _Forms and validation_, user stories 57, 58, 59, 64, 65, 72.
 
 ### How to verify
 

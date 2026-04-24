@@ -19,7 +19,7 @@ Add a filter bar above the expense list:
 
 Filters combine with AND across fields; tag-internal semantics are governed by the toggle (OR = any-tag-matches, AND = all-tags-must-match). Extend `expense-repo.listExpenses` to accept all filter parameters, using case-insensitive `LIKE` for description, `YYYY-MM-DD` string comparison for date bounds, category-id equality, and a subquery/group-by for the tag AND case.
 
-See PRD section *Search and filter*, user stories 27–33.
+See PRD section _Search and filter_, user stories 27–33.
 
 ### How to verify
 
