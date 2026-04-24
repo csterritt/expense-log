@@ -36,16 +36,17 @@ Label each task with its type:
 - **TEST**: write or update tests
 - **MIGRATE**: schema or data migration
 - **CONFIG**: environment, tooling, or infrastructure change
+- **WALKTHROUGH**: using showboat (run `uvx showboat --help` for details) create a walkthrough of the implementation, making a new directory under Notes/walkthroughs named with the TASK-ID, put the files it generates there
 - **REVIEW**: human decision required before proceeding
 
-Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST.
+Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST. Write the WALKTHROUGH task after all code is written, just before the final REVIEW step.
 
 ### 4. Quiz the user
 
 Present the proposed task list as a numbered list. For each task show:
 
 - **Title**: short imperative description (e.g. "Add `user_id` column to `sessions` table")
-- **Type**: WRITE / TEST / MIGRATE / CONFIG / REVIEW
+- **Type**: WRITE / TEST / MIGRATE / CONFIG / WALKTHROUGH / REVIEW
 - **Output**: what exists or passes when this task is done
 - **Depends on**: task numbers that must complete first
 
@@ -74,7 +75,7 @@ Parent PRD: #<prd-issue-number>
 
 ### <n>. <Task title>
 
-**Type**: WRITE / TEST / MIGRATE / CONFIG / REVIEW  
+**Type**: WRITE / TEST / MIGRATE / CONFIG / WALKTHROUGH / REVIEW  
 **Output**: <what exists or passes when done>  
 **Depends on**: <task numbers or "none">
 
