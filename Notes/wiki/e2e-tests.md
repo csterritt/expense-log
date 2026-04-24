@@ -1,6 +1,6 @@
 # E2E Tests Catalog
 
-Catalog of all Playwright end-to-end tests under `e2e-tests/` (50 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
+Catalog of all Playwright end-to-end tests under `e2e-tests/` (51 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
 
 ## Support utilities (`e2e-tests/support/`)
 
@@ -34,6 +34,10 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (50 spec files + 1
 - [e2e-tests/general/06-expense-routes-require-auth.spec.ts](./e2e-tests/general/06-expense-routes-require-auth.spec.md) — All expense feature routes (`/expenses`, `/categories`, `/tags`, `/summary`, `/recurring`) redirect unauthenticated visitors to sign-in.
 - [e2e-tests/general/07-expense-routes-signed-in.spec.ts](./e2e-tests/general/07-expense-routes-signed-in.spec.md) — Signed-in users see correct headings on each expense feature route, and `/expenses` shows the empty-state message.
 - [e2e-tests/general/08-expense-nav-links.spec.ts](./e2e-tests/general/08-expense-nav-links.spec.md) — Header nav links for the expense feature appear only when signed in and navigate to the correct pages.
+
+## Expenses (`e2e-tests/expenses/`)
+
+- [e2e-tests/expenses/01-list-rendering.spec.ts](./e2e-tests/expenses/01-list-rendering.spec.md) — Issue 02. Seeds expenses across the default ET window plus one outside it; asserts ordering, formatting, tag join, and out-of-window exclusion on `/expenses`.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 

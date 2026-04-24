@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (65 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (68 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
@@ -30,7 +30,10 @@ Catalog of all source files under `src/` (65 files total), organized by category
 - [src/lib/cookie-support.ts](./src/lib/cookie-support.md) — Cookie parsing, serialization, and deletion utilities.
 - [src/lib/db-access.ts](./src/lib/db-access.md) — Database access helpers with retry logic for D1 queries.
 - [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
+- [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`.
+- [src/lib/expense-repo.ts](./src/lib/expense-repo.md) — Read/write helpers for the `expense` table; provides `listExpenses` for the list view.
 - [src/lib/generate-code.ts](./src/lib/generate-code.md) — Single-use sign-up code generation utility.
+- [src/lib/money.ts](./src/lib/money.md) — Money formatting helpers; provides `formatCents` for the expense list view.
 - [src/lib/po-notify.ts](./src/lib/po-notify.md) — Pushover notification integration (optional).
 - [src/lib/redirects.tsx](./src/lib/redirects.md) — JSX-based redirect response builders.
 - [src/lib/send-email.ts](./src/lib/send-email.md) — Low-level email sending via Nodemailer or fetch-based transport.
@@ -58,7 +61,7 @@ Catalog of all source files under `src/` (65 files total), organized by category
 
 All five routes are signed-in-only via the `signedInAccess` middleware. Four are placeholder pages awaiting feature implementation.
 
-- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list page (`/expenses`); currently shows an empty-state placeholder.
+- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list page (`/expenses`); renders a DaisyUI table of in-window expenses or the empty-state when none.
 - [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Categories placeholder page (`/categories`).
 - [src/routes/build-tags.tsx](./src/routes/build-tags.md) — Tags placeholder page (`/tags`).
 - [src/routes/build-summary.tsx](./src/routes/build-summary.md) — Summary placeholder page (`/summary`).

@@ -1,10 +1,12 @@
 # Unit Tests Catalog
 
-Catalog of all unit tests under `tests/` (5 spec files total). Each file links to its individual wiki page.
+Catalog of all unit tests under `tests/` (7 spec files total). Each file links to its individual wiki page.
 
 ## Test files
 
 - [tests/db-access-retry.spec.ts](./tests/db-access-retry.spec.md) — Tests database access retry logic (src/lib/db-access.ts). Validates that transient D1 failures are retried up to the configured limit and that permanent failures bubble up correctly.
+- [tests/et-date.spec.ts](./tests/et-date.spec.md) — Tests `America/New_York` date helpers (src/lib/et-date.ts). Covers DST boundaries, default-range month wrapping, and `isValidYmd` edges.
+- [tests/money.spec.ts](./tests/money.spec.md) — Tests `formatCents` (src/lib/money.ts) for representative cent values.
 - [tests/send-email.spec.ts](./tests/send-email.spec.md) — Tests email sending utilities (src/lib/send-email.ts). Covers transport selection, template rendering, error handling, and optional SMTP configuration parsing.
 - [tests/sign-up-utils.spec.ts](./tests/sign-up-utils.spec.md) — Tests sign-up validation and processing utilities (src/lib/sign-up-utils.ts). Validates email normalization, password strength checks, name trimming, and duplicate detection logic.
 - [tests/time-access.spec.ts](./tests/time-access.spec.md) — Tests time-access utilities (src/lib/time-access.ts). Covers clock manipulation for testing, duration formatting, and boundary conditions.

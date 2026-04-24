@@ -8,7 +8,17 @@ import { secureHeaders } from 'hono/secure-headers'
 import { eq, and, isNull } from 'drizzle-orm'
 
 import { createDbClient } from '../../db/client'
-import { user, account, session, singleUseCode, interestedEmail } from '../../db/schema'
+import {
+  user,
+  account,
+  session,
+  singleUseCode,
+  interestedEmail,
+  category,
+  tag,
+  expense,
+  expenseTag,
+} from '../../db/schema'
 import { STANDARD_SECURE_HEADERS } from '../../constants'
 
 /**
@@ -27,6 +37,10 @@ testDatabaseRouter.delete('/clear', secureHeaders(STANDARD_SECURE_HEADERS), asyn
     const db = createDbClient(c.env.PROJECT_DB)
 
     // Delete in order to avoid foreign key constraints
+    await db.delete(expenseTag)
+    await db.delete(expense)
+    await db.delete(tag)
+    await db.delete(category)
     await db.delete(session)
     await db.delete(account)
     await db.delete(user)
@@ -270,6 +284,95 @@ testDatabaseRouter.get('/code-exists/:code', secureHeaders(STANDARD_SECURE_HEADE
       {
         success: false,
         error: 'Failed to check code existence',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500,
+    )
+  }
+})
+
+/**
+ * Seed the database with expenses for testing list rendering
+ * POST /test/database/seed-expenses
+ */
+// PRODUCTION:REMOVE
+interface SeedExpenseInput {
+  date: string
+  description: string
+  amountCents: number
+  categoryName: string
+  tagNames?: string[]
+}
+
+testDatabaseRouter.post('/seed-expenses', secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+  try {
+    const db = createDbClient(c.env.PROJECT_DB)
+
+    const body = (await c.req.json()) as SeedExpenseInput[]
+    if (!Array.isArray(body)) {
+      return c.json({ success: false, error: 'Body must be a JSON array' }, 400)
+    }
+
+    const now = new Date()
+    const categoryIdByLower = new Map<string, string>()
+    const tagIdByLower = new Map<string, string>()
+
+    const existingCategories = await db.select().from(category)
+    for (const row of existingCategories) {
+      categoryIdByLower.set(row.name.toLowerCase(), row.id)
+    }
+    const existingTags = await db.select().from(tag)
+    for (const row of existingTags) {
+      tagIdByLower.set(row.name.toLowerCase(), row.id)
+    }
+
+    let created = 0
+    for (const row of body) {
+      const catKey = row.categoryName.toLowerCase()
+      let categoryId = categoryIdByLower.get(catKey)
+      if (!categoryId) {
+        categoryId = crypto.randomUUID()
+        await db
+          .insert(category)
+          .values({ id: categoryId, name: row.categoryName, createdAt: now, updatedAt: now })
+        categoryIdByLower.set(catKey, categoryId)
+      }
+
+      const expenseId = crypto.randomUUID()
+      await db.insert(expense).values({
+        id: expenseId,
+        description: row.description,
+        amountCents: row.amountCents,
+        categoryId,
+        date: row.date,
+        createdAt: now,
+        updatedAt: now,
+      })
+
+      const tagNames = row.tagNames ?? []
+      for (const tagName of tagNames) {
+        const tagKey = tagName.toLowerCase()
+        let tagId = tagIdByLower.get(tagKey)
+        if (!tagId) {
+          tagId = crypto.randomUUID()
+          await db
+            .insert(tag)
+            .values({ id: tagId, name: tagName, createdAt: now, updatedAt: now })
+          tagIdByLower.set(tagKey, tagId)
+        }
+        await db.insert(expenseTag).values({ expenseId, tagId })
+      }
+
+      created += 1
+    }
+
+    return c.json({ success: true, created })
+  } catch (error) {
+    console.error('Failed to seed expenses:', error)
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to seed expenses',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
       500,

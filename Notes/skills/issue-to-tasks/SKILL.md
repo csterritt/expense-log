@@ -40,7 +40,7 @@ Label each task with its type:
 - **WALKTHROUGH**: using showboat (run `uvx showboat --help` for details) create a walkthrough of the implementation, making a new directory under Notes/walkthroughs named with the TASK-ID, put the files it generates there
 - **REVIEW**: human decision required before proceeding
 
-Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST. Write the WALKTHROUGH task after all code is written, just before the final REVIEW step.
+Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST. Write the DOCUMENT and WALKTHROUGH tasks after all code is written, just before the final REVIEW step.
 
 ### 4. Quiz the user
 
