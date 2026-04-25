@@ -10,7 +10,7 @@ import { Context } from 'hono'
 
 import { redirectWithError, redirectWithMessage } from './redirects'
 import { addCookie } from './cookie-support'
-import { getUserIdByEmail, updateAccountTimestamp, claimSingleUseCode } from './db-access'
+import { getUserIdByEmail, updateAccountTimestamp, claimSingleUseCode } from './db/auth-access'
 import { createAuth } from './auth'
 import { createDbClient } from '../db/client'
 import { PATHS, COOKIES, MESSAGES, LOG_MESSAGES } from '../constants'

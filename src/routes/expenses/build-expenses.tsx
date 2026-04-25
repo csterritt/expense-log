@@ -11,10 +11,11 @@ import { secureHeaders } from 'hono/secure-headers'
 
 import { PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import { Bindings } from '../../local-types'
+import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
 import { signedInAccess } from '../../middleware/signed-in-access'
 import { defaultRangeEt } from '../../lib/et-date'
-import { listExpenses, type ExpenseRow } from '../../lib/expense-repo'
+import { listExpenses, type ExpenseRow } from '../../lib/db/expense-access'
 import { formatCents } from '../../lib/money'
 
 const renderExpenseTable = (rows: ExpenseRow[]) => {
@@ -70,8 +71,12 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const range = defaultRangeEt()
-      const rows = await listExpenses(c, range)
-      return c.render(useLayout(c, renderExpenses(rows)))
+      const db = createDbClient(c.env.PROJECT_DB)
+      const result = await listExpenses(db, range)
+      if (result.isErr) {
+        return c.text('Failed to load expenses', 500)
+      }
+      return c.render(useLayout(c, renderExpenses(result.value)))
     },
   )
 }

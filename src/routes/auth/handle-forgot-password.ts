@@ -28,7 +28,7 @@ import {
   getUserWithAccountByEmail,
   updateAccountTimestamp,
   UserWithAccountData,
-} from '../../lib/db-access'
+} from '../../lib/db/auth-access'
 import { validateRequest, ForgotPasswordFormSchema } from '../../lib/validators'
 
 interface RateLimitResult {

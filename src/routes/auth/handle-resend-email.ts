@@ -21,7 +21,7 @@ import {
 import { createAuth } from '../../lib/auth'
 import type { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
-import { getUserWithAccountByEmail, updateAccountTimestamp } from '../../lib/db-access'
+import { getUserWithAccountByEmail, updateAccountTimestamp } from '../../lib/db/auth-access'
 import { addCookie } from '../../lib/cookie-support'
 import { validateRequest, ResendEmailFormSchema } from '../../lib/validators'
 

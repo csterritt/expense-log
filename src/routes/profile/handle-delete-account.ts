@@ -13,7 +13,7 @@ import { redirectWithMessage, redirectWithError } from '../../lib/redirects'
 import { PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import type { AuthUser, Bindings, DrizzleClient } from '../../local-types'
 import { signedInAccess } from '../../middleware/signed-in-access'
-import { deleteUserAccount } from '../../lib/db-access'
+import { deleteUserAccount } from '../../lib/db/auth-access'
 import { removeCookie } from '../../lib/cookie-support'
 
 /**

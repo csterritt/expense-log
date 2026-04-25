@@ -4,15 +4,14 @@
 
 /**
  * Centralized database access layer with retry logic and Result types
- * @module lib/db-access
+ * @module lib/db/auth-access
  */
-import retry from 'async-retry'
 import Result from 'true-myth/result'
 import { eq, and, isNull } from 'drizzle-orm'
 
-import { user, account, singleUseCode, interestedEmail } from '../db/schema'
-import { STANDARD_RETRY_OPTIONS } from '../constants'
-import type { DrizzleClient } from '../local-types'
+import { user, account, singleUseCode, interestedEmail } from '../../db/schema'
+import type { DrizzleClient } from '../../local-types'
+import { withRetry, toResult } from '../db-helpers'
 
 /**
  * Type definitions for database operations
@@ -27,43 +26,6 @@ export interface UserWithAccountData {
 
 export interface UserIdData {
   id: string
-}
-
-/**
- * Wrap a database operation with retry logic and Result type handling
- * @param operationName - Name of the operation for logging
- * @param operation - The async operation to execute
- * @returns Promise<Result<T, Error>>
- */
-const withRetry = async <T>(
-  operationName: string,
-  operation: () => Promise<Result<T, Error>>,
-): Promise<Result<T, Error>> => {
-  try {
-    return await retry(async () => {
-      const result = await operation()
-      if (result.isErr) {
-        throw result.error
-      }
-      return result
-    }, STANDARD_RETRY_OPTIONS)
-  } catch (err) {
-    console.log(`${operationName} final error:`, err)
-    return Result.err(err instanceof Error ? err : new Error(String(err)))
-  }
-}
-
-/**
- * Wrap a value in Result.ok, or wrap an error in Result.err
- * @param fn - The async function to execute
- * @returns Promise<Result<T, Error>>
- */
-const toResult = async <T>(fn: () => Promise<T>): Promise<Result<T, Error>> => {
-  try {
-    return Result.ok(await fn())
-  } catch (e) {
-    return Result.err(e instanceof Error ? e : new Error(String(e)))
-  }
 }
 
 /**
