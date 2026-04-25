@@ -46,7 +46,7 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
           type='text'
           required
           maxLength={descriptionMax}
-          className='input input-bordered'
+          className='input input-bordered w-full'
           data-testid='expense-form-description'
         />
       </div>
