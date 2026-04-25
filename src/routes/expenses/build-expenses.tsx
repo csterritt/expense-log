@@ -36,7 +36,7 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
       className='mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-end'
       data-testid='expense-form'
     >
-      <div className='form-control md:col-span-2'>
+      <div className='flex flex-col md:col-span-2'>
         <label className='label' htmlFor='expense-form-description'>
           <span className='label-text'>Description</span>
         </label>
@@ -50,7 +50,7 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
           data-testid='expense-form-description'
         />
       </div>
-      <div className='form-control'>
+      <div className='flex flex-col'>
         <label className='label' htmlFor='expense-form-amount'>
           <span className='label-text'>Amount</span>
         </label>
@@ -64,7 +64,7 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
           data-testid='expense-form-amount'
         />
       </div>
-      <div className='form-control'>
+      <div className='flex flex-col'>
         <label className='label' htmlFor='expense-form-date'>
           <span className='label-text'>Date</span>
         </label>
@@ -78,7 +78,7 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
           data-testid='expense-form-date'
         />
       </div>
-      <div className='form-control'>
+      <div className='flex flex-col'>
         <label className='label' htmlFor='expense-form-category'>
           <span className='label-text'>Category</span>
         </label>

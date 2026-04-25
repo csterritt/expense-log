@@ -7,3 +7,4 @@
   - 'build-layout.tsx' - an example of a layout component
 - When writing a request handler, always use the `redirectWithMessage` or `redirectWithError` functions from `src/lib/redirects.tsx` to redirect with a message or error cookie. Only return just text where specifically called out with a comment.
 - Always generate proper accessibility: ARIA roles, semantic HTML, and keyboard navigation.
+- DaisyUI no longer has the `form-control` class. Use `flex flex-col` instead.
