@@ -17,6 +17,7 @@ import { signedInAccess } from '../../middleware/signed-in-access'
 import { defaultRangeEt } from '../../lib/et-date'
 import { listExpenses, type ExpenseRow } from '../../lib/db/expense-access'
 import { formatCents } from '../../lib/money'
+import { redirectWithError } from '../../lib/redirects'
 
 const renderExpenseTable = (rows: ExpenseRow[]) => {
   return (
@@ -74,7 +75,11 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const result = await listExpenses(db, range)
       if (result.isErr) {
-        return c.text('Failed to load expenses', 500)
+        return redirectWithError(
+          c,
+          PATHS.AUTH.SIGN_IN,
+          'Failed to load expenses. Please try again.',
+        )
       }
       return c.render(useLayout(c, renderExpenses(result.value)))
     },

@@ -20,6 +20,21 @@ import {
   expenseTag,
 } from '../../db/schema'
 import { STANDARD_SECURE_HEADERS } from '../../constants'
+import { toResult } from '../../lib/db-helpers'
+
+/**
+ * Run a database operation through `toResult` and throw on error so the
+ * surrounding try/catch in each handler can report it uniformly.
+ * Satisfies the database-access rule requiring all DB access to go
+ * through the helpers in `src/lib/db-helpers.ts`.
+ */
+const runDb = async <T>(fn: () => Promise<T>): Promise<T> => {
+  const result = await toResult(fn)
+  if (result.isErr) {
+    throw result.error
+  }
+  return result.value
+}
 
 /**
  * Test-only database manipulation endpoints
@@ -37,15 +52,15 @@ testDatabaseRouter.delete('/clear', secureHeaders(STANDARD_SECURE_HEADERS), asyn
     const db = createDbClient(c.env.PROJECT_DB)
 
     // Delete in order to avoid foreign key constraints
-    await db.delete(expenseTag)
-    await db.delete(expense)
-    await db.delete(tag)
-    await db.delete(category)
-    await db.delete(session)
-    await db.delete(account)
-    await db.delete(user)
-    await db.delete(singleUseCode)
-    await db.delete(interestedEmail)
+    await runDb(() => db.delete(expenseTag))
+    await runDb(() => db.delete(expense))
+    await runDb(() => db.delete(tag))
+    await runDb(() => db.delete(category))
+    await runDb(() => db.delete(session))
+    await runDb(() => db.delete(account))
+    await runDb(() => db.delete(user))
+    await runDb(() => db.delete(singleUseCode))
+    await runDb(() => db.delete(interestedEmail))
 
     console.log('Test database cleared successfully')
 
@@ -83,7 +98,7 @@ testDatabaseRouter.delete('/clear-sessions', secureHeaders(STANDARD_SECURE_HEADE
     const db = createDbClient(c.env.PROJECT_DB)
 
     // Delete in order to avoid foreign key constraints
-    await db.delete(session)
+    await runDb(() => db.delete(session))
 
     console.log('Test database sessions cleared successfully')
 
@@ -137,7 +152,7 @@ testDatabaseRouter.post('/seed', secureHeaders(STANDARD_SECURE_HEADERS), async (
     ]
 
     for (const userData of testUsers) {
-      await db.insert(user).values(userData)
+      await runDb(() => db.insert(user).values(userData))
     }
 
     // Insert test accounts with credentials
@@ -177,7 +192,7 @@ testDatabaseRouter.post('/seed', secureHeaders(STANDARD_SECURE_HEADERS), async (
     ]
 
     for (const accountData of testAccounts) {
-      await db.insert(account).values(accountData)
+      await runDb(() => db.insert(account).values(accountData))
     }
 
     // Insert test single-use codes for gated sign-up testing
@@ -190,7 +205,7 @@ testDatabaseRouter.post('/seed', secureHeaders(STANDARD_SECURE_HEADERS), async (
     ]
 
     for (const codeData of testSingleUseCodes) {
-      await db.insert(singleUseCode).values(codeData)
+      await runDb(() => db.insert(singleUseCode).values(codeData))
     }
 
     console.log('Test database seeded successfully')
@@ -226,11 +241,11 @@ testDatabaseRouter.get('/status', secureHeaders(STANDARD_SECURE_HEADERS), async 
     const db = createDbClient(c.env.PROJECT_DB)
 
     // Count records in each table
-    const userCount = await db.select().from(user)
-    const accountCount = await db.select().from(account)
-    const sessionCount = await db.select().from(session)
-    const singleUseCodeCount = await db.select().from(singleUseCode)
-    const interestedEmailCount = await db.select().from(interestedEmail)
+    const userCount = await runDb(() => db.select().from(user))
+    const accountCount = await runDb(() => db.select().from(account))
+    const sessionCount = await runDb(() => db.select().from(session))
+    const singleUseCodeCount = await runDb(() => db.select().from(singleUseCode))
+    const interestedEmailCount = await runDb(() => db.select().from(interestedEmail))
 
     return c.json({
       success: true,
@@ -266,10 +281,12 @@ testDatabaseRouter.get('/code-exists/:code', secureHeaders(STANDARD_SECURE_HEADE
     const code = c.req.param('code')
     const db = createDbClient(c.env.PROJECT_DB)
 
-    const result = await db
-      .select({ code: singleUseCode.code })
-      .from(singleUseCode)
-      .where(and(eq(singleUseCode.code, code), isNull(singleUseCode.email)))
+    const result = await runDb(() =>
+      db
+        .select({ code: singleUseCode.code })
+        .from(singleUseCode)
+        .where(and(eq(singleUseCode.code, code), isNull(singleUseCode.email))),
+    )
 
     return c.json({
       success: true,
@@ -317,11 +334,11 @@ testDatabaseRouter.post('/seed-expenses', secureHeaders(STANDARD_SECURE_HEADERS)
     const categoryIdByLower = new Map<string, string>()
     const tagIdByLower = new Map<string, string>()
 
-    const existingCategories = await db.select().from(category)
+    const existingCategories = await runDb(() => db.select().from(category))
     for (const row of existingCategories) {
       categoryIdByLower.set(row.name.toLowerCase(), row.id)
     }
-    const existingTags = await db.select().from(tag)
+    const existingTags = await runDb(() => db.select().from(tag))
     for (const row of existingTags) {
       tagIdByLower.set(row.name.toLowerCase(), row.id)
     }
@@ -332,22 +349,26 @@ testDatabaseRouter.post('/seed-expenses', secureHeaders(STANDARD_SECURE_HEADERS)
       let categoryId = categoryIdByLower.get(catKey)
       if (!categoryId) {
         categoryId = crypto.randomUUID()
-        await db
-          .insert(category)
-          .values({ id: categoryId, name: row.categoryName, createdAt: now, updatedAt: now })
+        await runDb(() =>
+          db
+            .insert(category)
+            .values({ id: categoryId!, name: row.categoryName, createdAt: now, updatedAt: now }),
+        )
         categoryIdByLower.set(catKey, categoryId)
       }
 
       const expenseId = crypto.randomUUID()
-      await db.insert(expense).values({
-        id: expenseId,
-        description: row.description,
-        amountCents: row.amountCents,
-        categoryId,
-        date: row.date,
-        createdAt: now,
-        updatedAt: now,
-      })
+      await runDb(() =>
+        db.insert(expense).values({
+          id: expenseId,
+          description: row.description,
+          amountCents: row.amountCents,
+          categoryId,
+          date: row.date,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      )
 
       const tagNames = row.tagNames ?? []
       for (const tagName of tagNames) {
@@ -355,12 +376,12 @@ testDatabaseRouter.post('/seed-expenses', secureHeaders(STANDARD_SECURE_HEADERS)
         let tagId = tagIdByLower.get(tagKey)
         if (!tagId) {
           tagId = crypto.randomUUID()
-          await db
-            .insert(tag)
-            .values({ id: tagId, name: tagName, createdAt: now, updatedAt: now })
+          await runDb(() =>
+            db.insert(tag).values({ id: tagId!, name: tagName, createdAt: now, updatedAt: now }),
+          )
           tagIdByLower.set(tagKey, tagId)
         }
-        await db.insert(expenseTag).values({ expenseId, tagId })
+        await runDb(() => db.insert(expenseTag).values({ expenseId, tagId }))
       }
 
       created += 1

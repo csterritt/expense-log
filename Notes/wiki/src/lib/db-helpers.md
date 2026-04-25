@@ -15,6 +15,7 @@ Wraps an async operation in `async-retry` with `STANDARD_RETRY_OPTIONS`. If the 
 ### `toResult(fn): Promise<Result<T, Error>>`
 
 Executes `fn` and wraps:
+
 - Success → `Result.ok(await fn())`
 - Thrown error → `Result.err(e instanceof Error ? e : new Error(String(e)))`
 

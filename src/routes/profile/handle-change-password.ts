@@ -24,8 +24,12 @@ interface ChangePasswordData {
 }
 
 const isErrorWithMessage = (value: unknown): value is { message: string } => {
-  if (typeof value !== 'object' || value === null) return false
-  if (!('message' in value)) return false
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  if (!('message' in value)) {
+    return false
+  }
   return typeof (value as { message: unknown }).message === 'string'
 }
 

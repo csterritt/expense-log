@@ -24,7 +24,7 @@ If any are missing, it logs the missing vars and returns `false` (the app still 
 
 1. `secureHeaders` — referrer policy `strict-origin-when-cross-origin`
 2. CSRF protection (`hono/csrf`) — skipped for `/test/*` when test routes are enabled; allows `localhost` origins in dev
-3. `bodyLimit` — 1 KB max in dev (4 KB in production)
+3. `bodyLimit` — 1 KB max in dev (4 KB in production); on overflow uses `redirectWithError` to send the user back to the request `referer` (or `/auth/sign-in` if absent) with the message `'The submitted request was too large. Please try again.'`
 4. `logger` — Hono request logger
 5. `renderer` — JSX layout renderer
 6. `validateEnvBindings` — runtime check for `BETTER_AUTH_SECRET` and `SIGN_UP_MODE`
@@ -94,7 +94,8 @@ When `isTestRouteEnabledFlag` is true:
 ## Cross-references
 
 - [local-types.md](local-types.md) — `Bindings`, `AppVariables`
-- [constants.md](constants.md) — `HTML_STATUS`, `SIGN_UP_MODES`
+- [constants.md](constants.md) — `PATHS`, `SIGN_UP_MODES`
+- [lib/redirects.md](lib/redirects.md) — `redirectWithError` used by the body-limit overflow handler
 - [renderer.md](renderer.md) — `renderer`
 - [db/client.md](db/client.md) — `createDbClient`
 - [routes/auth/better-auth-handler.md](routes/auth/better-auth-handler.md) — `setupBetterAuth`

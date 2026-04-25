@@ -67,7 +67,7 @@ Same as `SignUpFormSchema` plus `code` (8–64 chars, non-empty).
 
 ### `validateRequest(data, schema): [boolean, T | null, string | null]`
 
-Uses `safeParse`. On failure, joins all issue messages. Special-cases `Expected unknown` → returns `VALIDATION.EMAIL_INVALID`.
+Arrow function. Uses `safeParse`. On failure, joins all issue messages. Special-cases `Expected unknown` → returns `VALIDATION.EMAIL_INVALID`.
 
 ## Cross-references
 

@@ -8,13 +8,13 @@ Verifies the expense feature header nav links: hidden when signed out, visible w
 
 ## Nav links under test
 
-| `data-testid`     | Path          | Heading      |
-| ----------------- | ------------- | ------------ |
-| `expenses-nav`    | `/expenses`   | `Expenses`   |
-| `categories-nav`  | `/categories` | `Categories` |
-| `tags-nav`        | `/tags`       | `Tags`       |
-| `summary-nav`     | `/summary`    | `Summary`    |
-| `recurring-nav`   | `/recurring`  | `Recurring`  |
+| `data-testid`    | Path          | Heading      |
+| ---------------- | ------------- | ------------ |
+| `expenses-nav`   | `/expenses`   | `Expenses`   |
+| `categories-nav` | `/categories` | `Categories` |
+| `tags-nav`       | `/tags`       | `Tags`       |
+| `summary-nav`    | `/summary`    | `Summary`    |
+| `recurring-nav`  | `/recurring`  | `Recurring`  |
 
 ## Test cases
 

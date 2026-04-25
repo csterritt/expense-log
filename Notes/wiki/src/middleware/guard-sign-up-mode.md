@@ -10,7 +10,7 @@ Actually **validates required environment bindings at runtime**. (Despite the fi
 
 ### `validateEnvBindings(c, next): Promise<Response | void>`
 
-Checks that `BETTER_AUTH_SECRET` and `SIGN_UP_MODE` are present in `c.env`. If any are missing or empty, logs `❌ Missing required environment bindings: ...` and returns a 500 response: `'Server configuration error. Please contact the administrator.'`.
+Checks that `BETTER_AUTH_SECRET` and `SIGN_UP_MODE` are present in `c.env`. If any are missing or empty, logs `❌ Missing required environment bindings: ...` and uses `redirectWithError` (from `lib/redirects.tsx`) to redirect to `PATHS.AUTH.SIGN_IN` with the error message `'Server configuration error. Please contact the administrator.'`. Per the project web-behavior rule, request handlers and middleware never return plain text.
 
 ## Logging
 

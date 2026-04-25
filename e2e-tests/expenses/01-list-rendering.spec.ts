@@ -90,23 +90,11 @@ test.describe('Expenses list rendering', () => {
       const rows = page.getByTestId('expense-row')
       await expect(rows).toHaveCount(4)
 
-      const descriptions = await page
-        .getByTestId('expense-row-description')
-        .allTextContents()
-      expect(descriptions).toEqual([
-        'Alpha breakfast',
-        'beta lunch',
-        'Gas',
-        'Electric bill',
-      ])
+      const descriptions = await page.getByTestId('expense-row-description').allTextContents()
+      expect(descriptions).toEqual(['Alpha breakfast', 'beta lunch', 'Gas', 'Electric bill'])
 
       const dates = await page.getByTestId('expense-row-date').allTextContents()
-      expect(dates).toEqual([
-        thisMonthEarlySame,
-        thisMonthEarly,
-        oneMonthBack,
-        twoMonthsBack,
-      ])
+      expect(dates).toEqual([thisMonthEarlySame, thisMonthEarly, oneMonthBack, twoMonthsBack])
 
       const amounts = await page.getByTestId('expense-row-amount').allTextContents()
       expect(amounts).toEqual(['1.00', '1,234.56', '45.67', '9,876.00'])
@@ -117,9 +105,7 @@ test.describe('Expenses list rendering', () => {
       expect(tagCells[2]).toBe('road-trip')
 
       // Out-of-window row must not appear
-      await expect(
-        page.getByText('Historical purchase', { exact: true }),
-      ).toHaveCount(0)
+      await expect(page.getByText('Historical purchase', { exact: true })).toHaveCount(0)
     }),
   )
 })

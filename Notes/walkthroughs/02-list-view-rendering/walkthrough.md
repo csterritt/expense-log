@@ -1,6 +1,7 @@
 # Issue 02 — Expense List View Rendering
 
-*2026-04-24T23:33:30Z by Showboat 0.6.1*
+_2026-04-24T23:33:30Z by Showboat 0.6.1_
+
 <!-- showboat-id: 1a8d0e1d-f3b8-4756-b3d3-768ce7fe3943 -->
 
 This walkthrough demonstrates Issue 02: turning the placeholder /expenses page into a real list view. New library modules `money` (formatCents) and `et-date` (todayEt, defaultRangeEt, isValidYmd), the `listExpenses` query in a new `expense-repo` module, a test-only seed-expenses route, the matching e2e helper, and the table rendering on /expenses.

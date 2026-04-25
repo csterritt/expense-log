@@ -20,9 +20,10 @@ Middleware chain:
 ### Behaviour
 
 1. Calls `defaultRangeEt()` to compute the default `[from, to]` window (current month plus the previous two ET months).
-2. Calls `listExpenses(c, range)`.
-3. If the result is empty, renders the empty-state paragraph from Issue 01.
-4. Otherwise renders a DaisyUI `table table-zebra` with columns Date, Description, Category, Tags, Amount.
+2. Calls `listExpenses(db, range)`.
+3. If the `Result` is `Err`, calls `redirectWithError` (from `lib/redirects.tsx`) to send the user to `/auth/sign-in` with the message `'Failed to load expenses. Please try again.'`. (Replaces the earlier `c.text('Failed to load expenses', 500)` per the web-behavior rule that request handlers never return plain text.)
+4. If the result is empty, renders the empty-state paragraph from Issue 01.
+5. Otherwise renders a DaisyUI `table table-zebra` with columns Date, Description, Category, Tags, Amount.
 
 ### Page content
 
@@ -41,6 +42,7 @@ Middleware chain:
 - [../../lib/et-date.md](../../lib/et-date.md) — `defaultRangeEt`
 - [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `listExpenses`, `ExpenseRow`
 - [../../lib/money.md](../../lib/money.md) — `formatCents`
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithError`
 - [../build-layout.md](../build-layout.md) — layout wrapper
 - [../../middleware/signed-in-access.md](../../middleware/signed-in-access.md) — auth gate
 - [../../constants.md](../../constants.md) — `PATHS.EXPENSES`, `STANDARD_SECURE_HEADERS`

@@ -144,6 +144,7 @@ app.use(
     maxSize: 1024, // 1kb // PRODUCTION:REMOVE
     onError: (c) => {
       console.log('Body limit exceeded')
+      // NOTE: This 'c.text' instead of a 'redirectWithError' is correct, and should not be changed
       return c.text('overflow :(', HTML_STATUS.CONTENT_TOO_LARGE)
     },
   }),

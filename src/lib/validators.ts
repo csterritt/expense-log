@@ -201,10 +201,10 @@ export const PathSignInValidationParamSchema = object({
  * @param schema - The schema to validate against
  * @returns A tuple with [isValid, result, error]
  */
-export function validateRequest<T extends BaseSchema<unknown, unknown, BaseIssue<unknown>>>(
+export const validateRequest = <T extends BaseSchema<unknown, unknown, BaseIssue<unknown>>>(
   data: unknown,
   schema: T,
-): [boolean, InferOutput<T> | null, string | null] {
+): [boolean, InferOutput<T> | null, string | null] => {
   const result = safeParse(schema, data)
 
   if (result.success) {

@@ -62,3 +62,25 @@ Ingested the Issue 02 work that turns `/expenses` into a working date-filtered l
 - **`src/lib/db/auth-access.ts`** (new) — auth queries from former `db-access.ts`; imports updated in 7 files.
 - **`src/lib/db/expense-access.ts`** (new) — renamed from `expense-repo.ts`; `listExpenses` now follows the `withRetry` + `Result` pattern.
 - **Wiki pages created**: `db-helpers.md`, `db/auth-access.md`, `db/expense-access.md`; deleted `db-access.md`, `expense-repo.md`; updated all cross-references.
+
+## [2026-04-25] lint | Enforce non-functional requirements (coding-style, database-access, web-behavior)
+
+Audited `src/` against `Notes/non-functional-reqs/{coding-style,database-access,web-behavior}.md` and fixed the violations:
+
+- **`src/lib/validators.ts`** — `validateRequest` converted from `function` declaration to `const … =>` arrow function (coding-style: arrow functions only).
+- **`src/routes/profile/handle-change-password.ts`** — `isErrorWithMessage`'s two single-line `if (...) return false` bodies wrapped in braces (coding-style: always brace `if`/`while` bodies).
+- **`src/routes/expenses/build-expenses.tsx`** — error path replaced `c.text('Failed to load expenses', 500)` with `redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Failed to load expenses. Please try again.')` (web-behavior: handlers never return plain text).
+- **`src/middleware/guard-sign-up-mode.ts`** — missing-binding response replaced `c.text(...)` with `redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Server configuration error. Please contact the administrator.')`; dropped the now-unused `INTERNAL_SERVER_ERROR` constant.
+- **`src/index.ts`** — `bodyLimit` `onError` replaced `c.text('overflow :(', HTML_STATUS.CONTENT_TOO_LARGE)` with `redirectWithError(c, referer ?? PATHS.AUTH.SIGN_IN, 'The submitted request was too large. Please try again.')`. Imports updated (`HTML_STATUS` → `PATHS`; added `redirectWithError`).
+- **`src/routes/test/database.ts`** — every direct Drizzle call (`db.delete/insert/select`) routed through a local `runDb<T>(fn)` helper that wraps `toResult` from `lib/db-helpers.ts` and rethrows on `Err` (database-access: all DB access via `withRetry`/`toResult`).
+
+Wiki pages updated to reflect the new behaviour:
+
+- `src/lib/validators.md` — note that `validateRequest` is now an arrow function.
+- `src/middleware/guard-sign-up-mode.md` — describe the new `redirectWithError` flow.
+- `src/routes/expenses/build-expenses.md` — document the new error redirect; added `lib/redirects.md` cross-reference.
+- `src/routes/profile/handle-change-password.md` — added an "Internal helpers" section for `isErrorWithMessage` noting the brace style.
+- `src/routes/test/database.md` — describe the `runDb` wrapper and its compliance with the database-access rule.
+- `src/index.md` — describe the body-limit `redirectWithError` overflow handler; updated the constants cross-reference (`HTML_STATUS` → `PATHS`) and added a `lib/redirects.md` link.
+
+Verification: `npx tsc --noEmit` produced only the two pre-existing `tests/send-email.spec.ts` errors that are unrelated to this change.

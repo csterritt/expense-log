@@ -109,28 +109,28 @@ Expense tags. Names are unique.
 
 Recurring expense templates that materialize into `expense` rows over time.
 
-| Column         | Type                | Constraints                                |
-| -------------- | ------------------- | ------------------------------------------ |
-| `id`           | text                | primaryKey                                 |
-| `description`  | text                | notNull                                    |
-| `amountCents`  | integer             | notNull                                    |
-| `categoryId`   | text                | notNull, references category.id (restrict) |
-| `recurrence`   | text                | notNull                                    |
-| `anchorDate`   | text                | notNull                                    |
-| `createdAt`    | integer (timestamp) | notNull                                    |
-| `updatedAt`    | integer (timestamp) | notNull                                    |
+| Column        | Type                | Constraints                                |
+| ------------- | ------------------- | ------------------------------------------ |
+| `id`          | text                | primaryKey                                 |
+| `description` | text                | notNull                                    |
+| `amountCents` | integer             | notNull                                    |
+| `categoryId`  | text                | notNull, references category.id (restrict) |
+| `recurrence`  | text                | notNull                                    |
+| `anchorDate`  | text                | notNull                                    |
+| `createdAt`   | integer (timestamp) | notNull                                    |
+| `updatedAt`   | integer (timestamp) | notNull                                    |
 
 ### `expense`
 
 Individual expense records, optionally linked to a `recurring` template.
 
-| Column            | Type                | Constraints                                |
-| ----------------- | ------------------- | ------------------------------------------ |
-| `id`              | text                | primaryKey                                 |
+| Column           | Type                | Constraints                                |
+| ---------------- | ------------------- | ------------------------------------------ |
+| `id`             | text                | primaryKey                                 |
 | `description`    | text                | notNull                                    |
 | `amountCents`    | integer             | notNull                                    |
 | `categoryId`     | text                | notNull, references category.id (restrict) |
-| `date`            | text                | notNull                                    |
+| `date`           | text                | notNull                                    |
 | `recurringId`    | text                | references recurring.id (set null)         |
 | `occurrenceDate` | text                |                                            |
 | `createdAt`      | integer (timestamp) | notNull                                    |
@@ -142,10 +142,10 @@ Includes a partial unique index `expense_recurring_occurrence_unique` on `(recur
 
 Join table between `expense` and `tag`.
 
-| Column      | Type | Constraints                                |
-| ----------- | ---- | ------------------------------------------ |
-| `expenseId` | text | notNull, references expense.id (cascade)   |
-| `tagId`     | text | notNull, references tag.id (restrict)      |
+| Column      | Type | Constraints                              |
+| ----------- | ---- | ---------------------------------------- |
+| `expenseId` | text | notNull, references expense.id (cascade) |
+| `tagId`     | text | notNull, references tag.id (restrict)    |
 
 Composite primary key `(expenseId, tagId)`.
 
@@ -153,10 +153,10 @@ Composite primary key `(expenseId, tagId)`.
 
 Join table between `recurring` and `tag`.
 
-| Column        | Type | Constraints                                  |
-| ------------- | ---- | -------------------------------------------- |
-| `recurringId` | text | notNull, references recurring.id (cascade)   |
-| `tagId`       | text | notNull, references tag.id (restrict)        |
+| Column        | Type | Constraints                                |
+| ------------- | ---- | ------------------------------------------ |
+| `recurringId` | text | notNull, references recurring.id (cascade) |
+| `tagId`       | text | notNull, references tag.id (restrict)      |
 
 Composite primary key `(recurringId, tagId)`.
 

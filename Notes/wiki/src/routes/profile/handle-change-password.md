@@ -6,6 +6,12 @@
 
 POST handler for changing password (`POST /profile`). Requires authentication.
 
+## Internal helpers
+
+### `isErrorWithMessage(value): value is { message: string }`
+
+Type-guard arrow function used to detect better-auth thrown errors. Each `if` body is wrapped in braces per the project coding-style rule.
+
 ## Export
 
 ### `handleChangePassword(app): void`
