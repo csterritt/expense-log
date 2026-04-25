@@ -22,7 +22,7 @@ POST handler for interest/waitlist sign-up (`POST /auth/interest-sign-up`). Only
 ## Cross-references
 
 - [build-interest-sign-up.md](build-interest-sign-up.md) — GET page
-- [lib/db-access.md](../../lib/db-access.md) — `addInterestedEmail`
+- [lib/db/auth-access.md](../../lib/db/auth-access.md) — `addInterestedEmail`
 
 ---
 

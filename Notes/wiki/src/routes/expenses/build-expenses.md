@@ -39,7 +39,7 @@ Middleware chain:
 ## Cross-references
 
 - [../../lib/et-date.md](../../lib/et-date.md) — `defaultRangeEt`
-- [../../lib/expense-repo.md](../../lib/expense-repo.md) — `listExpenses`, `ExpenseRow`
+- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `listExpenses`, `ExpenseRow`
 - [../../lib/money.md](../../lib/money.md) — `formatCents`
 - [../build-layout.md](../build-layout.md) — layout wrapper
 - [../../middleware/signed-in-access.md](../../middleware/signed-in-access.md) — auth gate

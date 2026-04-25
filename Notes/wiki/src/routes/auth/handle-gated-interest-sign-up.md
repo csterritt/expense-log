@@ -22,7 +22,7 @@ POST handler for combined gated + interest sign-up (`POST /auth/sign-up`). Only 
 ## Cross-references
 
 - [lib/sign-up-utils.md](../../lib/sign-up-utils.md) — `processGatedSignUp`
-- [lib/db-access.md](../../lib/db-access.md) — `claimSingleUseCode`, `addInterestedEmail`
+- [lib/db/auth-access.md](../../lib/db/auth-access.md) — `claimSingleUseCode`, `addInterestedEmail`
 
 ---
 

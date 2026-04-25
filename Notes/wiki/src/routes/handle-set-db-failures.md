@@ -22,11 +22,12 @@ Sets cookies:
 
 Returns JSON: `{ ok: true, name, times }`
 
-Used by E2E tests to verify retry logic in `db-access.ts`.
+Used by E2E tests to verify retry logic in `db-helpers.ts` and `db/auth-access.ts`.
 
 ## Cross-references
 
-- [lib/db-access.md](../lib/db-access.md) — reads these cookies to simulate failures
+- [lib/db-helpers.md](../lib/db-helpers.md) — `withRetry` reads failure cookies
+- [lib/db/auth-access.md](../lib/db/auth-access.md) — reads these cookies to simulate failures
 - [lib/test-routes.md](../lib/test-routes.md) — enabled only in test/dev mode
 
 ---

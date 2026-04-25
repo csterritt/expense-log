@@ -80,6 +80,8 @@ Parent PRD: #<prd-issue-number>
 **Output**: <what exists or passes when done>  
 **Depends on**: <task numbers or "none">
 
+<For WRITE and TEST tasks include a short paragraph asking the AI to read and follow the non-functional requirements and coding standards specified in the files under Notes/non-functional-reqs>
+
 <A short paragraph describing exactly what to do. Written as an instruction to the AI that will execute it. Include: which files to touch, which pattern to follow, which existing code to use as reference. Do NOT include code snippets — describe intent, not implementation.>
 
 ---

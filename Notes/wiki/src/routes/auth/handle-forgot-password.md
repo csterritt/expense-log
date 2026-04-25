@@ -23,6 +23,7 @@ POST handler for forgot password (`POST /auth/forgot-password`). Initiates the p
 
 - [build-forgot-password.md](build-forgot-password.md) — GET page
 - [build-waiting-for-reset.md](build-waiting-for-reset.md) — waiting page
+- [lib/db/auth-access.md](../../lib/db/auth-access.md) — `getUserWithAccountByEmail`, `updateAccountTimestamp`
 
 ---
 

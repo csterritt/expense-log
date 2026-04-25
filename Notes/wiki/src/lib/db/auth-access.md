@@ -1,10 +1,10 @@
-# db-access.ts
+# auth-access.ts
 
-**Source:** `src/lib/db-access.ts`
+**Source:** `src/lib/db/auth-access.ts`
 
 ## Purpose
 
-Centralized database access layer. All DB queries are wrapped in retry logic and return `Result<T, Error>` via `true-myth/result`.
+Auth-specific database access layer. All queries are wrapped in `withRetry` and return `Result<T, Error>` via `true-myth/result`. Split out from the former `db-access.ts` so it lives alongside `expense-access.ts` under `src/lib/db/`.
 
 ## Types
 
@@ -18,17 +18,9 @@ Centralized database access layer. All DB queries are wrapped in retry logic and
 
 ## Internal helpers
 
-### `withRetry(operationName, operation)`
-
-Wraps an async operation in `async-retry` with `STANDARD_RETRY_OPTIONS`. Logs `final error` on repeated failure.
-
-### `toResult(fn)`
-
-Converts a `Promise<T>` into `Promise<Result<T, Error>>`.
-
 ### `isUniqueConstraintError(error)`
 
-Recursively checks error messages for SQLite/Drizzle/D1 unique-constraint strings so duplicate inserts can be returned as `Result.ok(false)` instead of errors.
+Recursively checks error messages for SQLite / Drizzle / D1 unique-constraint strings so duplicate inserts can be returned as `Result.ok(false)` instead of errors.
 
 ## Exports
 
@@ -62,9 +54,10 @@ Deletes the user row. FK cascade deletes associated sessions and accounts. Retur
 
 ## Cross-references
 
+- [db-helpers.md](../db-helpers.md) — `withRetry`, `toResult`
 - [constants.md](../constants.md) — `STANDARD_RETRY_OPTIONS`
-- [db/schema.md](../db/schema.md) — table definitions
+- [db/schema.md](../../db/schema.md) — table definitions
 
 ---
 
-See [source-code.md](../../source-code.md) for the full catalog.
+See [source-code.md](../../../source-code.md) for the full catalog.

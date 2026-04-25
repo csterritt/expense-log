@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (68 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (69 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
@@ -28,10 +28,11 @@ Catalog of all source files under `src/` (68 files total), organized by category
 
 - [src/lib/auth.ts](./src/lib/auth.md) — Better Auth instance configuration: Drizzle adapter, email/password setup, email verification callbacks, session config, trusted origins, and secret binding.
 - [src/lib/cookie-support.ts](./src/lib/cookie-support.md) — Cookie parsing, serialization, and deletion utilities.
-- [src/lib/db-access.ts](./src/lib/db-access.md) — Database access helpers with retry logic for D1 queries.
+- [src/lib/db-helpers.ts](./src/lib/db-helpers.md) — Shared `withRetry` and `toResult` wrappers used by `db/auth-access.ts` and `db/expense-access.ts`.
+- [src/lib/db/auth-access.ts](./src/lib/db/auth-access.md) — Auth DB access helpers (retry + Result): `getUserWithAccountByEmail`, `claimSingleUseCode`, `addInterestedEmail`, `deleteUserAccount`.
+- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense DB access helpers (retry + Result): `listExpenses` with tag hydration.
 - [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
 - [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`.
-- [src/lib/expense-repo.ts](./src/lib/expense-repo.md) — Read/write helpers for the `expense` table; provides `listExpenses` for the list view.
 - [src/lib/generate-code.ts](./src/lib/generate-code.md) — Single-use sign-up code generation utility.
 - [src/lib/money.ts](./src/lib/money.md) — Money formatting helpers; provides `formatCents` for the expense list view.
 - [src/lib/po-notify.ts](./src/lib/po-notify.md) — Pushover notification integration (optional).

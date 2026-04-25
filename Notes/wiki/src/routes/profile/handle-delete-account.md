@@ -21,7 +21,7 @@ POST handler for account deletion (`POST /profile/delete`). Permanently deletes 
 ## Cross-references
 
 - [build-delete-confirm.md](build-delete-confirm.md) — confirmation page
-- [lib/db-access.md](../../lib/db-access.md) — `deleteUserAccount`
+- [lib/db/auth-access.md](../../lib/db/auth-access.md) — `deleteUserAccount`
 
 ---
 

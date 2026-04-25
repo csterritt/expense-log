@@ -23,7 +23,8 @@ Builds a better-auth instance with the following configuration:
 
 ## Cross-references
 
-- [db-access.md](db-access.md) — `createDbClient`
+- [db/auth-access.md](db/auth-access.md) — DB auth helpers
+- [db-helpers.md](db-helpers.md) — `withRetry`, `toResult`
 - [email-service.md](email-service.md) — `sendConfirmationEmail`, `sendPasswordResetEmail`
 - [constants.md](../constants.md) — `DURATIONS`
 - [local-types.md](../local-types.md) — `Bindings`

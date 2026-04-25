@@ -75,7 +75,7 @@ Full gated sign-up flow:
 
 ## Cross-references
 
-- [db-access.md](db-access.md) — `claimSingleUseCode`, `getUserIdByEmail`, `updateAccountTimestamp`
+- [db/auth-access.md](db/auth-access.md) — `claimSingleUseCode`, `getUserIdByEmail`, `updateAccountTimestamp`
 - [validators.md](validators.md) — validation schemas
 - [constants.md](../constants.md) — `PATHS`, `COOKIES`, `MESSAGES`
 

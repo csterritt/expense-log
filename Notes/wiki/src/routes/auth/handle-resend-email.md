@@ -22,6 +22,7 @@ POST handler to resend verification email (`POST /auth/resend-email`). Active in
 ## Cross-references
 
 - [constants.md](../../constants.md) — `DURATIONS.EMAIL_RESEND_TIME_IN_MILLISECONDS`
+- [lib/db/auth-access.md](../../lib/db/auth-access.md) — `getUserWithAccountByEmail`, `updateAccountTimestamp`
 
 ---
 

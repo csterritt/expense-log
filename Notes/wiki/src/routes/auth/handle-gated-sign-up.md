@@ -22,7 +22,7 @@ POST handler for gated sign-up (`POST /auth/sign-up`). Only active in `GATED_SIG
 ## Cross-references
 
 - [lib/sign-up-utils.md](../../lib/sign-up-utils.md) — `processGatedSignUp`
-- [lib/db-access.md](../../lib/db-access.md) — `claimSingleUseCode`
+- [lib/db/auth-access.md](../../lib/db/auth-access.md) — `claimSingleUseCode`
 
 ---
 
