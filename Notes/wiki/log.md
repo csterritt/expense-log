@@ -84,3 +84,18 @@ Wiki pages updated to reflect the new behaviour:
 - `src/index.md` — describe the body-limit `redirectWithError` overflow handler; updated the constants cross-reference (`HTML_STATUS` → `PATHS`) and added a `lib/redirects.md` link.
 
 Verification: `npx tsc --noEmit` produced only the two pre-existing `tests/send-email.spec.ts` errors that are unrelated to this change.
+
+## [2026-04-25] ingest | Issue 03: entry form (existing categories only, no tags)
+
+Ingested the Issue 03 work that adds the expense entry form at the top of `/expenses` and wires the create flow.
+
+- **`src/lib/money.ts`**: added `parseAmount(input)` returning `Result<number, string>`. Two-regex strategy (`/^\d*\.?\d+$/` for no-comma; `/^[1-9]\d{0,2}(,\d{3})+(\.\d+)?$/` for the comma case), then a separate decimal-place check. Rejects empty, zero, negatives, more than two decimals, malformed commas, and non-numeric. `Notes/wiki/src/lib/money.md` updated.
+- **`src/lib/db/expense-access.ts`**: added `listCategories(db)` (sorted `lower(name) asc`), `createExpense(db, input)` (verifies the `categoryId` exists, generates a UUID, inserts the row), and the `CategoryRow` / `CreateExpenseInput` types. Both new functions follow the `withRetry` + `Result` pattern. `Notes/wiki/src/lib/db/expense-access.md` updated.
+- **`src/routes/expenses/build-expenses.tsx`**: GET now also calls `listCategories` (in parallel with `listExpenses`) and renders the entry form above the list, with `data-testid`s `expense-form`, `expense-form-{description,amount,date,category,create}` and a `descriptionMax` constant following the `PRODUCTION:UNCOMMENT`/`PRODUCTION:REMOVE` convention. New `POST /expenses` validates the form via a local `validateExpenseForm` helper (description trimmed/length, `isValidYmd`, `categoryId`, `parseAmount`) and uses `redirectWithError` / `redirectWithMessage` for PRG. Flash messages render via the existing `useLayout` banner. `Notes/wiki/src/routes/expenses/build-expenses.md` rewritten.
+- **`src/routes/test/database.ts`**: added `POST /test/database/seed-categories` (PRODUCTION:REMOVE), case-insensitive de-dup, returns `{ success, created }`. `Notes/wiki/src/routes/test/database.md` updated.
+- **`e2e-tests/support/db-helpers.ts`**: added `seedCategories(rows)` and `SeedCategoryRow` matching the `seedExpenses` style. `Notes/wiki/e2e-tests/support/db-helpers.md` updated.
+- **`e2e-tests/expenses/02-entry-form.spec.ts`** (new): three tests covering form-render defaults, every amount variant from the issue (with reverse-alpha descriptions so the new row sorts to the top via the case-insensitive description tiebreak), and server-side rejection of `0` / `abc`. `Notes/wiki/e2e-tests/expenses/02-entry-form.spec.md` added; `Notes/wiki/e2e-tests.md` count 51 → 52.
+- **`tests/money.spec.ts`**: added a `parseAmount` `describe` block (~13 cases) on top of the existing `formatCents` block. `Notes/wiki/tests/money.spec.md` updated. All 20 tests pass via `bun test tests/money.spec.ts`.
+- **Note**: the planned `tests/expense-access.spec.ts` was deferred per the task's "no DB harness exists yet" clause; the `createExpense` happy/sad paths are covered by `02-entry-form.spec.ts` instead.
+
+Verification: `npx tsc --noEmit` clean on changed files (only pre-existing `tests/send-email.spec.ts` errors remain). `bun test tests/money.spec.ts` 20/20 pass. `npx playwright test e2e-tests/expenses/` 4/4 pass.

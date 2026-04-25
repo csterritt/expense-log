@@ -1,6 +1,6 @@
 # E2E Tests Catalog
 
-Catalog of all Playwright end-to-end tests under `e2e-tests/` (51 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
+Catalog of all Playwright end-to-end tests under `e2e-tests/` (52 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
 
 ## Support utilities (`e2e-tests/support/`)
 
@@ -38,6 +38,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (51 spec files + 1
 ## Expenses (`e2e-tests/expenses/`)
 
 - [e2e-tests/expenses/01-list-rendering.spec.ts](./e2e-tests/expenses/01-list-rendering.spec.md) — Issue 02. Seeds expenses across the default ET window plus one outside it; asserts ordering, formatting, tag join, and out-of-window exclusion on `/expenses`.
+- [e2e-tests/expenses/02-entry-form.spec.ts](./e2e-tests/expenses/02-entry-form.spec.md) — Issue 03. Renders the entry form with today (ET) defaulted, submits each amount variant from the issue and asserts PRG + formatted row, and verifies server-side rejection of `0` and non-numeric amounts.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 

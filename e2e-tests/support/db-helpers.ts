@@ -91,6 +91,43 @@ export const checkCodeExists = async (code: string): Promise<boolean> => {
   }
 }
 
+export interface SeedCategoryRow {
+  name: string
+}
+
+/**
+ * Seed database with a list of categories.
+ * Calls test-only server endpoint to insert rows directly.
+ */
+export const seedCategories = async (rows: SeedCategoryRow[]): Promise<void> => {
+  try {
+    const response = await fetch('http://localhost:3000/test/database/seed-categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rows),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      created?: number
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed categories')
+    }
+
+    console.log(`Categories seeded successfully: ${result.created} created`)
+  } catch (error) {
+    console.error('Failed to seed categories:', error)
+    throw error
+  }
+}
+
 export interface SeedExpenseRow {
   date: string
   description: string

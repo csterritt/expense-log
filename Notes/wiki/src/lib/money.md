@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Money formatting utilities. Issue 02 introduced `formatCents` for rendering integer cent amounts in the expense list table. `parseAmount` is intentionally left for a later slice.
+Money formatting and parsing utilities. Issue 02 introduced `formatCents`; Issue 03 added `parseAmount`.
 
 ## Exports
 
@@ -20,10 +20,20 @@ Formats an integer cent amount as a US-English dollar string with comma thousand
 
 Implemented with `Intl.NumberFormat('en-US')` for the integer part and a manual two-digit pad for the cents fraction; this avoids floating-point rounding when scaling cents to dollars.
 
+### `parseAmount(input: string): Result<number, string>`
+
+Parses a user-entered positive money amount into integer cents.
+
+- Trims whitespace.
+- Accepts forms like `1234`, `1234.56`, `1,234.56`, `.50`, `1,000,000.00`.
+- Validates with two regexes: `/^\d*\.?\d+$/` for the no-comma case and `/^[1-9]\d{0,2}(,\d{3})+(\.\d+)?$/` for the comma case.
+- Rejects empty input, zero (`0`, `0.00`), negatives, more than 2 decimal places, malformed comma placement (e.g. `1,23.45`, `,123`, `12,3456`), and non-numeric input.
+- Returns `Result.ok(cents)` on success, `Result.err(message)` on failure (no exceptions).
+
 ## Cross-references
 
-- [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — uses `formatCents` for the amount column.
-- [tests/money.spec.md](../../tests/money.spec.md) — unit coverage.
+- [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — uses `formatCents` for the amount column and `parseAmount` for the entry-form POST handler.
+- [tests/money.spec.md](../../tests/money.spec.md) — unit coverage of both `formatCents` and `parseAmount`.
 
 ---
 

@@ -27,6 +27,85 @@ export interface ListExpenseFilters {
   to: string
 }
 
+export interface CategoryRow {
+  id: string
+  name: string
+}
+
+export interface CreateExpenseInput {
+  date: string
+  description: string
+  categoryId: string
+  amountCents: number
+}
+
+/**
+ * List all categories sorted by case-insensitive `name ASC`.
+ * @param db - Database instance
+ * @returns Promise<Result<CategoryRow[], Error>>
+ */
+export const listCategories = (db: DrizzleClient): Promise<Result<CategoryRow[], Error>> =>
+  withRetry('listCategories', () => listCategoriesActual(db))
+
+const listCategoriesActual = async (
+  db: DrizzleClient,
+): Promise<Result<CategoryRow[], Error>> => {
+  try {
+    const rows = await db
+      .select({ id: category.id, name: category.name })
+      .from(category)
+      .orderBy(asc(sql`lower(${category.name})`))
+    return Result.ok(rows)
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
+ * Create a new expense row after verifying its `categoryId` exists.
+ *
+ * Inputs are assumed already validated (date as `YYYY-MM-DD`, non-empty
+ * description, positive integer cents). No tag handling in this slice.
+ * @param db - Database instance
+ * @param input - New-expense fields
+ * @returns Promise<Result<{ id: string }, Error>> — the new expense id on success
+ */
+export const createExpense = (
+  db: DrizzleClient,
+  input: CreateExpenseInput,
+): Promise<Result<{ id: string }, Error>> =>
+  withRetry('createExpense', () => createExpenseActual(db, input))
+
+const createExpenseActual = async (
+  db: DrizzleClient,
+  input: CreateExpenseInput,
+): Promise<Result<{ id: string }, Error>> => {
+  try {
+    const found = await db
+      .select({ id: category.id })
+      .from(category)
+      .where(eq(category.id, input.categoryId))
+    if (found.length === 0) {
+      return Result.err(new Error(`Category not found: ${input.categoryId}`))
+    }
+
+    const id = crypto.randomUUID()
+    const now = new Date()
+    await db.insert(expense).values({
+      id,
+      description: input.description,
+      amountCents: input.amountCents,
+      categoryId: input.categoryId,
+      date: input.date,
+      createdAt: now,
+      updatedAt: now,
+    })
+    return Result.ok({ id })
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
 /**
  * List expenses whose `date` is within `[from, to]` inclusive.
  *

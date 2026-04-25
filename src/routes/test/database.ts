@@ -401,4 +401,60 @@ testDatabaseRouter.post('/seed-expenses', secureHeaders(STANDARD_SECURE_HEADERS)
   }
 })
 
+/**
+ * Seed the database with categories for testing the entry form
+ * POST /test/database/seed-categories
+ */
+// PRODUCTION:REMOVE
+interface SeedCategoryInput {
+  name: string
+}
+
+testDatabaseRouter.post('/seed-categories', secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
+  try {
+    const db = createDbClient(c.env.PROJECT_DB)
+
+    const body = (await c.req.json()) as SeedCategoryInput[]
+    if (!Array.isArray(body)) {
+      return c.json({ success: false, error: 'Body must be a JSON array' }, 400)
+    }
+
+    const now = new Date()
+    const existing = await runDb(() => db.select().from(category))
+    const existingByLower = new Map<string, string>()
+    for (const row of existing) {
+      existingByLower.set(row.name.toLowerCase(), row.id)
+    }
+
+    let created = 0
+    for (const row of body) {
+      if (typeof row.name !== 'string' || row.name.trim() === '') {
+        continue
+      }
+      const key = row.name.toLowerCase()
+      if (existingByLower.has(key)) {
+        continue
+      }
+      const id = crypto.randomUUID()
+      await runDb(() =>
+        db.insert(category).values({ id, name: row.name, createdAt: now, updatedAt: now }),
+      )
+      existingByLower.set(key, id)
+      created += 1
+    }
+
+    return c.json({ success: true, created })
+  } catch (error) {
+    console.error('Failed to seed categories:', error)
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to seed categories',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500,
+    )
+  }
+})
+
 export { testDatabaseRouter }

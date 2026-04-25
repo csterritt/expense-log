@@ -32,6 +32,14 @@ POST `/test/database/seed` — seeds the database with test users, accounts, and
 
 POST `/test/database/seed-expenses` — Issue 02. Sends a JSON array of expense seeds. The server creates any missing categories/tags by case-insensitive name and inserts the expense + join rows. Logs the number created.
 
+### `SeedCategoryRow` (type)
+
+`{ name }` shape sent to the seed-categories endpoint.
+
+### `seedCategories(rows): Promise<void>`
+
+POST `/test/database/seed-categories` — Issue 03. Sends a JSON array of category seeds. The server de-duplicates case-insensitively against existing rows and inserts the rest. Used by `02-entry-form.spec.ts` to populate the category `<select>` before exercising the entry form.
+
 ---
 
 See [e2e-tests.md](../../e2e-tests.md) for the full catalog.

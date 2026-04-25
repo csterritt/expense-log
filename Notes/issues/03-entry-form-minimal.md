@@ -22,7 +22,7 @@ See PRD sections _Money_, _Forms and validation_, and user stories 1–5, 13.
   2. Visit `/expenses`; confirm the form renders with the date defaulted to today (ET) and the category `<select>` populated.
   3. Submit `description=Coffee`, `amount=4.50`, date=today, category=seeded one.
   4. Confirm redirect back to `/expenses` with the new row at the top and the form cleared.
-- **Automated**: unit tests for `money.parseAmount`. Playwright e2e signs in, seeds a category, submits the form for each amount input variant listed above, and asserts the row appears formatted as `$X,XXX.XX`.
+- **Automated**: unit tests for `money.parseAmount`. Playwright e2e signs in, seeds a category, submits the form for each amount input variant listed above, and asserts the row appears formatted as `X,XXX.XX`.
 
 ### Acceptance criteria
 
