@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit tests for `src/lib/time-access.ts` clock manipulation. Tests `getCurrentTime`, `setCurrentDelta`, and `clearCurrentDelta` using a fake Hono-like context object.
+Unit tests for `src/lib/time-access.ts` clock manipulation. Tests `getCurrentTime`, `setCurrentDelta`, and `clearCurrentDelta` using a fake Hono-like context object. Imports `beforeEach`/`describe`/`it` from `bun:test`.
 
 ## Fake context (`makeFakeContext`)
 

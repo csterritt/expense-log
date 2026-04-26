@@ -3,7 +3,7 @@
 // To run this, cd to this directory and type 'bun test'
 // ====================================
 
-import { describe, it } from 'node:test'
+import { describe, it } from 'bun:test'
 import assert from 'node:assert'
 
 import {

@@ -3,7 +3,7 @@
 // To run this, cd to this directory and type 'bun test'
 // ====================================
 
-import { beforeEach, describe, it } from 'node:test'
+import { beforeEach, describe, it } from 'bun:test'
 import assert from 'node:assert'
 import { setTimeout } from 'timers/promises'
 import { getCurrentTime, setCurrentDelta, clearCurrentDelta } from '../src/lib/time-access'

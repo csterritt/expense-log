@@ -114,3 +114,20 @@ Ingested the Issue 04 work that swaps the single-string `validateExpenseForm` he
 - **Catalogs**: `source-code.md` (count 69 → 71, added `expense-validators.md` and `form-state.md`, updated `money.md` and `build-expenses.md` summaries); `e2e-tests.md` (count 52 → 53, added the new spec entry); `unit-tests.md` (count 7 → 8, added the new spec entry).
 
 Verification: `tsc --noEmit` clean (only pre-existing `tests/send-email.spec.ts` errors remain). `bun test tests/expense-validators.spec.ts` 21/21 pass. `playwright test e2e-tests/expenses/` 11/11 pass (4 prior + 7 new).
+
+## [2026-04-26] fix | Unit test failures — Bun `node:test` polyfill bug + `send-email` signature drift
+
+Fixed 6 failing tests and 4 `NotImplementedError` crashes across 5 spec files. Root causes were (1) Bun's `node:test` polyfill breaking on nested `describe()` blocks (oven-sh/bun#5090) and (2) `sendOtpToUserViaEmail` gaining an `env` parameter that the test still called without.
+
+**`tests/send-email.spec.ts`**:
+- Changed `import { describe, it } from 'node:test'` → `'bun:test'`.
+- Added a local `mockEnv` object with `SMTP_SERVER_PORT`, `SMTP_SERVER_HOST`, `SMTP_SERVER_USER`, `SMTP_SERVER_PASSWORD`.
+- Updated both mock `emailAgent` signatures to accept the leading `env` parameter.
+- Updated both `sendOtpToUserViaEmail` call sites to pass `mockEnv` as the first argument.
+
+**`tests/sign-up-utils.spec.ts`**, **`tests/expense-validators.spec.ts`**, **`tests/db-access-retry.spec.ts`**, **`tests/time-access.spec.ts`**:
+- Changed `import { describe, it }` (and `beforeEach` for `time-access`) from `'node:test'` → `'bun:test'`.
+
+**Wiki pages updated**: `tests/send-email.spec.md` (noted `bun:test` import, `mockEnv` setup, and updated mock-agent signature), `tests/sign-up-utils.spec.md` (noted `bun:test` import), `tests/expense-validators.spec.md` (updated Setup line from `node:test` to `bun:test`), `tests/db-access-retry.spec.md` (noted `bun:test` import), `tests/time-access.spec.md` (noted `bun:test` import).
+
+Verification: `cd tests; bun test` — 94 pass, 0 fail, 0 errors across all 8 spec files.

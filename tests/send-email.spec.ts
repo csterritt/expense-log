@@ -3,10 +3,17 @@
 // To run this, cd to this directory and type 'bun test'
 // ====================================
 
-import { describe, it } from 'node:test'
+import { describe, it } from 'bun:test'
 import assert from 'node:assert'
 import { sendOtpToUserViaEmail } from '../src/lib/send-email'
 import { isOk } from 'true-myth/result'
+
+const mockEnv = {
+  SMTP_SERVER_PORT: '587',
+  SMTP_SERVER_HOST: 'smtp.example.com',
+  SMTP_SERVER_USER: 'user',
+  SMTP_SERVER_PASSWORD: 'password',
+}
 
 describe('sendOtpToUserViaEmail', () => {
   it('sends email with correct content and OTP code', async () => {
@@ -17,23 +24,25 @@ describe('sendOtpToUserViaEmail', () => {
 
     // Create mock email agent that captures arguments and returns successfully
     const mockEmailAgent = async (
+      env: any,
       fromAddress: string,
       toAddress: string,
       subject: string,
       content: string,
     ): Promise<void> => {
-      capturedArgs = { fromAddress, toAddress, subject, content }
+      capturedArgs = { env, fromAddress, toAddress, subject, content }
       return Promise.resolve()
     }
 
     // Call the function with our mock
-    const result = await sendOtpToUserViaEmail(testEmail, testOtp, mockEmailAgent)
+    const result = await sendOtpToUserViaEmail(mockEnv, testEmail, testOtp, mockEmailAgent)
 
     // Verify result is successful
     assert.strictEqual(isOk(result), true)
 
     // Verify email was "sent" with correct parameters
     assert.notStrictEqual(capturedArgs, null)
+    assert.strictEqual(capturedArgs?.env, mockEnv)
     assert.strictEqual(capturedArgs?.fromAddress, 'noreply@cls.cloud')
     assert.strictEqual(capturedArgs?.toAddress, testEmail)
     assert.strictEqual(capturedArgs?.subject, 'Your Mini-Auth Verification Code')
@@ -50,12 +59,23 @@ describe('sendOtpToUserViaEmail', () => {
     const testOtp = '123456'
 
     // Create mock email agent that fails
-    const mockFailingEmailAgent = async (): Promise<void> => {
+    const mockFailingEmailAgent = async (
+      env: any,
+      fromAddress: string,
+      toAddress: string,
+      subject: string,
+      content: string,
+    ): Promise<void> => {
+      void env
+      void fromAddress
+      void toAddress
+      void subject
+      void content
       throw new Error('Email sending failed')
     }
 
     // Call the function with our failing mock
-    const result = await sendOtpToUserViaEmail(testEmail, testOtp, mockFailingEmailAgent)
+    const result = await sendOtpToUserViaEmail(mockEnv, testEmail, testOtp, mockFailingEmailAgent)
 
     // Verify result is an error
     assert.strictEqual(result.isErr, true)
