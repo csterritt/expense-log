@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (69 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (71 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
@@ -33,8 +33,10 @@ Catalog of all source files under `src/` (69 files total), organized by category
 - [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense DB access helpers (retry + Result): `listExpenses` with tag hydration.
 - [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
 - [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`.
+- [src/lib/expense-validators.ts](./src/lib/expense-validators.md) — Per-field validators for the expense entry form; `parseExpenseCreate` collects every field's error and returns parsed cents on success.
+- [src/lib/form-state.ts](./src/lib/form-state.md) — Single-use flash payload (`{fieldErrors, values}`) for re-rendering a form on the next GET after a validation-failure redirect.
 - [src/lib/generate-code.ts](./src/lib/generate-code.md) — Single-use sign-up code generation utility.
-- [src/lib/money.ts](./src/lib/money.md) — Money formatting helpers; provides `formatCents` for the expense list view.
+- [src/lib/money.ts](./src/lib/money.md) — Money formatting helpers; provides `formatCents` and `parseAmount` for the expense list and entry form.
 - [src/lib/po-notify.ts](./src/lib/po-notify.md) — Pushover notification integration (optional).
 - [src/lib/redirects.tsx](./src/lib/redirects.md) — JSX-based redirect response builders.
 - [src/lib/send-email.ts](./src/lib/send-email.md) — Low-level email sending via Nodemailer or fetch-based transport.
@@ -62,7 +64,7 @@ Catalog of all source files under `src/` (69 files total), organized by category
 
 All five routes are signed-in-only via the `signedInAccess` middleware. Four are placeholder pages awaiting feature implementation.
 
-- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list page (`/expenses`); renders a DaisyUI table of in-window expenses or the empty-state when none.
+- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list + entry form page (`/expenses`); GET renders the form (with any flashed per-field errors and sticky values) above the in-window expense table or empty state; POST validates via `parseExpenseCreate` and PRG-redirects on either path.
 - [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Categories placeholder page (`/categories`).
 - [src/routes/build-tags.tsx](./src/routes/build-tags.md) — Tags placeholder page (`/tags`).
 - [src/routes/build-summary.tsx](./src/routes/build-summary.md) — Summary placeholder page (`/summary`).

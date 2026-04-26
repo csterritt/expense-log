@@ -33,12 +33,14 @@ End-to-end coverage for Issue 03: signs in `KNOWN_USER`, seeds a category with [
 ### `rejects zero and non-numeric amounts with no new row created`
 
 - Submits `amount=0` and `amount=abc`.
-- Asserts an error alert (`role='alert'.alert-error`) is visible after each submission.
+- Asserts the field-level `expense-form-amount-error` testid is visible after each submission. (Issue 04 replaced the original `role='alert'.alert-error` banner with per-field error rendering — see [03-validation-errors.spec.md](03-validation-errors.spec.md).)
 - Asserts `expense-row` count is 0 — neither bad submission produced a row.
 
 ## Cross-references
 
 - [../../src/routes/expenses/build-expenses.md](../../src/routes/expenses/build-expenses.md) — route under test.
 - [../../src/lib/money.md](../../src/lib/money.md) — `parseAmount` rejects the bad inputs that this spec exercises.
+- [../../src/lib/expense-validators.md](../../src/lib/expense-validators.md) — produces the field-level error asserted in the rejection test.
 - [../support/db-helpers.md](../support/db-helpers.md) — `seedCategories` helper.
 - [01-list-rendering.spec.md](01-list-rendering.spec.md) — sibling spec covering Issue 02 list rendering.
+- [03-validation-errors.spec.md](03-validation-errors.spec.md) — sibling spec covering Issue 04 per-field validation.

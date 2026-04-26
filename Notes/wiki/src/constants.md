@@ -52,6 +52,7 @@ Cookie names and standard options.
 
 - `MESSAGE_FOUND` — flash success message
 - `ERROR_FOUND` — flash error message
+- `FORM_ERRORS` — single-use payload for per-field form errors + sticky values; consumed by [`form-state.md`](lib/form-state.md)
 - `EMAIL_ENTERED` — email for verification flow
 - `SESSION` — session identifier
 - `DB_FAIL_COUNT` — test-only DB failure count

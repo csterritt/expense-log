@@ -14,7 +14,7 @@ import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
 import { signedInAccess } from '../../middleware/signed-in-access'
-import { defaultRangeEt, isValidYmd, todayEt } from '../../lib/et-date'
+import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import {
   listExpenses,
   listCategories,
@@ -22,19 +22,62 @@ import {
   type CategoryRow,
   type ExpenseRow,
 } from '../../lib/db/expense-access'
-import { formatCents, parseAmount } from '../../lib/money'
+import { formatCents } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
+import {
+  parseExpenseCreate,
+  descriptionMax,
+  type FieldErrors,
+} from '../../lib/expense-validators'
+import {
+  readAndClearFormState,
+  redirectWithFormErrors,
+  type ExpenseFormValues,
+} from '../../lib/form-state'
 
-// const descriptionMax = 200 // PRODUCTION:UNCOMMENT
-const descriptionMax = 202
+type EntryFormState = {
+  fieldErrors: FieldErrors
+  values: ExpenseFormValues
+}
 
-const renderEntryForm = (categories: CategoryRow[], today: string) => {
+const emptyState = (today: string): EntryFormState => ({
+  fieldErrors: {},
+  values: { description: '', amount: '', date: today, categoryId: '' },
+})
+
+const fieldError = (field: keyof FieldErrors, message?: string) => {
+  if (!message) {
+    return null
+  }
+  return (
+    <p
+      className='text-error text-sm mt-1'
+      data-testid={`expense-form-${field}-error`}
+    >
+      {message}
+    </p>
+  )
+}
+
+const inputClass = (base: string, hasError: boolean) =>
+  hasError ? `${base} input-error` : base
+
+const selectClass = (base: string, hasError: boolean) =>
+  hasError ? `${base} select-error` : base
+
+const renderEntryForm = (
+  categories: CategoryRow[],
+  state: EntryFormState,
+) => {
+  const { fieldErrors, values } = state
+  const selectedCategory = values.categoryId ?? ''
   return (
     <form
       method='post'
       action={PATHS.EXPENSES}
-      className='mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-end'
+      className='mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-start'
       data-testid='expense-form'
+      noValidate
     >
       <div className='flex flex-col md:col-span-2'>
         <label className='label' htmlFor='expense-form-description'>
@@ -45,10 +88,12 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
           name='description'
           type='text'
           required
-          maxLength={descriptionMax}
-          className='input input-bordered w-full'
+          maxLength={descriptionMax + 50}
+          className={inputClass('input input-bordered w-full', !!fieldErrors.description)}
           data-testid='expense-form-description'
+          value={values.description ?? ''}
         />
+        {fieldError('description', fieldErrors.description)}
       </div>
       <div className='flex flex-col'>
         <label className='label' htmlFor='expense-form-amount'>
@@ -60,9 +105,11 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
           type='text'
           inputMode='decimal'
           required
-          className='input input-bordered'
+          className={inputClass('input input-bordered', !!fieldErrors.amount)}
           data-testid='expense-form-amount'
+          value={values.amount ?? ''}
         />
+        {fieldError('amount', fieldErrors.amount)}
       </div>
       <div className='flex flex-col'>
         <label className='label' htmlFor='expense-form-date'>
@@ -71,12 +118,15 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
         <input
           id='expense-form-date'
           name='date'
-          type='date'
+          type='text'
           required
-          value={today}
-          className='input input-bordered'
+          pattern='\d{4}-\d{2}-\d{2}'
+          className={inputClass('input input-bordered', !!fieldErrors.date)}
           data-testid='expense-form-date'
+          value={values.date ?? ''}
+          placeholder='YYYY-MM-DD'
         />
+        {fieldError('date', fieldErrors.date)}
       </div>
       <div className='flex flex-col'>
         <label className='label' htmlFor='expense-form-category'>
@@ -86,17 +136,19 @@ const renderEntryForm = (categories: CategoryRow[], today: string) => {
           id='expense-form-category'
           name='categoryId'
           required
-          className='select select-bordered'
+          className={selectClass('select select-bordered', !!fieldErrors.category)}
           data-testid='expense-form-category'
-          defaultValue=''
         >
-          <option value='' disabled>
+          <option value='' selected={selectedCategory === ''} disabled>
             Select a category
           </option>
           {categories.map((cat) => (
-            <option value={cat.id}>{cat.name}</option>
+            <option value={cat.id} selected={selectedCategory === cat.id}>
+              {cat.name}
+            </option>
           ))}
         </select>
+        {fieldError('category', fieldErrors.category)}
       </div>
       <div className='md:col-span-5'>
         <button
@@ -142,11 +194,15 @@ const renderExpenseTable = (rows: ExpenseRow[]) => {
   )
 }
 
-const renderExpenses = (rows: ExpenseRow[], categories: CategoryRow[], today: string) => {
+const renderExpenses = (
+  rows: ExpenseRow[],
+  categories: CategoryRow[],
+  state: EntryFormState,
+) => {
   return (
     <div data-testid='expenses-page'>
       <h1 className='text-2xl font-bold mb-4'>Expenses</h1>
-      {renderEntryForm(categories, today)}
+      {renderEntryForm(categories, state)}
       {rows.length === 0 ? (
         <p className='text-gray-600' data-testid='expenses-empty-state'>
           No expenses yet
@@ -156,45 +212,6 @@ const renderExpenses = (rows: ExpenseRow[], categories: CategoryRow[], today: st
       )}
     </div>
   )
-}
-
-interface ValidatedExpenseInput {
-  date: string
-  description: string
-  categoryId: string
-  amountCents: number
-}
-
-const validateExpenseForm = (
-  raw: Record<string, string>,
-): { ok: true; value: ValidatedExpenseInput } | { ok: false; error: string } => {
-  const description = (raw.description ?? '').trim()
-  if (description === '') {
-    return { ok: false, error: 'Description is required.' }
-  }
-  if (description.length > descriptionMax) {
-    return { ok: false, error: `Description must be at most ${descriptionMax} characters.` }
-  }
-
-  const date = (raw.date ?? '').trim()
-  if (!isValidYmd(date)) {
-    return { ok: false, error: 'Date must be a valid YYYY-MM-DD value.' }
-  }
-
-  const categoryId = (raw.categoryId ?? '').trim()
-  if (categoryId === '') {
-    return { ok: false, error: 'Category is required.' }
-  }
-
-  const amountResult = parseAmount(raw.amount ?? '')
-  if (amountResult.isErr) {
-    return { ok: false, error: amountResult.error }
-  }
-
-  return {
-    ok: true,
-    value: { date, description, categoryId, amountCents: amountResult.value },
-  }
 }
 
 export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
@@ -216,11 +233,21 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
           'Failed to load expenses. Please try again.',
         )
       }
+      const today = todayEt()
+      const flash = readAndClearFormState(c)
+      const state: EntryFormState = flash
+        ? {
+            fieldErrors: flash.fieldErrors ?? {},
+            values: {
+              description: flash.values.description ?? '',
+              amount: flash.values.amount ?? '',
+              date: flash.values.date ?? today,
+              categoryId: flash.values.categoryId ?? '',
+            },
+          }
+        : emptyState(today)
       return c.render(
-        useLayout(
-          c,
-          renderExpenses(expensesResult.value, categoriesResult.value, todayEt()),
-        ),
+        useLayout(c, renderExpenses(expensesResult.value, categoriesResult.value, state)),
       )
     },
   )
@@ -231,16 +258,16 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const form = await c.req.parseBody()
-      const raw: Record<string, string> = {
+      const raw = {
         description: typeof form.description === 'string' ? form.description : '',
         amount: typeof form.amount === 'string' ? form.amount : '',
         date: typeof form.date === 'string' ? form.date : '',
         categoryId: typeof form.categoryId === 'string' ? form.categoryId : '',
       }
 
-      const validated = validateExpenseForm(raw)
-      if (!validated.ok) {
-        return redirectWithError(c, PATHS.EXPENSES, validated.error)
+      const validated = parseExpenseCreate(raw)
+      if (validated.isErr) {
+        return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, raw)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)

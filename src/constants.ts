@@ -84,6 +84,8 @@ export const COOKIES = {
   MESSAGE_FOUND: 'MESSAGE_FOUND',
   // Error message cookie
   ERROR_FOUND: 'ERROR_FOUND',
+  // Per-form field-error + sticky-values cookie (single-use)
+  FORM_ERRORS: 'FORM_ERRORS',
   // Email entered cookie
   EMAIL_ENTERED: 'EMAIL_ENTERED',
 

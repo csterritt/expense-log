@@ -111,7 +111,7 @@ test.describe('Expense entry form', () => {
         categoryName: 'Food',
       })
       await page.waitForURL(BASE_URLS.EXPENSES)
-      await expect(page.locator('[role="alert"].alert-error')).toBeVisible()
+      await expect(page.getByTestId("expense-form-amount-error")).toBeVisible()
       await expect(page.getByTestId('expense-row')).toHaveCount(0)
 
       await submitEntryForm(page, {
@@ -120,7 +120,7 @@ test.describe('Expense entry form', () => {
         categoryName: 'Food',
       })
       await page.waitForURL(BASE_URLS.EXPENSES)
-      await expect(page.locator('[role="alert"].alert-error')).toBeVisible()
+      await expect(page.getByTestId("expense-form-amount-error")).toBeVisible()
       await expect(page.getByTestId('expense-row')).toHaveCount(0)
     }),
   )
