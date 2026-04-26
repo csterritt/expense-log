@@ -11,7 +11,8 @@ Database-level concerns (e.g. whether the referenced `categoryId` exists) are st
 ## Constants
 
 - `descriptionMax` — `200` in production / `202` for testing.
-- `categoryNameMax` — `20` in production / `22` for testing. Added in Issue 05 to cap inline-typed category names. Both follow the project's `PRODUCTION:UNCOMMENT` convention and are re-exported so the entry form can reuse them.
+- `categoryNameMax` — `20` in production / `22` for testing. Added in Issue 05 to cap inline-typed category names.
+- `tagNameMax` — `20` in production / `22` for testing. Added in Issue 06 to cap a single tag name. All three follow the project's `PRODUCTION:UNCOMMENT` convention and are re-exported so the entry form can reuse them for `<input maxlength>` sizing.
 
 ## Schemas
 
@@ -26,7 +27,7 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 
 ## Types
 
-- `FieldErrors` — `{ description?, amount?, date?, category? }`. A missing key means that field passed validation.
+- `FieldErrors` — `{ description?, amount?, date?, category?, tags? }`. A missing key means that field passed validation. The `tags` slot is added in Issue 06 for the CSV input.
 - `RawExpenseCreate` — the four raw string fields read from the form body (`description`, `amount`, `date`, `category`).
 - `ParsedExpenseCreate` — `{ description, amountCents, date, category }` (note the `amountCents`, not `amount`; and `category` is the trimmed typed name, not an id).
 - `ExpenseCreateInput` — `InferOutput<typeof ExpenseCreateSchema>`, exported for completeness.
@@ -44,6 +45,12 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 
 - Introduced in Issue 05. Runs the trimmed input through `NewCategoryNameSchema` and, on success, returns the trimmed value *case-preserved*. Lowercasing is deferred to `createCategoryAndExpense` so the UI can echo the user's casing back on the confirmation page.
 - On failure returns a single user-facing string suitable to place under the entry form's `category` field via `redirectWithFormErrors(c, PATHS.EXPENSES, { category: err }, values)`.
+
+### `parseTagCsv(input: string): Result<string[], string>`
+
+- Introduced in Issue 06. Splits the raw CSV on `,`, trims each entry, drops empty-after-trim entries, lower-cases the survivors, and de-duplicates silently (preserving first-appearance order). Enforces `length <= tagNameMax` on every kept name.
+- Returns `Result.ok([])` for an empty / all-whitespace CSV (zero tags is a valid submission).
+- Returns `Result.err(\`Tag names must be at most ${tagNameMax} characters.\`)` when any kept entry exceeds the limit. The POST handler surfaces that string under the `tags` field via `redirectWithFormErrors(c, PATHS.EXPENSES, { tags: err }, values)`.
 
 ## Cross-references
 

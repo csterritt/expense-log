@@ -9,8 +9,10 @@ import assert from 'node:assert'
 import {
   parseExpenseCreate,
   parseNewCategoryName,
+  parseTagCsv,
   descriptionMax,
   categoryNameMax,
+  tagNameMax,
   type FieldErrors,
 } from '../src/lib/expense-validators'
 
@@ -178,6 +180,70 @@ describe('parseExpenseCreate', () => {
       assert.strictEqual(r.isOk, true)
       if (r.isOk) {
         assert.strictEqual(r.value, 'Groceries')
+      }
+    })
+  })
+
+  describe('parseTagCsv', () => {
+    it('returns ok([]) for empty string', () => {
+      const r = parseTagCsv('')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, [])
+      }
+    })
+
+    it('parses a simple two-tag CSV', () => {
+      const r = parseTagCsv('food, groceries')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, ['food', 'groceries'])
+      }
+    })
+
+    it('case-insensitively de-duplicates', () => {
+      const r = parseTagCsv('Food, food, FOOD')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, ['food'])
+      }
+    })
+
+    it('trims whitespace per entry', () => {
+      const r = parseTagCsv('  food  ,   groceries')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, ['food', 'groceries'])
+      }
+    })
+
+    it('rejects a single tagNameMax + 1 char name', () => {
+      const r = parseTagCsv('a'.repeat(tagNameMax + 1))
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.length > 0)
+      }
+    })
+
+    it('rejects when any tag in a longer list exceeds the limit', () => {
+      const tooLong = 'a'.repeat(tagNameMax + 1)
+      const r = parseTagCsv(`food, ${tooLong}, groceries`)
+      assert.strictEqual(r.isErr, true)
+    })
+
+    it('returns ok([]) for an all-empty CSV', () => {
+      const r = parseTagCsv(', ,  ,')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, [])
+      }
+    })
+
+    it('accepts exactly tagNameMax characters', () => {
+      const r = parseTagCsv('a'.repeat(tagNameMax))
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, ['a'.repeat(tagNameMax)])
       }
     })
   })

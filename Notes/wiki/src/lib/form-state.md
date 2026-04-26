@@ -10,7 +10,7 @@ The payload is JSON-encoded into a dedicated `COOKIES.FORM_ERRORS` cookie that i
 
 ## Types
 
-- `ExpenseFormValues` — sticky values for the entry form: `{ description?, amount?, date?, categoryId? }`. Each field is the raw string the user typed, not the parsed form, so the input redisplays exactly what they entered.
+- `ExpenseFormValues` — sticky values for the entry form: `{ description?, amount?, date?, category?, tags? }`. Each field is the raw string the user typed, not the parsed form, so the input redisplays exactly what they entered. (Issue 05 renamed `categoryId` → `category` when the entry form switched to a free-form text input. Issue 06 added `tags` for the CSV input.)
 - `FormState` — `{ fieldErrors: FieldErrors, values: ExpenseFormValues }`. Generic enough that future forms can reuse it; today only the expense entry form uses it.
 
 ## Exports

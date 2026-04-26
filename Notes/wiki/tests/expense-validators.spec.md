@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases. Pins the contract that `parseExpenseCreate` accepts a representative valid input per field, rejects every failure case enumerated in the issues, and reports **every** invalid field at once on multi-field failures (not just the first).
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases. Pins the contract that `parseExpenseCreate` accepts a representative valid input per field, rejects every failure case enumerated in the issues, and reports **every** invalid field at once on multi-field failures (not just the first).
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (28 total)
+## Test cases (36 total)
 
 ### `description`
 
@@ -39,6 +39,16 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 ### `parseNewCategoryName` (Issue 05, 7 cases)
 
 - `accepts a single character`, `accepts exactly categoryNameMax characters`, `rejects categoryNameMax + 1 characters`, `rejects empty input`, `rejects whitespace-only input`, `trims surrounding whitespace and returns the trimmed value`, `preserves case in the trimmed value`.
+
+### `parseTagCsv` (Issue 06, 8 cases)
+
+- `returns ok([]) for empty string`.
+- `parses a simple two-tag CSV` — `'food, groceries'` → `['food','groceries']`.
+- `case-insensitively de-duplicates` — `'Food, food, FOOD'` collapses to `['food']`.
+- `trims whitespace per entry` — surrounding spaces stripped before lower-casing.
+- `rejects a single tagNameMax + 1 char name`, `rejects when any tag in a longer list exceeds the limit`.
+- `returns ok([]) for an all-empty CSV` — `', ,  ,'` → `[]` (zero tags is valid).
+- `accepts exactly tagNameMax characters`.
 
 ### `multi-field failure`
 

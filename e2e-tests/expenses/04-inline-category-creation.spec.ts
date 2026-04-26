@@ -56,12 +56,12 @@ test.describe('Inline category creation (no-JS path)', () => {
       })
       await submitEntryForm(page)
 
-      await expect(page.getByTestId('confirm-create-category-page')).toBeVisible()
-      await expect(page.getByTestId('confirm-create-category-name')).toHaveText("'groceries'")
-      await expect(page.getByTestId('confirm-create-category-description')).toHaveText('Weekly shop')
-      await expect(page.getByTestId('confirm-create-category-amount')).toHaveText('42.50')
-      await expect(page.getByTestId('confirm-create-category-date')).toHaveText(todayEt())
-      await expect(page.getByTestId('confirm-create-category-category')).toHaveText('groceries')
+      await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
+      await expect(page.getByTestId('confirm-create-new-category-line')).toContainText("'groceries'")
+      await expect(page.getByTestId('confirm-create-new-description')).toHaveText('Weekly shop')
+      await expect(page.getByTestId('confirm-create-new-amount')).toHaveText('42.50')
+      await expect(page.getByTestId('confirm-create-new-date')).toHaveText(todayEt())
+      await expect(page.getByTestId('confirm-create-new-category')).toHaveText('groceries')
     }),
   )
 
@@ -79,8 +79,8 @@ test.describe('Inline category creation (no-JS path)', () => {
       })
       await submitEntryForm(page)
 
-      await expect(page.getByTestId('confirm-create-category-page')).toBeVisible()
-      await page.getByTestId('confirm-create-category-cancel').click()
+      await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
+      await page.getByTestId('confirm-create-new-cancel').click()
 
       await page.waitForURL(BASE_URLS.EXPENSES)
       await expect(page.getByTestId('expense-form')).toBeVisible()
@@ -107,8 +107,8 @@ test.describe('Inline category creation (no-JS path)', () => {
       })
       await submitEntryForm(page)
 
-      await expect(page.getByTestId('confirm-create-category-page')).toBeVisible()
-      await page.getByTestId('confirm-create-category-confirm').click()
+      await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
+      await page.getByTestId('confirm-create-new-confirm').click()
 
       await page.waitForURL(BASE_URLS.EXPENSES)
       await expect(page.getByTestId('expense-row')).toHaveCount(1)
@@ -129,7 +129,7 @@ test.describe('Inline category creation (no-JS path)', () => {
       await submitEntryForm(page)
 
       await page.waitForURL(BASE_URLS.EXPENSES)
-      await expect(page.getByTestId('confirm-create-category-page')).toHaveCount(0)
+      await expect(page.getByTestId('confirm-create-new-page')).toHaveCount(0)
       await expect(page.getByTestId('expense-row')).toHaveCount(2)
     }),
   )
@@ -150,7 +150,7 @@ test.describe('Inline category creation (no-JS path)', () => {
       await submitEntryForm(page)
 
       await page.waitForURL(BASE_URLS.EXPENSES)
-      await expect(page.getByTestId('confirm-create-category-page')).toHaveCount(0)
+      await expect(page.getByTestId('confirm-create-new-page')).toHaveCount(0)
       await expect(page.getByTestId('expense-form-category-error')).toBeVisible()
       await expect(page.getByTestId('expense-form-description')).toHaveValue('Big name')
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('5.00')
@@ -175,7 +175,7 @@ test.describe('Inline category creation (no-JS path)', () => {
       await submitEntryForm(page)
 
       await page.waitForURL(BASE_URLS.EXPENSES)
-      await expect(page.getByTestId('confirm-create-category-page')).toHaveCount(0)
+      await expect(page.getByTestId('confirm-create-new-page')).toHaveCount(0)
       await expect(page.getByTestId('expense-form-category-error')).toBeVisible()
       await expect(page.getByTestId('expense-row')).toHaveCount(0)
     }),

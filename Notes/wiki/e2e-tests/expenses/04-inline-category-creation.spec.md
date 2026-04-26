@@ -19,26 +19,26 @@ End-to-end coverage for Issue 05's inline-category-creation flow on the entry fo
 ### `unmatched name renders the consolidated confirmation page`
 
 - Submits with `category='Groceries'` (not seeded).
-- Asserts `confirm-create-category-page` is visible and that every mirror field (`-name`, `-description`, `-amount`, `-date`, `-category`) shows the lowercased category name and the typed expense values verbatim.
+- Asserts `confirm-create-new-page` is visible (testid renamed in Issue 06) and that the `confirm-create-new-category-line` shows `'groceries'` plus every mirror field (`-description`, `-amount`, `-date`, `-category`) shows the lowercased category name and the typed expense values verbatim.
 
 ### `cancel preserves every typed value and creates nothing`
 
-- Submits with an unmatched `category='Groceries'`, lands on the confirmation page, clicks `confirm-create-category-cancel`.
+- Submits with an unmatched `category='Groceries'`, lands on the confirmation page, clicks `confirm-create-new-cancel`.
 - After waiting for `/expenses`, asserts all four entry-form fields still hold the originally-typed values (including the original-case `Groceries` in the category input) and that no `expense-row` was created.
 
 ### `confirm creates the category + expense and routes future submits through the existing-match branch`
 
-- First submission: typed `Groceries` is unmatched, lands on the confirmation page; click `confirm-create-category-confirm`.
+- First submission: typed `Groceries` is unmatched, lands on the confirmation page; click `confirm-create-new-confirm`.
 - After waiting for `/expenses`, asserts a single `expense-row` exists with `expense-row-category` text `groceries` (matching the lowercasing performed by `createCategoryAndExpense`) and that the entry form is cleared.
 - Second submission: typed `GROCERIES` (different case) now matches the just-created row.
-  - `confirm-create-category-page` is **not** rendered.
+  - `confirm-create-new-page` is **not** rendered.
   - The expense list grows to two rows.
 - Together this proves both `findCategoryByName`'s case-insensitive match and the atomic create's lowercasing in a single test.
 
 ### `over-max category name shows field error and skips the confirmation page`
 
 - Submits with `category='g'.repeat(categoryNameMax + 1)`.
-- After redirect, asserts `confirm-create-category-page` is **not** present, `expense-form-category-error` is visible, and every other typed field's sticky value is preserved.
+- After redirect, asserts `confirm-create-new-page` is **not** present, `expense-form-category-error` is visible, and every other typed field's sticky value is preserved.
 
 ### `whitespace-only category name shows field error and skips the confirmation page`
 

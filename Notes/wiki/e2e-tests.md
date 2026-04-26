@@ -1,6 +1,6 @@
 # E2E Tests Catalog
 
-Catalog of all Playwright end-to-end tests under `e2e-tests/` (54 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
+Catalog of all Playwright end-to-end tests under `e2e-tests/` (55 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
 
 ## Support utilities (`e2e-tests/support/`)
 
@@ -40,7 +40,8 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (54 spec files + 1
 - [e2e-tests/expenses/01-list-rendering.spec.ts](./e2e-tests/expenses/01-list-rendering.spec.md) — Issue 02. Seeds expenses across the default ET window plus one outside it; asserts ordering, formatting, tag join, and out-of-window exclusion on `/expenses`.
 - [e2e-tests/expenses/02-entry-form.spec.ts](./e2e-tests/expenses/02-entry-form.spec.md) — Issue 03. Renders the entry form with today (ET) defaulted, submits each amount variant from the issue and asserts PRG + formatted row, and verifies server-side rejection of `0` and non-numeric amounts (now via the field-level error testid added in Issue 04).
 - [e2e-tests/expenses/03-validation-errors.spec.ts](./e2e-tests/expenses/03-validation-errors.spec.md) — Issue 04. Per-field validation and sticky-value coverage: empty / over-max description, four bad amounts, invalid date `2025-13-40`, missing category, all-bad-at-once, and a fix-and-resubmit round trip.
-- [e2e-tests/expenses/04-inline-category-creation.spec.ts](./e2e-tests/expenses/04-inline-category-creation.spec.md) — Issue 05. Inline-category-creation flow: unmatched names render the consolidated confirmation page; Confirm atomically creates the category + expense (with case-insensitive lookup on subsequent submits); Cancel rounds-trips every typed value with no DB writes; over-max and whitespace-only names short-circuit before the confirmation page.
+- [e2e-tests/expenses/04-inline-category-creation.spec.ts](./e2e-tests/expenses/04-inline-category-creation.spec.md) — Issue 05. Inline-category-creation flow: unmatched names render the consolidated confirmation page; Confirm atomically creates the category + expense (with case-insensitive lookup on subsequent submits); Cancel rounds-trips every typed value with no DB writes; over-max and whitespace-only names short-circuit before the confirmation page. Testids renamed to `confirm-create-new-*` in Issue 06.
+- [e2e-tests/expenses/05-tags-and-inline-creation.spec.ts](./e2e-tests/expenses/05-tags-and-inline-creation.spec.md) — Issue 06. Tags CSV input + combined inline-creation flow: mixed existing+new tags route through the generalised confirmation page with case-insensitive de-duplication and alphabetical list rendering; brand-new category + new tags lists every new name; subsequent all-existing submission takes the direct path; Cancel preserves the **raw** typed CSV; over-max tag names short-circuit with a `tags` field error; whitespace-only CSV creates the expense with no tags attached.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 

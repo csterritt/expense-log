@@ -31,6 +31,7 @@ export type ExpenseFormValues = {
   amount?: string
   date?: string
   category?: string
+  tags?: string
 }
 
 /**

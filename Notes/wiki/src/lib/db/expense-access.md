@@ -94,6 +94,26 @@ interface CreateCategoryAndExpenseInput {
 - Trims `input.newCategoryName`, lowercases it, and inserts both the new `category` row and a matching `expense` row inside a single `db.batch([...])` so a failure on either statement rolls the other back.
 - Generates fresh UUIDs for both rows and sets `createdAt`/`updatedAt` to a single `new Date()` captured at call time.
 - A race-condition unique-name collision is recognised heuristically (`/unique|constraint/i` on the thrown message) and surfaces as `Result.err(new Error(\`A category named "..." already exists.\`))`; callers in `build-expenses.tsx` map that error straight back to the `category` field via `redirectWithFormErrors`.
+- Note: kept around as the simpler category-only helper from Issue 05. Issue 06's combined-creation flow uses the more general `createManyAndExpense` below; this helper is currently unused by the route handlers but remains a useful reference.
+
+### `findTagsByNames(db, names): Promise<Result<TagRow[], Error>>`
+
+- Added in Issue 06. Public wrapper: `withRetry('findTagsByNames', () => findTagsByNamesActual(db, names))`.
+- Trims and lowercases every entry, drops empty/whitespace-only entries, de-duplicates, and short-circuits to `Result.ok([])` when the effective list is empty (no query issued).
+- Otherwise issues a single `WHERE lower(tag.name) IN (...)` lookup. Used by the entry-form POST to compute the existing-vs-new diff against the typed CSV.
+
+### `createExpenseWithTags(db, input): Promise<Result<{ id }, Error>>`
+
+- Added in Issue 06. Public wrapper: `withRetry('createExpenseWithTags', () => createExpenseWithTagsActual(db, input))`.
+- Verifies `input.categoryId` exists, then inserts the expense row plus one `expenseTag` link per (de-duplicated) tag id. With no tag ids, runs the bare `expense` insert; with tags, batches everything atomically.
+- Used by the entry-form POST when both the category and every tag already exist (no confirmation page needed).
+
+### `createManyAndExpense(db, input): Promise<Result<{ categoryId, expenseId, createdTagIds }, Error>>`
+
+- Added in Issue 06. Public wrapper: `withRetry('createManyAndExpense', () => createManyAndExpenseActual(db, input))`.
+- Accepts `{ newCategoryName | existingCategoryId, newTagNames, existingTagIds, date, description, amountCents }`. Exactly one of `newCategoryName` / `existingCategoryId` must be supplied — both/neither return `Result.err`.
+- In a single `db.batch([...])` inserts (a) the optional new category row (lower-cased, fresh UUID), (b) one `tag` row per de-duplicated `newTagNames` entry (lower-cased, fresh UUIDs), (c) the `expense` row, (d) one `expenseTag` row per (de-duplicated combined existing + new) tag id.
+- Unique-name collisions on `category.name` or `tag.name` (`/unique|constraint/i`) surface as `Result.err(new Error('One of the new names collides with an existing row. Please try again.'))`; the confirm POST surfaces this under `category` when a new category was being created and otherwise under `tags`.
 
 ## Cross-references
 

@@ -17,9 +17,10 @@ import { signedInAccess } from '../../middleware/signed-in-access'
 import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import {
   listExpenses,
-  createExpense,
+  createExpenseWithTags,
   findCategoryByName,
-  createCategoryAndExpense,
+  findTagsByNames,
+  createManyAndExpense,
   type ExpenseRow,
 } from '../../lib/db/expense-access'
 import { formatCents } from '../../lib/money'
@@ -27,8 +28,10 @@ import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseExpenseCreate,
   parseNewCategoryName,
+  parseTagCsv,
   descriptionMax,
   categoryNameMax,
+  tagNameMax,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import {
@@ -37,7 +40,9 @@ import {
   type ExpenseFormValues,
 } from '../../lib/form-state'
 
-const CONFIRM_CREATE_CATEGORY_PATH = '/expenses/confirm-create-category'
+const CONFIRM_CREATE_NEW_PATH = '/expenses/confirm-create-new'
+// Generous CSV maxlength: enough for ~8 max-length tags plus separators.
+const tagsCsvMax = (tagNameMax + 2) * 8
 
 type EntryFormState = {
   fieldErrors: FieldErrors
@@ -46,7 +51,7 @@ type EntryFormState = {
 
 const emptyState = (today: string): EntryFormState => ({
   fieldErrors: {},
-  values: { description: '', amount: '', date: today, category: '' },
+  values: { description: '', amount: '', date: today, category: '', tags: '' },
 })
 
 const fieldError = (field: keyof FieldErrors, message?: string) => {
@@ -142,6 +147,22 @@ const renderEntryForm = (state: EntryFormState) => {
         />
         {fieldError('category', fieldErrors.category)}
       </div>
+      <div className='flex flex-col md:col-span-5'>
+        <label className='label' htmlFor='expense-form-tags'>
+          <span className='label-text'>Tags (comma-separated)</span>
+        </label>
+        <input
+          id='expense-form-tags'
+          name='tags'
+          type='text'
+          maxLength={tagsCsvMax}
+          className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
+          data-testid='expense-form-tags'
+          value={values.tags ?? ''}
+          placeholder='e.g. food, groceries'
+        />
+        {fieldError('tags', fieldErrors.tags)}
+      </div>
       <div className='md:col-span-5'>
         <button
           type='submit'
@@ -202,66 +223,75 @@ const renderExpenses = (rows: ExpenseRow[], state: EntryFormState) => {
   )
 }
 
-type ConfirmCreateCategoryProps = {
-  normalizedName: string
+type ConfirmCreateNewProps = {
+  // Normalized (lowercased, trimmed) new category name, or null when the
+  // category already exists.
+  newCategoryName: string | null
+  // Final category name to display in the preview (existing match name or
+  // the normalized new-category name).
+  finalCategoryName: string
+  // Normalized new-tag names (lowercased, trimmed, de-duplicated). Already
+  // alphabetized by the caller.
+  newTagNames: string[]
+  // Final tag list to display in the preview (alphabetized).
+  finalTagNames: string[]
+  // Raw values from the entry form (exact strings to round-trip on Cancel).
   values: ExpenseFormValues
 }
 
-const renderConfirmCreateCategory = (props: ConfirmCreateCategoryProps) => {
-  const { normalizedName, values } = props
-  const amountDisplay = (() => {
-    const trimmed = (values.amount ?? '').trim()
-    if (trimmed.length === 0) {
-      return ''
-    }
-    // Best-effort preview: show the raw typed value. Exact formatting is
-    // applied server-side at create time via `formatCents`.
-    return trimmed
-  })()
+const renderConfirmCreateNew = (props: ConfirmCreateNewProps) => {
+  const { newCategoryName, finalCategoryName, newTagNames, finalTagNames, values } = props
+  const amountDisplay = (values.amount ?? '').trim()
   return (
     <div
       className='max-w-xl mx-auto'
-      data-testid='confirm-create-category-page'
+      data-testid='confirm-create-new-page'
     >
-      <h1 className='text-2xl font-bold mb-4'>Confirm new category</h1>
-      <p className='mb-4'>
-        Create category{' '}
-        <strong data-testid='confirm-create-category-name'>
-          '{normalizedName}'
-        </strong>{' '}
-        and add this expense?
-      </p>
+      <h1 className='text-2xl font-bold mb-4'>Confirm new items</h1>
+      <ul className='mb-4 list-disc list-inside' data-testid='confirm-create-new-list'>
+        {newCategoryName !== null ? (
+          <li data-testid='confirm-create-new-category-line'>
+            Create category <strong>'{newCategoryName}'</strong>
+          </li>
+        ) : null}
+        {newTagNames.map((name) => (
+          <li data-testid='confirm-create-new-tag-line'>
+            Create tag <strong>'{name}'</strong>
+          </li>
+        ))}
+      </ul>
       <dl className='grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 mb-6'>
         <dt className='font-semibold'>Description</dt>
-        <dd data-testid='confirm-create-category-description'>
+        <dd data-testid='confirm-create-new-description'>
           {values.description ?? ''}
         </dd>
         <dt className='font-semibold'>Amount</dt>
-        <dd data-testid='confirm-create-category-amount'>{amountDisplay}</dd>
+        <dd data-testid='confirm-create-new-amount'>{amountDisplay}</dd>
         <dt className='font-semibold'>Date</dt>
-        <dd data-testid='confirm-create-category-date'>{values.date ?? ''}</dd>
+        <dd data-testid='confirm-create-new-date'>{values.date ?? ''}</dd>
         <dt className='font-semibold'>Category</dt>
-        <dd data-testid='confirm-create-category-category'>
-          {normalizedName}
-        </dd>
+        <dd data-testid='confirm-create-new-category'>{finalCategoryName}</dd>
+        <dt className='font-semibold'>Tags</dt>
+        <dd data-testid='confirm-create-new-tags'>{finalTagNames.join(', ')}</dd>
       </dl>
       <form
         method='post'
-        action={CONFIRM_CREATE_CATEGORY_PATH}
+        action={CONFIRM_CREATE_NEW_PATH}
         className='flex gap-3'
-        data-testid='confirm-create-category-form'
+        data-testid='confirm-create-new-form'
         noValidate
       >
         <input type='hidden' name='description' value={values.description ?? ''} />
         <input type='hidden' name='amount' value={values.amount ?? ''} />
         <input type='hidden' name='date' value={values.date ?? ''} />
         <input type='hidden' name='category' value={values.category ?? ''} />
+        <input type='hidden' name='tags' value={values.tags ?? ''} />
         <button
           type='submit'
           name='action'
           value='confirm'
           className='btn btn-primary'
-          data-testid='confirm-create-category-confirm'
+          data-testid='confirm-create-new-confirm'
         >
           Confirm
         </button>
@@ -270,7 +300,7 @@ const renderConfirmCreateCategory = (props: ConfirmCreateCategoryProps) => {
           name='action'
           value='cancel'
           className='btn btn-ghost'
-          data-testid='confirm-create-category-cancel'
+          data-testid='confirm-create-new-cancel'
         >
           Cancel
         </button>
@@ -286,6 +316,7 @@ const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
     amount: typeof form.amount === 'string' ? form.amount : '',
     date: typeof form.date === 'string' ? form.date : '',
     category: typeof form.category === 'string' ? form.category : '',
+    tags: typeof form.tags === 'string' ? form.tags : '',
     action: typeof form.action === 'string' ? form.action : '',
   }
 }
@@ -316,6 +347,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
               amount: flash.values.amount ?? '',
               date: flash.values.date ?? today,
               category: flash.values.category ?? '',
+              tags: flash.values.tags ?? '',
             },
           }
         : emptyState(today)
@@ -334,6 +366,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
         amount: raw.amount,
         date: raw.date,
         category: raw.category,
+        tags: raw.tags,
       }
 
       const validated = parseExpenseCreate({
@@ -342,8 +375,13 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
         date: raw.date,
         category: raw.category,
       })
-      if (validated.isErr) {
-        return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, rawValues)
+      const tagParse = parseTagCsv(raw.tags)
+      if (validated.isErr || tagParse.isErr) {
+        const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
+        if (tagParse.isErr) {
+          errs.tags = tagParse.error
+        }
+        return redirectWithFormErrors(c, PATHS.EXPENSES, errs, rawValues)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)
@@ -356,13 +394,40 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
         )
       }
 
-      if (lookup.value !== null) {
-        // Existing category: create the expense directly.
-        const createResult = await createExpense(db, {
+      const tagLookup = await findTagsByNames(db, tagParse.value)
+      if (tagLookup.isErr) {
+        return redirectWithError(
+          c,
+          PATHS.EXPENSES,
+          'Failed to save expense. Please try again.',
+        )
+      }
+      const existingTagByLower = new Map<string, { id: string; name: string }>()
+      for (const row of tagLookup.value) {
+        existingTagByLower.set(row.name.toLowerCase(), row)
+      }
+      const newTagNames: string[] = []
+      const existingTagIds: string[] = []
+      for (const lowered of tagParse.value) {
+        const match = existingTagByLower.get(lowered)
+        if (match) {
+          existingTagIds.push(match.id)
+        } else {
+          newTagNames.push(lowered)
+        }
+      }
+
+      const categoryIsNew = lookup.value === null
+      const anyNew = categoryIsNew || newTagNames.length > 0
+
+      if (!anyNew) {
+        // Everything matches — create the expense (and link tags) directly.
+        const createResult = await createExpenseWithTags(db, {
           description: validated.value.description,
           amountCents: validated.value.amountCents,
           date: validated.value.date,
-          categoryId: lookup.value.id,
+          categoryId: lookup.value!.id,
+          tagIds: existingTagIds,
         })
         if (createResult.isErr) {
           return redirectWithError(
@@ -374,30 +439,45 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
         return redirectWithMessage(c, PATHS.EXPENSES, 'Expense added.')
       }
 
-      // No match — validate the typed name for length/empty, then render
-      // the consolidated confirmation page. No DB writes yet.
-      const nameCheck = parseNewCategoryName(validated.value.category)
-      if (nameCheck.isErr) {
-        return redirectWithFormErrors(
-          c,
-          PATHS.EXPENSES,
-          { category: nameCheck.error },
-          rawValues,
-        )
+      // Something is new — validate the new-category name when applicable.
+      let normalizedNewCategory: string | null = null
+      let finalCategoryName: string
+      if (categoryIsNew) {
+        const nameCheck = parseNewCategoryName(validated.value.category)
+        if (nameCheck.isErr) {
+          return redirectWithFormErrors(
+            c,
+            PATHS.EXPENSES,
+            { category: nameCheck.error },
+            rawValues,
+          )
+        }
+        normalizedNewCategory = nameCheck.value.toLowerCase()
+        finalCategoryName = normalizedNewCategory
+      } else {
+        finalCategoryName = lookup.value!.name
       }
 
-      const normalizedName = nameCheck.value.toLowerCase()
+      // Render the consolidated confirmation page. No DB writes yet.
+      const sortedNewTags = newTagNames.slice().sort((a, b) => a.localeCompare(b))
+      const finalTagNames = tagParse.value.slice().sort((a, b) => a.localeCompare(b))
       return c.render(
         useLayout(
           c,
-          renderConfirmCreateCategory({ normalizedName, values: rawValues }),
+          renderConfirmCreateNew({
+            newCategoryName: normalizedNewCategory,
+            finalCategoryName,
+            newTagNames: sortedNewTags,
+            finalTagNames,
+            values: rawValues,
+          }),
         ),
       )
     },
   )
 
   app.post(
-    CONFIRM_CREATE_CATEGORY_PATH,
+    CONFIRM_CREATE_NEW_PATH,
     secureHeaders(STANDARD_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
@@ -407,6 +487,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
         amount: raw.amount,
         date: raw.date,
         category: raw.category,
+        tags: raw.tags,
       }
 
       if (raw.action === 'cancel') {
@@ -423,34 +504,82 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
         date: raw.date,
         category: raw.category,
       })
-      if (validated.isErr) {
-        return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, rawValues)
-      }
-
-      const nameCheck = parseNewCategoryName(validated.value.category)
-      if (nameCheck.isErr) {
-        return redirectWithFormErrors(
-          c,
-          PATHS.EXPENSES,
-          { category: nameCheck.error },
-          rawValues,
-        )
+      const tagParse = parseTagCsv(raw.tags)
+      if (validated.isErr || tagParse.isErr) {
+        const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
+        if (tagParse.isErr) {
+          errs.tags = tagParse.error
+        }
+        return redirectWithFormErrors(c, PATHS.EXPENSES, errs, rawValues)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)
-      const createResult = await createCategoryAndExpense(db, {
-        newCategoryName: nameCheck.value,
+      const lookup = await findCategoryByName(db, validated.value.category)
+      if (lookup.isErr) {
+        return redirectWithError(
+          c,
+          PATHS.EXPENSES,
+          'Failed to save expense. Please try again.',
+        )
+      }
+      const tagLookup = await findTagsByNames(db, tagParse.value)
+      if (tagLookup.isErr) {
+        return redirectWithError(
+          c,
+          PATHS.EXPENSES,
+          'Failed to save expense. Please try again.',
+        )
+      }
+      const existingTagByLower = new Map<string, { id: string; name: string }>()
+      for (const row of tagLookup.value) {
+        existingTagByLower.set(row.name.toLowerCase(), row)
+      }
+      const newTagNames: string[] = []
+      const existingTagIds: string[] = []
+      for (const lowered of tagParse.value) {
+        const match = existingTagByLower.get(lowered)
+        if (match) {
+          existingTagIds.push(match.id)
+        } else {
+          newTagNames.push(lowered)
+        }
+      }
+
+      let newCategoryName: string | null = null
+      let existingCategoryId: string | null = null
+      if (lookup.value !== null) {
+        existingCategoryId = lookup.value.id
+      } else {
+        const nameCheck = parseNewCategoryName(validated.value.category)
+        if (nameCheck.isErr) {
+          return redirectWithFormErrors(
+            c,
+            PATHS.EXPENSES,
+            { category: nameCheck.error },
+            rawValues,
+          )
+        }
+        newCategoryName = nameCheck.value
+      }
+
+      const createResult = await createManyAndExpense(db, {
+        newCategoryName,
+        existingCategoryId,
+        newTagNames,
+        existingTagIds,
         date: validated.value.date,
         description: validated.value.description,
         amountCents: validated.value.amountCents,
       })
       if (createResult.isErr) {
-        return redirectWithFormErrors(
-          c,
-          PATHS.EXPENSES,
-          { category: createResult.error.message },
-          rawValues,
-        )
+        // Surface the collision message under whichever field is most likely
+        // to be at fault. We can't tell deterministically, so use `category`
+        // when a new category was being created and `tags` otherwise.
+        const errs: FieldErrors =
+          newCategoryName !== null
+            ? { category: createResult.error.message }
+            : { tags: createResult.error.message }
+        return redirectWithFormErrors(c, PATHS.EXPENSES, errs, rawValues)
       }
 
       return redirectWithMessage(c, PATHS.EXPENSES, 'Expense added.')

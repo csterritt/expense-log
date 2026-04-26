@@ -6,7 +6,7 @@
  * Read/write helpers for the `expense` table and its joins.
  * @module lib/db/expense-access
  */
-import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import Result from 'true-myth/result'
 
 import { category, expense, expenseTag, tag } from '../../db/schema'
@@ -167,14 +167,18 @@ const listExpensesActual = async (
     }
 
     return Result.ok(
-      rows.map((row) => ({
-        id: row.id,
-        date: row.date,
-        description: row.description,
-        categoryName: row.categoryName,
-        amountCents: row.amountCents,
-        tagNames: tagsByExpenseId.get(row.id) ?? [],
-      })),
+      rows.map((row) => {
+        const tags = (tagsByExpenseId.get(row.id) ?? []).slice()
+        tags.sort((a, b) => a.localeCompare(b))
+        return {
+          id: row.id,
+          date: row.date,
+          description: row.description,
+          categoryName: row.categoryName,
+          amountCents: row.amountCents,
+          tagNames: tags,
+        }
+      }),
     )
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
@@ -273,6 +277,233 @@ const createCategoryAndExpenseActual = async (
     if (/unique|constraint/i.test(message)) {
       return Result.err(
         new Error(`A category named "${input.newCategoryName.trim()}" already exists.`),
+      )
+    }
+    return Result.err(e instanceof Error ? e : new Error(message))
+  }
+}
+
+export interface TagRow {
+  id: string
+  name: string
+}
+
+/**
+ * Look up tags by name (case-insensitive). Empty / whitespace-only entries
+ * are silently dropped; remaining names are trimmed, lower-cased, and
+ * de-duplicated before issuing a single `IN (...)` query. An empty effective
+ * list short-circuits to `Result.ok([])` without querying.
+ *
+ * @param db - Database instance
+ * @param names - Tag names to look up (any case, leading/trailing whitespace
+ *   allowed)
+ */
+export const findTagsByNames = (
+  db: DrizzleClient,
+  names: string[],
+): Promise<Result<TagRow[], Error>> =>
+  withRetry('findTagsByNames', () => findTagsByNamesActual(db, names))
+
+const findTagsByNamesActual = async (
+  db: DrizzleClient,
+  names: string[],
+): Promise<Result<TagRow[], Error>> => {
+  try {
+    const normalized = new Set<string>()
+    for (const raw of names) {
+      if (typeof raw !== 'string') {
+        continue
+      }
+      const trimmed = raw.trim().toLowerCase()
+      if (trimmed.length > 0) {
+        normalized.add(trimmed)
+      }
+    }
+    if (normalized.size === 0) {
+      return Result.ok([])
+    }
+    const list = Array.from(normalized)
+    const rows = await db
+      .select({ id: tag.id, name: tag.name })
+      .from(tag)
+      .where(inArray(sql`lower(${tag.name})`, list))
+    return Result.ok(rows)
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+export interface CreateExpenseWithTagsInput {
+  date: string
+  description: string
+  categoryId: string
+  amountCents: number
+  tagIds: string[]
+}
+
+/**
+ * Create an expense row plus its `expenseTag` links in a single batch.
+ * Duplicate tag ids in `tagIds` are silently de-duplicated.
+ */
+export const createExpenseWithTags = (
+  db: DrizzleClient,
+  input: CreateExpenseWithTagsInput,
+): Promise<Result<{ id: string }, Error>> =>
+  withRetry('createExpenseWithTags', () => createExpenseWithTagsActual(db, input))
+
+const createExpenseWithTagsActual = async (
+  db: DrizzleClient,
+  input: CreateExpenseWithTagsInput,
+): Promise<Result<{ id: string }, Error>> => {
+  try {
+    const found = await db
+      .select({ id: category.id })
+      .from(category)
+      .where(eq(category.id, input.categoryId))
+    if (found.length === 0) {
+      return Result.err(new Error(`Category not found: ${input.categoryId}`))
+    }
+
+    const id = crypto.randomUUID()
+    const now = new Date()
+    const uniqueTagIds = Array.from(new Set(input.tagIds))
+
+    const insertExpense = db.insert(expense).values({
+      id,
+      description: input.description,
+      amountCents: input.amountCents,
+      categoryId: input.categoryId,
+      date: input.date,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    if (uniqueTagIds.length === 0) {
+      await insertExpense
+    } else {
+      const statements: unknown[] = [insertExpense]
+      for (const tagId of uniqueTagIds) {
+        statements.push(db.insert(expenseTag).values({ expenseId: id, tagId }))
+      }
+      // D1 batch is atomic — the whole set succeeds or rolls back.
+      await db.batch(statements as never)
+    }
+    return Result.ok({ id })
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+export interface CreateManyAndExpenseInput {
+  newCategoryName: string | null
+  existingCategoryId: string | null
+  newTagNames: string[]
+  existingTagIds: string[]
+  date: string
+  description: string
+  amountCents: number
+}
+
+/**
+ * Atomically create zero-or-one new category, zero-or-more new tags, the
+ * expense row, and the `expenseTag` links — all in a single D1 batch so any
+ * unique-name collision rolls everything back. Names are lower-cased after
+ * trim before insert. Exactly one of `newCategoryName` / `existingCategoryId`
+ * must be supplied.
+ */
+export const createManyAndExpense = (
+  db: DrizzleClient,
+  input: CreateManyAndExpenseInput,
+): Promise<Result<{ categoryId: string; expenseId: string; createdTagIds: string[] }, Error>> =>
+  withRetry('createManyAndExpense', () => createManyAndExpenseActual(db, input))
+
+const createManyAndExpenseActual = async (
+  db: DrizzleClient,
+  input: CreateManyAndExpenseInput,
+): Promise<Result<{ categoryId: string; expenseId: string; createdTagIds: string[] }, Error>> => {
+  try {
+    const hasNewCategory = typeof input.newCategoryName === 'string' && input.newCategoryName.trim().length > 0
+    const hasExistingCategory = typeof input.existingCategoryId === 'string' && input.existingCategoryId.length > 0
+    if (hasNewCategory && hasExistingCategory) {
+      return Result.err(
+        new Error('Provide exactly one of newCategoryName or existingCategoryId.'),
+      )
+    }
+    if (!hasNewCategory && !hasExistingCategory) {
+      return Result.err(
+        new Error('Provide exactly one of newCategoryName or existingCategoryId.'),
+      )
+    }
+
+    const now = new Date()
+    const expenseId = crypto.randomUUID()
+
+    let categoryId: string
+    const statements: unknown[] = []
+
+    if (hasNewCategory) {
+      categoryId = crypto.randomUUID()
+      const normalizedCat = (input.newCategoryName as string).trim().toLowerCase()
+      statements.push(
+        db.insert(category).values({
+          id: categoryId,
+          name: normalizedCat,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      )
+    } else {
+      categoryId = input.existingCategoryId as string
+    }
+
+    // De-duplicate new tag names by lower-cased trim.
+    const newTagNames = new Map<string, string>() // lowered -> id
+    for (const raw of input.newTagNames) {
+      if (typeof raw !== 'string') {
+        continue
+      }
+      const lowered = raw.trim().toLowerCase()
+      if (lowered.length === 0) {
+        continue
+      }
+      if (!newTagNames.has(lowered)) {
+        newTagNames.set(lowered, crypto.randomUUID())
+      }
+    }
+    const createdTagIds: string[] = []
+    for (const [name, id] of newTagNames.entries()) {
+      createdTagIds.push(id)
+      statements.push(
+        db.insert(tag).values({ id, name, createdAt: now, updatedAt: now }),
+      )
+    }
+
+    statements.push(
+      db.insert(expense).values({
+        id: expenseId,
+        description: input.description,
+        amountCents: input.amountCents,
+        categoryId,
+        date: input.date,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    )
+
+    // Combine existing + new tag ids, de-duplicated, and link each.
+    const allTagIds = Array.from(new Set([...input.existingTagIds, ...createdTagIds]))
+    for (const tagId of allTagIds) {
+      statements.push(db.insert(expenseTag).values({ expenseId, tagId }))
+    }
+
+    await db.batch(statements as never)
+
+    return Result.ok({ categoryId, expenseId, createdTagIds })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    if (/unique|constraint/i.test(message)) {
+      return Result.err(
+        new Error('One of the new names collides with an existing row. Please try again.'),
       )
     }
     return Result.err(e instanceof Error ? e : new Error(message))
