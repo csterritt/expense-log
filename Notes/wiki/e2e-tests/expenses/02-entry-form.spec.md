@@ -4,21 +4,21 @@
 
 ## Purpose
 
-End-to-end coverage for Issue 03: signs in `KNOWN_USER`, seeds a category with [`seedCategories`](../support/db-helpers.md), and exercises the entry form on `/expenses` end-to-end (render, valid submissions for every amount variant from the issue, and server-side rejection of bad amounts).
+End-to-end coverage for Issue 03 (extended in Issue 05): signs in `KNOWN_USER`, seeds a category with [`seedCategories`](../support/db-helpers.md), and exercises the entry form on `/expenses` end-to-end (render, valid submissions for every amount variant from the issue, and server-side rejection of bad amounts). Issue 05 swapped the category `<select>` for a text input, so `submitEntryForm` now `.fill`s the category by name and the render test asserts on the input's attributes instead of an `<option>` list.
 
 ## Setup
 
 - Computes `todayEt` locally with `Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' })` to mirror the server's `todayEt`.
-- Local `submitEntryForm(page, opts)` helper fills the form fields by `data-testid` and clicks `expense-form-create`.
+- Local `submitEntryForm(page, opts)` helper fills the form fields by `data-testid` (including `.fill(opts.categoryName)` on the Issue 05 text input) and clicks `expense-form-create`.
 - All tests run via `testWithDatabase` for isolation.
 
 ## Tests
 
-### `renders with today (ET) defaulted and category select populated`
+### `renders with today (ET) defaulted and a category text input`
 
 - Asserts the form (`expense-form`) is visible.
 - Asserts `expense-form-date` has value equal to `todayEt()`.
-- Asserts `expense-form-category` contains an option with text `Food` (the seeded category).
+- Asserts `expense-form-category` is empty by default and has `type='text'` (Issue 05 — was previously a `<select>` populated from `listCategories`).
 
 ### `accepts each amount variant, posts, redirects, and renders formatted rows`
 

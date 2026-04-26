@@ -8,7 +8,9 @@ import assert from 'node:assert'
 
 import {
   parseExpenseCreate,
+  parseNewCategoryName,
   descriptionMax,
+  categoryNameMax,
   type FieldErrors,
 } from '../src/lib/expense-validators'
 
@@ -16,7 +18,7 @@ const VALID = {
   description: 'Lunch',
   amount: '12.34',
   date: '2024-02-29',
-  categoryId: 'cat-1',
+  category: 'Food',
 }
 
 const expectOk = (input: typeof VALID, expected: { amountCents: number }) => {
@@ -26,7 +28,7 @@ const expectOk = (input: typeof VALID, expected: { amountCents: number }) => {
     assert.strictEqual(r.value.amountCents, expected.amountCents)
     assert.strictEqual(r.value.description, input.description.trim())
     assert.strictEqual(r.value.date, input.date.trim())
-    assert.strictEqual(r.value.categoryId, input.categoryId.trim())
+    assert.strictEqual(r.value.category, input.category.trim())
   }
 }
 
@@ -118,23 +120,72 @@ describe('parseExpenseCreate', () => {
   })
 
   describe('category', () => {
-    it('accepts a non-empty id', () => {
-      expectOk({ ...VALID, categoryId: 'cat-xyz' }, { amountCents: 1234 })
+    it('accepts a non-empty name', () => {
+      expectOk({ ...VALID, category: 'Groceries' }, { amountCents: 1234 })
     })
 
     it('rejects empty', () => {
-      expectFieldErr({ categoryId: '' }, ['category'])
+      expectFieldErr({ category: '' }, ['category'])
     })
 
     it('rejects whitespace-only', () => {
-      expectFieldErr({ categoryId: '   ' }, ['category'])
+      expectFieldErr({ category: '   ' }, ['category'])
+    })
+  })
+
+  describe('parseNewCategoryName', () => {
+    it('accepts a single character', () => {
+      const r = parseNewCategoryName('a')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.strictEqual(r.value, 'a')
+      }
+    })
+
+    it('accepts exactly categoryNameMax characters', () => {
+      const r = parseNewCategoryName('a'.repeat(categoryNameMax))
+      assert.strictEqual(r.isOk, true)
+    })
+
+    it('rejects categoryNameMax + 1 characters', () => {
+      const r = parseNewCategoryName('a'.repeat(categoryNameMax + 1))
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.length > 0)
+      }
+    })
+
+    it('rejects empty input', () => {
+      const r = parseNewCategoryName('')
+      assert.strictEqual(r.isErr, true)
+    })
+
+    it('rejects whitespace-only input', () => {
+      const r = parseNewCategoryName('   ')
+      assert.strictEqual(r.isErr, true)
+    })
+
+    it('trims surrounding whitespace and returns the trimmed value', () => {
+      const r = parseNewCategoryName('  Groceries  ')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.strictEqual(r.value, 'Groceries')
+      }
+    })
+
+    it('preserves case in the trimmed value', () => {
+      const r = parseNewCategoryName('Groceries')
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.strictEqual(r.value, 'Groceries')
+      }
     })
   })
 
   describe('multi-field failure', () => {
     it('reports errors for every invalid field at once', () => {
       expectFieldErr(
-        { description: '', amount: '0', date: '2025-13-40', categoryId: '' },
+        { description: '', amount: '0', date: '2025-13-40', category: '' },
         ['description', 'amount', 'date', 'category'],
       )
     })

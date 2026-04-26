@@ -13,6 +13,13 @@ import { category, expense, expenseTag, tag } from '../../db/schema'
 import type { DrizzleClient } from '../../local-types'
 import { withRetry } from '../db-helpers'
 
+export interface CreateCategoryAndExpenseInput {
+  newCategoryName: string
+  date: string
+  description: string
+  amountCents: number
+}
+
 export interface ExpenseRow {
   id: string
   date: string
@@ -171,5 +178,103 @@ const listExpensesActual = async (
     )
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
+ * Look up a single category by name (case-insensitive). Whitespace around
+ * `name` is trimmed before comparing. Returns `Result.ok(null)` when the
+ * trimmed input is empty or no row matches.
+ * @param db - Database instance
+ * @param name - Category name to look up (any case, leading/trailing
+ *   whitespace allowed)
+ */
+export const findCategoryByName = (
+  db: DrizzleClient,
+  name: string,
+): Promise<Result<CategoryRow | null, Error>> =>
+  withRetry('findCategoryByName', () => findCategoryByNameActual(db, name))
+
+const findCategoryByNameActual = async (
+  db: DrizzleClient,
+  name: string,
+): Promise<Result<CategoryRow | null, Error>> => {
+  try {
+    const trimmed = typeof name === 'string' ? name.trim() : ''
+    if (trimmed.length === 0) {
+      return Result.ok(null)
+    }
+    const rows = await db
+      .select({ id: category.id, name: category.name })
+      .from(category)
+      .where(sql`lower(${category.name}) = lower(${trimmed})`)
+      .limit(1)
+    if (rows.length === 0) {
+      return Result.ok(null)
+    }
+    return Result.ok(rows[0])
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
+ * Atomically create a new category (lowercased after trim) and an expense
+ * row referencing it.
+ *
+ * Both inserts are issued as a single D1 batch so a failure on either rolls
+ * the other back. A unique-name collision (race against another writer)
+ * surfaces as `Result.err` with a clear message; the caller is expected to
+ * redirect back to the entry form with a field-level error.
+ * @param db - Database instance
+ * @param input - New-category name + already-validated expense fields
+ */
+export const createCategoryAndExpense = (
+  db: DrizzleClient,
+  input: CreateCategoryAndExpenseInput,
+): Promise<Result<{ categoryId: string; expenseId: string }, Error>> =>
+  withRetry('createCategoryAndExpense', () => createCategoryAndExpenseActual(db, input))
+
+const createCategoryAndExpenseActual = async (
+  db: DrizzleClient,
+  input: CreateCategoryAndExpenseInput,
+): Promise<Result<{ categoryId: string; expenseId: string }, Error>> => {
+  try {
+    const normalizedName = input.newCategoryName.trim().toLowerCase()
+    if (normalizedName.length === 0) {
+      return Result.err(new Error('Category name is required.'))
+    }
+
+    const categoryId = crypto.randomUUID()
+    const expenseId = crypto.randomUUID()
+    const now = new Date()
+
+    await db.batch([
+      db.insert(category).values({
+        id: categoryId,
+        name: normalizedName,
+        createdAt: now,
+        updatedAt: now,
+      }),
+      db.insert(expense).values({
+        id: expenseId,
+        description: input.description,
+        amountCents: input.amountCents,
+        categoryId,
+        date: input.date,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ])
+
+    return Result.ok({ categoryId, expenseId })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    if (/unique|constraint/i.test(message)) {
+      return Result.err(
+        new Error(`A category named "${input.newCategoryName.trim()}" already exists.`),
+      )
+    }
+    return Result.err(e instanceof Error ? e : new Error(message))
   }
 }

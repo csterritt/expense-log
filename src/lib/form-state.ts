@@ -30,7 +30,7 @@ export type ExpenseFormValues = {
   description?: string
   amount?: string
   date?: string
-  categoryId?: string
+  category?: string
 }
 
 /**

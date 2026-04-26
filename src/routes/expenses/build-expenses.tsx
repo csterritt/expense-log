@@ -17,16 +17,18 @@ import { signedInAccess } from '../../middleware/signed-in-access'
 import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import {
   listExpenses,
-  listCategories,
   createExpense,
-  type CategoryRow,
+  findCategoryByName,
+  createCategoryAndExpense,
   type ExpenseRow,
 } from '../../lib/db/expense-access'
 import { formatCents } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseExpenseCreate,
+  parseNewCategoryName,
   descriptionMax,
+  categoryNameMax,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import {
@@ -35,6 +37,8 @@ import {
   type ExpenseFormValues,
 } from '../../lib/form-state'
 
+const CONFIRM_CREATE_CATEGORY_PATH = '/expenses/confirm-create-category'
+
 type EntryFormState = {
   fieldErrors: FieldErrors
   values: ExpenseFormValues
@@ -42,7 +46,7 @@ type EntryFormState = {
 
 const emptyState = (today: string): EntryFormState => ({
   fieldErrors: {},
-  values: { description: '', amount: '', date: today, categoryId: '' },
+  values: { description: '', amount: '', date: today, category: '' },
 })
 
 const fieldError = (field: keyof FieldErrors, message?: string) => {
@@ -62,15 +66,8 @@ const fieldError = (field: keyof FieldErrors, message?: string) => {
 const inputClass = (base: string, hasError: boolean) =>
   hasError ? `${base} input-error` : base
 
-const selectClass = (base: string, hasError: boolean) =>
-  hasError ? `${base} select-error` : base
-
-const renderEntryForm = (
-  categories: CategoryRow[],
-  state: EntryFormState,
-) => {
+const renderEntryForm = (state: EntryFormState) => {
   const { fieldErrors, values } = state
-  const selectedCategory = values.categoryId ?? ''
   return (
     <form
       method='post'
@@ -132,22 +129,17 @@ const renderEntryForm = (
         <label className='label' htmlFor='expense-form-category'>
           <span className='label-text'>Category</span>
         </label>
-        <select
+        <input
           id='expense-form-category'
-          name='categoryId'
+          name='category'
+          type='text'
           required
-          className={selectClass('select select-bordered', !!fieldErrors.category)}
+          maxLength={categoryNameMax + 50}
+          className={inputClass('input input-bordered', !!fieldErrors.category)}
           data-testid='expense-form-category'
-        >
-          <option value='' selected={selectedCategory === ''} disabled>
-            Select a category
-          </option>
-          {categories.map((cat) => (
-            <option value={cat.id} selected={selectedCategory === cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
+          value={values.category ?? ''}
+          placeholder='Type a category'
+        />
         {fieldError('category', fieldErrors.category)}
       </div>
       <div className='md:col-span-5'>
@@ -194,15 +186,11 @@ const renderExpenseTable = (rows: ExpenseRow[]) => {
   )
 }
 
-const renderExpenses = (
-  rows: ExpenseRow[],
-  categories: CategoryRow[],
-  state: EntryFormState,
-) => {
+const renderExpenses = (rows: ExpenseRow[], state: EntryFormState) => {
   return (
     <div data-testid='expenses-page'>
       <h1 className='text-2xl font-bold mb-4'>Expenses</h1>
-      {renderEntryForm(categories, state)}
+      {renderEntryForm(state)}
       {rows.length === 0 ? (
         <p className='text-gray-600' data-testid='expenses-empty-state'>
           No expenses yet
@@ -214,6 +202,94 @@ const renderExpenses = (
   )
 }
 
+type ConfirmCreateCategoryProps = {
+  normalizedName: string
+  values: ExpenseFormValues
+}
+
+const renderConfirmCreateCategory = (props: ConfirmCreateCategoryProps) => {
+  const { normalizedName, values } = props
+  const amountDisplay = (() => {
+    const trimmed = (values.amount ?? '').trim()
+    if (trimmed.length === 0) {
+      return ''
+    }
+    // Best-effort preview: show the raw typed value. Exact formatting is
+    // applied server-side at create time via `formatCents`.
+    return trimmed
+  })()
+  return (
+    <div
+      className='max-w-xl mx-auto'
+      data-testid='confirm-create-category-page'
+    >
+      <h1 className='text-2xl font-bold mb-4'>Confirm new category</h1>
+      <p className='mb-4'>
+        Create category{' '}
+        <strong data-testid='confirm-create-category-name'>
+          '{normalizedName}'
+        </strong>{' '}
+        and add this expense?
+      </p>
+      <dl className='grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 mb-6'>
+        <dt className='font-semibold'>Description</dt>
+        <dd data-testid='confirm-create-category-description'>
+          {values.description ?? ''}
+        </dd>
+        <dt className='font-semibold'>Amount</dt>
+        <dd data-testid='confirm-create-category-amount'>{amountDisplay}</dd>
+        <dt className='font-semibold'>Date</dt>
+        <dd data-testid='confirm-create-category-date'>{values.date ?? ''}</dd>
+        <dt className='font-semibold'>Category</dt>
+        <dd data-testid='confirm-create-category-category'>
+          {normalizedName}
+        </dd>
+      </dl>
+      <form
+        method='post'
+        action={CONFIRM_CREATE_CATEGORY_PATH}
+        className='flex gap-3'
+        data-testid='confirm-create-category-form'
+        noValidate
+      >
+        <input type='hidden' name='description' value={values.description ?? ''} />
+        <input type='hidden' name='amount' value={values.amount ?? ''} />
+        <input type='hidden' name='date' value={values.date ?? ''} />
+        <input type='hidden' name='category' value={values.category ?? ''} />
+        <button
+          type='submit'
+          name='action'
+          value='confirm'
+          className='btn btn-primary'
+          data-testid='confirm-create-category-confirm'
+        >
+          Confirm
+        </button>
+        <button
+          type='submit'
+          name='action'
+          value='cancel'
+          className='btn btn-ghost'
+          data-testid='confirm-create-category-cancel'
+        >
+          Cancel
+        </button>
+      </form>
+    </div>
+  )
+}
+
+const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
+  const form = await c.req.parseBody()
+  return {
+    description: typeof form.description === 'string' ? form.description : '',
+    amount: typeof form.amount === 'string' ? form.amount : '',
+    date: typeof form.date === 'string' ? form.date : '',
+    category: typeof form.category === 'string' ? form.category : '',
+    action: typeof form.action === 'string' ? form.action : '',
+  }
+}
+
 export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
   app.get(
     PATHS.EXPENSES,
@@ -222,11 +298,8 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
     async (c: Context<{ Bindings: Bindings }>) => {
       const range = defaultRangeEt()
       const db = createDbClient(c.env.PROJECT_DB)
-      const [expensesResult, categoriesResult] = await Promise.all([
-        listExpenses(db, range),
-        listCategories(db),
-      ])
-      if (expensesResult.isErr || categoriesResult.isErr) {
+      const expensesResult = await listExpenses(db, range)
+      if (expensesResult.isErr) {
         return redirectWithError(
           c,
           PATHS.AUTH.SIGN_IN,
@@ -242,13 +315,11 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
               description: flash.values.description ?? '',
               amount: flash.values.amount ?? '',
               date: flash.values.date ?? today,
-              categoryId: flash.values.categoryId ?? '',
+              category: flash.values.category ?? '',
             },
           }
         : emptyState(today)
-      return c.render(
-        useLayout(c, renderExpenses(expensesResult.value, categoriesResult.value, state)),
-      )
+      return c.render(useLayout(c, renderExpenses(expensesResult.value, state)))
     },
   )
 
@@ -257,26 +328,128 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
     secureHeaders(STANDARD_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
-      const form = await c.req.parseBody()
-      const raw = {
-        description: typeof form.description === 'string' ? form.description : '',
-        amount: typeof form.amount === 'string' ? form.amount : '',
-        date: typeof form.date === 'string' ? form.date : '',
-        categoryId: typeof form.categoryId === 'string' ? form.categoryId : '',
+      const raw = await readRawBody(c)
+      const rawValues: ExpenseFormValues = {
+        description: raw.description,
+        amount: raw.amount,
+        date: raw.date,
+        category: raw.category,
       }
 
-      const validated = parseExpenseCreate(raw)
+      const validated = parseExpenseCreate({
+        description: raw.description,
+        amount: raw.amount,
+        date: raw.date,
+        category: raw.category,
+      })
       if (validated.isErr) {
-        return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, raw)
+        return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, rawValues)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)
-      const createResult = await createExpense(db, validated.value)
-      if (createResult.isErr) {
+      const lookup = await findCategoryByName(db, validated.value.category)
+      if (lookup.isErr) {
         return redirectWithError(
           c,
           PATHS.EXPENSES,
           'Failed to save expense. Please try again.',
+        )
+      }
+
+      if (lookup.value !== null) {
+        // Existing category: create the expense directly.
+        const createResult = await createExpense(db, {
+          description: validated.value.description,
+          amountCents: validated.value.amountCents,
+          date: validated.value.date,
+          categoryId: lookup.value.id,
+        })
+        if (createResult.isErr) {
+          return redirectWithError(
+            c,
+            PATHS.EXPENSES,
+            'Failed to save expense. Please try again.',
+          )
+        }
+        return redirectWithMessage(c, PATHS.EXPENSES, 'Expense added.')
+      }
+
+      // No match — validate the typed name for length/empty, then render
+      // the consolidated confirmation page. No DB writes yet.
+      const nameCheck = parseNewCategoryName(validated.value.category)
+      if (nameCheck.isErr) {
+        return redirectWithFormErrors(
+          c,
+          PATHS.EXPENSES,
+          { category: nameCheck.error },
+          rawValues,
+        )
+      }
+
+      const normalizedName = nameCheck.value.toLowerCase()
+      return c.render(
+        useLayout(
+          c,
+          renderConfirmCreateCategory({ normalizedName, values: rawValues }),
+        ),
+      )
+    },
+  )
+
+  app.post(
+    CONFIRM_CREATE_CATEGORY_PATH,
+    secureHeaders(STANDARD_SECURE_HEADERS),
+    signedInAccess,
+    async (c: Context<{ Bindings: Bindings }>) => {
+      const raw = await readRawBody(c)
+      const rawValues: ExpenseFormValues = {
+        description: raw.description,
+        amount: raw.amount,
+        date: raw.date,
+        category: raw.category,
+      }
+
+      if (raw.action === 'cancel') {
+        // Round-trip every typed value back to the entry form via the
+        // single-use form-state cookie, with no field errors.
+        return redirectWithFormErrors(c, PATHS.EXPENSES, {}, rawValues)
+      }
+
+      // Defensive re-validation of every field — the user could have
+      // tampered with hidden inputs.
+      const validated = parseExpenseCreate({
+        description: raw.description,
+        amount: raw.amount,
+        date: raw.date,
+        category: raw.category,
+      })
+      if (validated.isErr) {
+        return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, rawValues)
+      }
+
+      const nameCheck = parseNewCategoryName(validated.value.category)
+      if (nameCheck.isErr) {
+        return redirectWithFormErrors(
+          c,
+          PATHS.EXPENSES,
+          { category: nameCheck.error },
+          rawValues,
+        )
+      }
+
+      const db = createDbClient(c.env.PROJECT_DB)
+      const createResult = await createCategoryAndExpense(db, {
+        newCategoryName: nameCheck.value,
+        date: validated.value.date,
+        description: validated.value.description,
+        amountCents: validated.value.amountCents,
+      })
+      if (createResult.isErr) {
+        return redirectWithFormErrors(
+          c,
+          PATHS.EXPENSES,
+          { category: createResult.error.message },
+          rawValues,
         )
       }
 

@@ -32,7 +32,7 @@ type EntryOpts = {
   description: string
   amount: string
   date: string
-  categoryLabel?: string // when undefined, leave the placeholder selected
+  categoryLabel?: string // when undefined, leave the category input blank
 }
 
 const fillForm = async (page: any, opts: EntryOpts) => {
@@ -45,7 +45,9 @@ const fillForm = async (page: any, opts: EntryOpts) => {
   await amt.fill(opts.amount)
   await date.fill(opts.date)
   if (opts.categoryLabel !== undefined) {
-    await cat.selectOption({ label: opts.categoryLabel })
+    await cat.fill(opts.categoryLabel)
+  } else {
+    await cat.fill('')
   }
 }
 
@@ -73,7 +75,7 @@ test.describe('Expense entry form: field-level validation errors', () => {
       await expect(page.getByTestId('expense-form-description')).toHaveValue('')
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('12.34')
       await expect(page.getByTestId('expense-form-date')).toHaveValue('2024-05-01')
-      await expect(page.getByTestId('expense-form-category')).toHaveValue(/.+/)
+      await expect(page.getByTestId('expense-form-category')).toHaveValue('Food')
       await expect(page.getByTestId('expense-row')).toHaveCount(0)
     }),
   )

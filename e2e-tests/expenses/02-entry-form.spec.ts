@@ -34,13 +34,13 @@ const submitEntryForm = async (
   if (opts.date) {
     await page.getByTestId('expense-form-date').fill(opts.date)
   }
-  await page.getByTestId('expense-form-category').selectOption({ label: opts.categoryName })
+  await page.getByTestId('expense-form-category').fill(opts.categoryName)
   await page.getByTestId('expense-form-create').click()
 }
 
 test.describe('Expense entry form', () => {
   test(
-    'renders with today (ET) defaulted and category select populated',
+    'renders with today (ET) defaulted and a category text input',
     testWithDatabase(async ({ page }) => {
       await seedCategories([{ name: 'Food' }])
       await signInAndGoToExpenses(page)
@@ -51,8 +51,9 @@ test.describe('Expense entry form', () => {
       const dateInput = page.getByTestId('expense-form-date')
       await expect(dateInput).toHaveValue(todayEt())
 
-      const select = page.getByTestId('expense-form-category')
-      await expect(select.locator('option', { hasText: 'Food' })).toHaveCount(1)
+      const cat = page.getByTestId('expense-form-category')
+      await expect(cat).toHaveValue('')
+      await expect(cat).toHaveAttribute('type', 'text')
     }),
   )
 

@@ -50,6 +50,17 @@ interface CreateExpenseInput {
 }
 ```
 
+### `CreateCategoryAndExpenseInput`
+
+```ts
+interface CreateCategoryAndExpenseInput {
+  newCategoryName: string
+  date: string
+  description: string
+  amountCents: number
+}
+```
+
 ## Exports
 
 ### `listExpenses(db, filters): Promise<Result<ExpenseRow[], Error>>`
@@ -70,6 +81,19 @@ interface CreateExpenseInput {
 - Verifies that `input.categoryId` exists in the `category` table; returns `Result.err` with a "Category not found" message otherwise.
 - Generates a new `id` via `crypto.randomUUID()` and inserts a row into `expense` with `createdAt`/`updatedAt` set to the current `Date`. No tag handling in this slice (tags arrive in a later issue).
 - Inputs are assumed already validated by the caller (the POST handler in `build-expenses.tsx` does this via `parseAmount`, `isValidYmd`, and a description length check).
+
+### `findCategoryByName(db, name): Promise<Result<CategoryRow | null, Error>>`
+
+- Public wrapper: `withRetry('findCategoryByName', () => findCategoryByNameActual(db, name))`.
+- Trims the input and matches case-insensitively via `lower(category.name) = lower(?)`. Returns `Result.ok(null)` for empty input or no match.
+- Added in Issue 05 for the inline-category-creation flow on the entry form: callers use it to decide whether to go straight to `createExpense` (match found) or render the consolidated confirmation page (no match).
+
+### `createCategoryAndExpense(db, input): Promise<Result<{ categoryId, expenseId }, Error>>`
+
+- Public wrapper: `withRetry('createCategoryAndExpense', () => createCategoryAndExpenseActual(db, input))`.
+- Trims `input.newCategoryName`, lowercases it, and inserts both the new `category` row and a matching `expense` row inside a single `db.batch([...])` so a failure on either statement rolls the other back.
+- Generates fresh UUIDs for both rows and sets `createdAt`/`updatedAt` to a single `new Date()` captured at call time.
+- A race-condition unique-name collision is recognised heuristically (`/unique|constraint/i` on the thrown message) and surfaces as `Result.err(new Error(\`A category named "..." already exists.\`))`; callers in `build-expenses.tsx` map that error straight back to the `category` field via `redirectWithFormErrors`.
 
 ## Cross-references
 

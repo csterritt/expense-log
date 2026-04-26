@@ -39,6 +39,12 @@ import { parseAmount } from './money'
 // export const descriptionMax = 200 // PRODUCTION:UNCOMMENT
 export const descriptionMax = 202
 
+// Maximum length for a newly-typed category name (Issue 5). Production
+// enforces 20; tests use a slightly-larger value so the browser does not
+// auto-truncate over-long inputs before they reach the server.
+// export const categoryNameMax = 20 // PRODUCTION:UNCOMMENT
+export const categoryNameMax = 22
+
 /**
  * Per-field error messages produced by `parseExpenseCreate`. Any missing key
  * means that field passed validation.
@@ -51,14 +57,16 @@ export type FieldErrors = {
 }
 
 /**
- * The fully-validated output of `parseExpenseCreate`, ready to hand to
- * `createExpense`.
+ * The fully-validated output of `parseExpenseCreate`. `category` carries the
+ * trimmed user-typed category name; the POST handler resolves it to an id
+ * via `findCategoryByName` (existing match) or `createCategoryAndExpense`
+ * (new category, after `parseNewCategoryName`).
  */
 export type ParsedExpenseCreate = {
   description: string
   amountCents: number
   date: string
-  categoryId: string
+  category: string
 }
 
 /**
@@ -68,7 +76,7 @@ export type RawExpenseCreate = {
   description: string
   amount: string
   date: string
-  categoryId: string
+  category: string
 }
 
 // ---------- Description ----------
@@ -102,11 +110,12 @@ export const DateSchema = pipe(
 // ---------- Category ----------
 
 /**
- * Valibot schema for the `categoryId` field. Non-empty string.
+ * Valibot schema for the `category` field. Non-empty string after trim.
  *
- * Whether the id exists in the database is enforced by `createExpense`.
+ * Existence in the database (or creation of a new row) is handled by the
+ * POST handler.
  */
-export const CategoryIdSchema = pipe(
+export const CategorySchema = pipe(
   string('Category is required.'),
   custom<string>(
     (v) => typeof v === 'string' && v.trim().length > 0,
@@ -137,7 +146,7 @@ export const ExpenseCreateSchema = object({
   description: DescriptionSchema,
   amount: AmountSchema,
   date: DateSchema,
-  categoryId: CategoryIdSchema,
+  category: CategorySchema,
 })
 
 export type ExpenseCreateInput = InferOutput<typeof ExpenseCreateSchema>
@@ -179,8 +188,8 @@ export const parseExpenseCreate = (
     errors.date = dateError
   }
 
-  const categoryId = typeof raw.categoryId === 'string' ? raw.categoryId.trim() : ''
-  const categoryError = firstIssueMessage(CategoryIdSchema, categoryId)
+  const category = typeof raw.category === 'string' ? raw.category.trim() : ''
+  const categoryError = firstIssueMessage(CategorySchema, category)
   if (categoryError) {
     errors.category = categoryError
   }
@@ -203,5 +212,38 @@ export const parseExpenseCreate = (
     return Result.err(errors)
   }
 
-  return Result.ok({ description, amountCents, date, categoryId })
+  return Result.ok({ description, amountCents, date, category })
+}
+
+// ---------- New-category name (Issue 5) ----------
+
+/**
+ * Valibot schema for a new (typed-by-the-user) category name. Trimmed input
+ * must be non-empty and `<= categoryNameMax` characters.
+ */
+export const NewCategoryNameSchema = pipe(
+  string('Category name is required.'),
+  custom<string>(
+    (v) => typeof v === 'string' && v.trim().length > 0,
+    'Category name is required.',
+  ),
+  custom<string>(
+    (v) => typeof v === 'string' && v.trim().length <= categoryNameMax,
+    `Category name must be at most ${categoryNameMax} characters.`,
+  ),
+)
+
+/**
+ * Validate a typed new-category name. On success returns the trimmed input
+ * (case-preserving — final lowercasing is performed by the DB helper before
+ * insert). On failure returns a single user-facing error string suitable to
+ * place under the entry-form `category` field.
+ */
+export const parseNewCategoryName = (input: string): Result<string, string> => {
+  const value = typeof input === 'string' ? input.trim() : ''
+  const message = firstIssueMessage(NewCategoryNameSchema, value)
+  if (message) {
+    return Result.err(message)
+  }
+  return Result.ok(value)
 }

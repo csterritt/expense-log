@@ -4,15 +4,15 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04. Pins the contract that `parseExpenseCreate` accepts a representative valid input per field, rejects every failure case enumerated in the issue, and reports **every** invalid field at once on multi-field failures (not just the first).
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases. Pins the contract that `parseExpenseCreate` accepts a representative valid input per field, rejects every failure case enumerated in the issues, and reports **every** invalid field at once on multi-field failures (not just the first).
 
 ## Setup
 
 - Uses `bun:test` (`describe` / `it`) and `node:assert`, matching `tests/money.spec.ts` and `tests/et-date.spec.ts`.
-- Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `categoryId` match.
+- Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (21 total)
+## Test cases (28 total)
 
 ### `description`
 
@@ -34,11 +34,15 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 
 ### `category`
 
-- `accepts a non-empty id`, `rejects empty`, `rejects whitespace-only`.
+- `accepts a non-empty name`, `rejects empty`, `rejects whitespace-only`.
+
+### `parseNewCategoryName` (Issue 05, 7 cases)
+
+- `accepts a single character`, `accepts exactly categoryNameMax characters`, `rejects categoryNameMax + 1 characters`, `rejects empty input`, `rejects whitespace-only input`, `trims surrounding whitespace and returns the trimmed value`, `preserves case in the trimmed value`.
 
 ### `multi-field failure`
 
-- `reports errors for every invalid field at once` — submits `{ description: '', amount: '0', date: '2025-13-40', categoryId: '' }` and asserts errors exist for `description`, `amount`, `date`, `category` simultaneously.
+- `reports errors for every invalid field at once` — submits `{ description: '', amount: '0', date: '2025-13-40', category: '' }` and asserts errors exist for `description`, `amount`, `date`, `category` simultaneously.
 - `preserves valid fields passing while invalid ones fail` — only `description` and `amount` invalid; asserts `errors.date` and `errors.category` are `undefined`.
 
 ## Cross-references
