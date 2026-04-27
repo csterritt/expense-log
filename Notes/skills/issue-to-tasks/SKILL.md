@@ -37,10 +37,11 @@ Label each task with its type:
 - **MIGRATE**: schema or data migration
 - **CONFIG**: environment, tooling, or infrastructure change
 - **DOCUMENT**: update docs, READMEs, the wiki in Notes/wiki (see Notes/wiki/wiki-rules.md for details) or other non-code artifacts
-- **WALKTHROUGH**: using showboat (run `uvx showboat --help` for details) create a walkthrough of the implementation, making a new directory under Notes/walkthroughs named with the TASK-ID, put the files it generates there
+- **CODE WALKTHROUGH**: Using showboat (run `uvx showboat --help` for details) create a walkthrough of the implementation, making a new directory under Notes/walkthroughs named {{TASK-ID}}/code-walkthrough, and put the files it generates there.
+- **UI WALKTHROUGH**: If there are user-facing changes in this task, use showboat (run `uvx showboat --help` for details) make a walkthrough showing the flow of user behavior added in this task. I'd like screenshots of the process using the rodney tool (run `uvx rodney --help` to find out how to use it), making a new directory under Notes/walkthroughs named {{TASK-ID}}/ui-walkthrough, and put the files it generates there.
 - **REVIEW**: human decision required before proceeding
 
-Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST. Write the DOCUMENT and WALKTHROUGH tasks after all code is written, just before the final REVIEW step.
+Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST. Write the DOCUMENT, CODE WALKTHROUGH and UI WALKTHROUGH tasks after all code is written, just before the final REVIEW step.
 
 ### 4. Quiz the user
 

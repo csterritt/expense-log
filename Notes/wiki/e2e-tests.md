@@ -1,6 +1,6 @@
 # E2E Tests Catalog
 
-Catalog of all Playwright end-to-end tests under `e2e-tests/` (55 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
+Catalog of all Playwright end-to-end tests under `e2e-tests/` (58 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
 
 ## Support utilities (`e2e-tests/support/`)
 
@@ -42,6 +42,9 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (55 spec files + 1
 - [e2e-tests/expenses/03-validation-errors.spec.ts](./e2e-tests/expenses/03-validation-errors.spec.md) — Issue 04. Per-field validation and sticky-value coverage: empty / over-max description, four bad amounts, invalid date `2025-13-40`, missing category, all-bad-at-once, and a fix-and-resubmit round trip.
 - [e2e-tests/expenses/04-inline-category-creation.spec.ts](./e2e-tests/expenses/04-inline-category-creation.spec.md) — Issue 05. Inline-category-creation flow: unmatched names render the consolidated confirmation page; Confirm atomically creates the category + expense (with case-insensitive lookup on subsequent submits); Cancel rounds-trips every typed value with no DB writes; over-max and whitespace-only names short-circuit before the confirmation page. Testids renamed to `confirm-create-new-*` in Issue 06.
 - [e2e-tests/expenses/05-tags-and-inline-creation.spec.ts](./e2e-tests/expenses/05-tags-and-inline-creation.spec.md) — Issue 06. Tags CSV input + combined inline-creation flow: mixed existing+new tags route through the generalised confirmation page with case-insensitive de-duplication and alphabetical list rendering; brand-new category + new tags lists every new name; subsequent all-existing submission takes the direct path; Cancel preserves the **raw** typed CSV; over-max tag names short-circuit with a `tags` field error; whitespace-only CSV creates the expense with no tags attached.
+- [e2e-tests/expenses/06-category-combobox-js.spec.ts](./e2e-tests/expenses/06-category-combobox-js.spec.md) — Progressive enhancement (JS-on). Verifies the client-side category combobox: filters the embedded category list as the user types, supports click and keyboard (ArrowDown/Enter) selection, and shows a "Create" row for unmatched names.
+- [e2e-tests/expenses/07-tag-chip-picker-js.spec.ts](./e2e-tests/expenses/07-tag-chip-picker-js.spec.md) — Progressive enhancement (JS-on). Verifies the client-side tag chip picker: renders chips for existing tags, shows filtered suggestions, adds chips via click or keyboard (Enter/comma), removes chips via click or Backspace, and syncs to a hidden input for form submission.
+- [e2e-tests/expenses/08-no-js-fallback.spec.ts](./e2e-tests/expenses/08-no-js-fallback.spec.md) — Progressive enhancement (JS-off). Verifies graceful degradation: the category and tags inputs remain plain `type='text'` fields, the form submits successfully with server-side parsing, and the resulting expense row renders correctly.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 

@@ -30,6 +30,15 @@ interface ListExpenseFilters {
 }
 ```
 
+### `TagRow`
+
+```ts
+interface TagRow {
+  id: string
+  name: string
+}
+```
+
 ### `CategoryRow`
 
 ```ts
@@ -69,11 +78,17 @@ interface CreateCategoryAndExpenseInput {
 - Private `listExpensesActual` joins `expense` -> `category` to fetch the category name, filters by `expense.date BETWEEN filters.from AND filters.to` (inclusive), and sorts by `date DESC`, then `lower(description) ASC` for the case-insensitive tiebreak.
 - Hydrates `tagNames` via a single secondary query that joins `expenseTag` -> `tag`, grouped by `expenseId` in a `Map`.
 
+### `listTags(db): Promise<Result<TagRow[], Error>>`
+
+- Public wrapper: `withRetry('listTags', () => listTagsActual(db))`.
+- Returns `{ id, name }` rows from `tag`, sorted by `asc(tag.name)`.
+- Added in Task 1 of the progressive-enhancement slice. Used by the GET handler on `/expenses` to embed a JSON list of all tags for the client-side chip picker.
+
 ### `listCategories(db): Promise<Result<CategoryRow[], Error>>`
 
 - Public wrapper: `withRetry('listCategories', () => listCategoriesActual(db))`.
 - Returns `{ id, name }` rows from `category`, sorted case-insensitively by `lower(name) ASC` (consistent with the list-view tiebreak convention).
-- Used by the entry form on `/expenses` to populate the category `<select>`.
+- Used by the entry form on `/expenses` to populate the category `<select>` (Issue 03) and later to embed JSON for the client-side combobox.
 
 ### `createExpense(db, input): Promise<Result<{ id: string }, Error>>`
 

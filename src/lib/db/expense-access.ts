@@ -69,6 +69,28 @@ const listCategoriesActual = async (
 }
 
 /**
+ * List all tags sorted by `name ASC`.
+ * @param db - Database instance
+ * @returns Promise<Result<TagRow[], Error>>
+ */
+export const listTags = (db: DrizzleClient): Promise<Result<TagRow[], Error>> =>
+  withRetry('listTags', () => listTagsActual(db))
+
+const listTagsActual = async (
+  db: DrizzleClient,
+): Promise<Result<TagRow[], Error>> => {
+  try {
+    const rows = await db
+      .select({ id: tag.id, name: tag.name })
+      .from(tag)
+      .orderBy(asc(tag.name))
+    return Result.ok(rows)
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
  * Create a new expense row after verifying its `categoryId` exists.
  *
  * Inputs are assumed already validated (date as `YYYY-MM-DD`, non-empty

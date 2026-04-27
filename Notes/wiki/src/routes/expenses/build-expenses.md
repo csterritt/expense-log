@@ -28,10 +28,21 @@ Registers three routes, all gated by `signedInAccess` and wrapped in `secureHead
 ### GET behaviour
 
 1. Calls `defaultRangeEt()` to compute the default `[from, to]` window (current month plus the previous two ET months).
-2. Runs `listExpenses(db, range)` only — Issue 05 removed the `listCategories` call because the category field is now a free-form text input.
+2. Runs `listExpenses(db, range)`, `listCategories(db)`, and `listTags(db)` in parallel via `Promise.all`. Issue 05 removed the `listCategories` call from the form rendering (the category field became a free-form text input), but it was re-added in the progressive-enhancement slice (Task 3) so the full category list can be embedded as JSON for the client-side combobox.
 3. If the `Result` is `Err`, calls `redirectWithError` to send the user to `/auth/sign-in` with the message `'Failed to load expenses. Please try again.'`.
 4. Calls `readAndClearFormState(c)` to consume any single-use flash payload set by a prior failed POST or Cancel. If present, its `fieldErrors` and `values` populate the form state (with the date value falling back to `todayEt()` when the flash didn't include one).
 5. Renders the entry form above the empty state or list table.
+
+### Progressive enhancement (client-side JS)
+
+- **Embedded JSON contract:** The GET response includes two `<script type="application/json">` tags carrying the full category and tag lists:
+  - `data-testid="embedded-categories-json"` — array of `{ id, name }` category rows (sorted case-insensitively).
+  - `data-testid="embedded-tags-json"` — array of `{ id, name }` tag rows (sorted alphabetically).
+  - Both are emitted directly inside the rendered JSX tree so the deferred JS modules can `JSON.parse(document.getElementById(...).textContent)` without an extra HTTP round-trip.
+- **`data-*` auto-init hooks:** The rendered HTML marks the two relevant inputs with PE attributes that the deferred scripts look for on `DOMContentLoaded`:
+  - `data-category-combobox` on the category `<input>` — consumed by `public/js/category-combobox.js`.
+  - `data-tag-chip-picker` on the tags `<input>` — consumed by `public/js/tag-chip-picker.js`.
+- **Script loading:** Two `<script src="/js/..." defer>` tags are appended at the end of the rendered tree (after the layout footer) so the DOM is fully parsed before the modules run. The scripts are scoped to the `/expenses` page only; they are never loaded globally.
 
 ### POST `/expenses` behaviour
 
@@ -60,8 +71,8 @@ Registers three routes, all gated by `signedInAccess` and wrapped in `secureHead
   - `expense-form-description` — `text`, `required`, `maxLength={descriptionMax + 50}` (intentionally larger than the server-side cap so tests can submit over-limit strings without browser truncation).
   - `expense-form-amount` — `text`, `inputmode='decimal'`, `required`.
   - `expense-form-date` — `text`, `required`, `pattern='\d{4}-\d{2}-\d{2}'`, placeholder `'YYYY-MM-DD'`. Uses `type='text'` rather than `type='date'` so the server can see and reject impossible calendar dates like `2025-13-40`.
-  - `expense-form-category` — Issue 05 replaced the `<select>` with a `text` input named `category`. `required`, `maxLength={categoryNameMax + 50}` (so tests can exercise over-max submissions), placeholder `'Type a category'`. Sticky value comes straight from `state.values.category`.
-  - `expense-form-tags` — Issue 06 added a single text input named `tags` (CSV). Optional, `maxLength={(tagNameMax + 2) * 8}` (sized for ~8 max-length tags + separators), placeholder `'e.g. food, groceries'`. Sticky value comes straight from `state.values.tags` (the raw typed CSV, including duplicates and original casing).
+  - `expense-form-category` — Issue 05 replaced the `<select>` with a `text` input named `category`. `required`, `maxLength={categoryNameMax + 50}` (so tests can exercise over-max submissions), placeholder `'Type a category'`. Sticky value comes straight from `state.values.category`. Progressive enhancement adds `data-category-combobox` so the client-side combobox module can replace the plain text UX with a filtered dropdown when JS is enabled.
+  - `expense-form-tags` — Issue 06 added a single text input named `tags` (CSV). Optional, `maxLength={(tagNameMax + 2) * 8}` (sized for ~8 max-length tags + separators), placeholder `'e.g. food, groceries'`. Sticky value comes straight from `state.values.tags` (the raw typed CSV, including duplicates and original casing). Progressive enhancement adds `data-tag-chip-picker` so the client-side chip picker can replace the plain text UX with a chip/suggestion UI when JS is enabled.
   - `expense-form-create` — submit button.
   - Each field also renders `expense-form-{field}-error` next to the input when a matching error is present (`description`, `amount`, `date`, `category`, `tags`).
 - Below the form: empty state (`expenses-empty-state`) when there are no rows, otherwise the Issue 02 `expenses-table` with `expense-row`/`expense-row-*` cells. Each row's `expense-row-tags` cell shows the alphabetised tag list (or empty span when no tags).
