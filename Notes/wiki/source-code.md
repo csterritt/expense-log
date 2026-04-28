@@ -116,13 +116,6 @@ All five routes are signed-in-only via the `signedInAccess` middleware. Four are
 
 - [src/routes/handle-set-db-failures.ts](./src/routes/handle-set-db-failures.md) — Simulates database failures for resilience testing (dev-only; PRODUCTION:REMOVE).
 
-## Client-side progressive-enhancement scripts (`public/js/`)
-
-These vanilla-JS modules are loaded deferred on the `/expenses` page only. They look for `data-*` auto-init hooks on the entry form, read embedded JSON data from the rendered page, and progressively enhance the plain text inputs into accessible combobox / chip-picker UIs. When JS is disabled, the inputs remain plain `type='text'` and the server-side validation and creation flows (Issues 05–06) continue to work unchanged.
-
-- [public/js/category-combobox.js](./public-js/category-combobox.md) — Progressive enhancement for the category input. Replaces the plain text field with a filtered dropdown, keyboard navigation (ArrowDown/ArrowUp/Enter/Escape), and a "Create ..." row for unmatched names.
-- [public/js/tag-chip-picker.js](./public-js/tag-chip-picker.md) — Progressive enhancement for the tags input. Replaces the plain CSV text field with a chip list, filtered suggestions, keyboard add/remove (Enter/comma/Backspace), and a hidden input synced for form submission.
-
 ## Cross-references
 
 - See [e2e-tests.md](e2e-tests.md) for tests covering these routes.

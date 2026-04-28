@@ -17,8 +17,6 @@ import { signedInAccess } from '../../middleware/signed-in-access'
 import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import {
   listExpenses,
-  listCategories,
-  listTags,
   createExpenseWithTags,
   findCategoryByName,
   findTagsByNames,
@@ -144,7 +142,6 @@ const renderEntryForm = (state: EntryFormState) => {
           maxLength={categoryNameMax + 50}
           className={inputClass('input input-bordered', !!fieldErrors.category)}
           data-testid='expense-form-category'
-          data-category-combobox
           value={values.category ?? ''}
           placeholder='Type a category'
         />
@@ -161,7 +158,6 @@ const renderEntryForm = (state: EntryFormState) => {
           maxLength={tagsCsvMax}
           className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
           data-testid='expense-form-tags'
-          data-tag-chip-picker
           value={values.tags ?? ''}
           placeholder='e.g. food, groceries'
         />
@@ -211,24 +207,11 @@ const renderExpenseTable = (rows: ExpenseRow[]) => {
   )
 }
 
-const renderExpenses = (
-  rows: ExpenseRow[],
-  state: EntryFormState,
-  categories: { name: string }[],
-  tags: { name: string }[],
-) => {
-  const catJson = JSON.stringify(categories).replace(/</g, '\\u003c')
-  const tagJson = JSON.stringify(tags).replace(/</g, '\\u003c')
+const renderExpenses = (rows: ExpenseRow[], state: EntryFormState) => {
   return (
     <div data-testid='expenses-page'>
       <h1 className='text-2xl font-bold mb-4'>Expenses</h1>
       {renderEntryForm(state)}
-      <script type='application/json' data-testid='categories-data'>
-        {catJson}
-      </script>
-      <script type='application/json' data-testid='tags-data'>
-        {tagJson}
-      </script>
       {rows.length === 0 ? (
         <p className='text-gray-600' data-testid='expenses-empty-state'>
           No expenses yet
@@ -236,8 +219,6 @@ const renderExpenses = (
       ) : (
         renderExpenseTable(rows)
       )}
-      <script src='/js/category-combobox.js' defer />
-      <script src='/js/tag-chip-picker.js' defer />
     </div>
   )
 }
@@ -356,22 +337,6 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
           'Failed to load expenses. Please try again.',
         )
       }
-      const categoriesResult = await listCategories(db)
-      if (categoriesResult.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.AUTH.SIGN_IN,
-          'Failed to load expenses. Please try again.',
-        )
-      }
-      const tagsResult = await listTags(db)
-      if (tagsResult.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.AUTH.SIGN_IN,
-          'Failed to load expenses. Please try again.',
-        )
-      }
       const today = todayEt()
       const flash = readAndClearFormState(c)
       const state: EntryFormState = flash
@@ -386,9 +351,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
             },
           }
         : emptyState(today)
-      const categories = categoriesResult.value.map((r) => ({ name: r.name }))
-      const tags = tagsResult.value.map((r) => ({ name: r.name }))
-      return c.render(useLayout(c, renderExpenses(expensesResult.value, state, categories, tags)))
+      return c.render(useLayout(c, renderExpenses(expensesResult.value, state)))
     },
   )
 

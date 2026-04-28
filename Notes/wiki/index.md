@@ -15,10 +15,6 @@ Content-oriented catalog of all pages in this wiki.
 - [e2e-tests.md](e2e-tests.md) — Catalog of all Playwright end-to-end tests under `e2e-tests/`. Each entry links to its individual page under `e2e-tests/`.
 - [unit-tests.md](unit-tests.md) — Catalog of all unit tests under `tests/`. Each entry links to its individual page under `tests/`.
 
-## Progressive enhancement
-
-- [progressive-enhancement.md](progressive-enhancement.md) — Overview of the client-side progressive enhancement layer for the expense entry form: embedded JSON contract, `data-*` auto-init hooks, the `public/js/` modules, and the graceful-degradation guarantee.
-
 ## Meta
 
 - [AGENT.md](AGENT.md) — Wiki schema, conventions, and agent rules.
