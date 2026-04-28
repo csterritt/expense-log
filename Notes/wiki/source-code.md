@@ -30,7 +30,7 @@ Catalog of all source files under `src/` (71 files total), organized by category
 - [src/lib/cookie-support.ts](./src/lib/cookie-support.md) — Cookie parsing, serialization, and deletion utilities.
 - [src/lib/db-helpers.ts](./src/lib/db-helpers.md) — Shared `withRetry` and `toResult` wrappers used by `db/auth-access.ts` and `db/expense-access.ts`.
 - [src/lib/db/auth-access.ts](./src/lib/db/auth-access.md) — Auth DB access helpers (retry + Result): `getUserWithAccountByEmail`, `claimSingleUseCode`, `addInterestedEmail`, `deleteUserAccount`.
-- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense DB access helpers (retry + Result): `listExpenses` with tag hydration.
+- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense DB access helpers (retry + Result): `listExpenses` with tag hydration, `listCategories`, `listTags`, `findCategoryByName`, `findTagsByNames`, `createExpense`, `createExpenseWithTags`, `createCategoryAndExpense`, `createManyAndExpense`.
 - [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
 - [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`.
 - [src/lib/expense-validators.ts](./src/lib/expense-validators.md) — Per-field validators for the expense entry form; `parseExpenseCreate` collects every field's error and returns parsed cents on success.

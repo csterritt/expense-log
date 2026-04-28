@@ -44,6 +44,13 @@ const submitEntryForm = async (page: any) => {
 }
 
 test.describe('Tags (no-JS CSV) + inline tag creation', () => {
+  // This spec exercises the no-JS server flow: the entry form posts a raw
+  // tags CSV in the original `expense-form-tags` text input. Issue 07
+  // mounts a chip picker on that input when JS is enabled (which would
+  // convert it to type='hidden'), so disable JS here to keep the test
+  // pinned to the no-JS path. The JS-on equivalent is `07-tag-chip-picker-js.spec.ts`.
+  test.use({ javaScriptEnabled: false })
+
   test(
     'mixed existing+new tags routes through confirmation, dedup applies, list shows alphabetical tags',
     testWithDatabase(async ({ page }) => {

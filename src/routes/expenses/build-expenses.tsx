@@ -9,7 +9,7 @@
 import { Context, Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
 
-import { PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
+import { ALLOW_SCRIPTS_SECURE_HEADERS, PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
@@ -17,6 +17,8 @@ import { signedInAccess } from '../../middleware/signed-in-access'
 import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import {
   listExpenses,
+  listCategories,
+  listTags,
   createExpenseWithTags,
   findCategoryByName,
   findTagsByNames,
@@ -71,7 +73,21 @@ const fieldError = (field: keyof FieldErrors, message?: string) => {
 const inputClass = (base: string, hasError: boolean) =>
   hasError ? `${base} input-error` : base
 
-const renderEntryForm = (state: EntryFormState) => {
+// Serialize a JSON payload safely for embedding inside a <script> tag.
+// Escaping `<` (and `>` / `&` defensively) prevents a stray `</script>`
+// in any data field from breaking out of the script element.
+const safeJsonForScript = (data: unknown): string =>
+  JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+
+type EntryPayloads = {
+  categories: { name: string }[]
+  tags: { name: string }[]
+}
+
+const renderEntryForm = (state: EntryFormState, payloads: EntryPayloads) => {
   const { fieldErrors, values } = state
   return (
     <form
@@ -142,6 +158,7 @@ const renderEntryForm = (state: EntryFormState) => {
           maxLength={categoryNameMax + 50}
           className={inputClass('input input-bordered', !!fieldErrors.category)}
           data-testid='expense-form-category'
+          data-category-combobox
           value={values.category ?? ''}
           placeholder='Type a category'
         />
@@ -158,6 +175,7 @@ const renderEntryForm = (state: EntryFormState) => {
           maxLength={tagsCsvMax}
           className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
           data-testid='expense-form-tags'
+          data-tag-chip-picker
           value={values.tags ?? ''}
           placeholder='e.g. food, groceries'
         />
@@ -172,6 +190,16 @@ const renderEntryForm = (state: EntryFormState) => {
           Add expense
         </button>
       </div>
+      <script
+        type='application/json'
+        data-testid='categories-data'
+        dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.categories) }}
+      />
+      <script
+        type='application/json'
+        data-testid='tags-data'
+        dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.tags) }}
+      />
     </form>
   )
 }
@@ -207,11 +235,15 @@ const renderExpenseTable = (rows: ExpenseRow[]) => {
   )
 }
 
-const renderExpenses = (rows: ExpenseRow[], state: EntryFormState) => {
+const renderExpenses = (
+  rows: ExpenseRow[],
+  state: EntryFormState,
+  payloads: EntryPayloads,
+) => {
   return (
     <div data-testid='expenses-page'>
       <h1 className='text-2xl font-bold mb-4'>Expenses</h1>
-      {renderEntryForm(state)}
+      {renderEntryForm(state, payloads)}
       {rows.length === 0 ? (
         <p className='text-gray-600' data-testid='expenses-empty-state'>
           No expenses yet
@@ -219,6 +251,8 @@ const renderExpenses = (rows: ExpenseRow[], state: EntryFormState) => {
       ) : (
         renderExpenseTable(rows)
       )}
+      <script src='/js/category-combobox.js' defer></script>
+      <script src='/js/tag-chip-picker.js' defer></script>
     </div>
   )
 }
@@ -324,7 +358,7 @@ const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
 export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
   app.get(
     PATHS.EXPENSES,
-    secureHeaders(STANDARD_SECURE_HEADERS),
+    secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const range = defaultRangeEt()
@@ -336,6 +370,26 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
           PATHS.AUTH.SIGN_IN,
           'Failed to load expenses. Please try again.',
         )
+      }
+      const categoriesResult = await listCategories(db)
+      if (categoriesResult.isErr) {
+        return redirectWithError(
+          c,
+          PATHS.AUTH.SIGN_IN,
+          'Failed to load expenses. Please try again.',
+        )
+      }
+      const tagsResult = await listTags(db)
+      if (tagsResult.isErr) {
+        return redirectWithError(
+          c,
+          PATHS.AUTH.SIGN_IN,
+          'Failed to load expenses. Please try again.',
+        )
+      }
+      const payloads: EntryPayloads = {
+        categories: categoriesResult.value.map((row) => ({ name: row.name })),
+        tags: tagsResult.value.map((row) => ({ name: row.name })),
       }
       const today = todayEt()
       const flash = readAndClearFormState(c)
@@ -351,7 +405,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
             },
           }
         : emptyState(today)
-      return c.render(useLayout(c, renderExpenses(expensesResult.value, state)))
+      return c.render(useLayout(c, renderExpenses(expensesResult.value, state, payloads)))
     },
   )
 

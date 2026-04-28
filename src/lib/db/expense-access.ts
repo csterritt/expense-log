@@ -333,6 +333,28 @@ const findTagsByNamesActual = async (
   }
 }
 
+/**
+ * List all tags sorted by case-insensitive `name ASC`.
+ * @param db - Database instance
+ * @returns Promise<Result<TagRow[], Error>>
+ */
+export const listTags = (db: DrizzleClient): Promise<Result<TagRow[], Error>> =>
+  withRetry('listTags', () => listTagsActual(db))
+
+const listTagsActual = async (
+  db: DrizzleClient,
+): Promise<Result<TagRow[], Error>> => {
+  try {
+    const rows = await db
+      .select({ id: tag.id, name: tag.name })
+      .from(tag)
+      .orderBy(asc(sql`lower(${tag.name})`))
+    return Result.ok(rows)
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
 export interface CreateExpenseWithTagsInput {
   date: string
   description: string

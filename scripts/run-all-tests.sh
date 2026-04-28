@@ -65,7 +65,7 @@ run_tests() {
   
   # Run tests and capture output
   local output
-  output=$(npx playwright test --reporter=line 2>&1)
+  output=$(npx playwright test --reporter=line e2e-tests 2>&1)
   
   # Parse results - look for the summary line like "X passed (time)" or "X failed"
   local passed=0
