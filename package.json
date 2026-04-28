@@ -3,9 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
-    "install:clean": "pnpm install --frozen-lockfile",
-    "test": "pnpm -r test",
+    "test": "cd tests && bun test",
     "dev-open-sign-up": "./run-dev.sh open-sign-up",
     "dev-no-sign-up": "./run-dev.sh no-sign-up",
     "dev-gated-sign-up": "./run-dev.sh gated-sign-up",
@@ -46,6 +44,5 @@
   },
   "engines": {
     "node": ">=22"
-  },
-  "packageManager": "pnpm@10.16.0"
+  }
 }
