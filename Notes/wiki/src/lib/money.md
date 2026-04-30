@@ -20,6 +20,16 @@ Formats an integer cent amount as a US-English dollar string with comma thousand
 
 Implemented with `Intl.NumberFormat('en-US')` for the integer part and a manual two-digit pad for the cents fraction; this avoids floating-point rounding when scaling cents to dollars.
 
+### `formatCentsPlain(cents: number): string`
+
+Added in Issue 08. Like `formatCents` but emits a plain decimal with no comma grouping — suitable for round-tripping through the entry / edit form's `amount` `<input>` (which `parseAmount` then re-validates).
+
+- `0` → `"0.00"`
+- `100` → `"1.00"`
+- `123456` → `"1234.56"`
+
+Used by the edit page GET to seed `expense-form-amount`'s `value` attribute from the loaded `amountCents`.
+
 ### `parseAmount(input: string): Result<number, string>`
 
 Parses a user-entered positive money amount into integer cents.

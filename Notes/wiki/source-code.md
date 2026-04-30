@@ -64,7 +64,9 @@ Catalog of all source files under `src/` (71 files total), organized by category
 
 All five routes are signed-in-only via the `signedInAccess` middleware. Four are placeholder pages awaiting feature implementation.
 
-- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list + entry form page (`/expenses`); GET renders the form (with any flashed per-field errors and sticky values) above the in-window expense table or empty state; POST validates via `parseExpenseCreate` and PRG-redirects on either path.
+- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list + entry form page (`/expenses`); GET renders the form (with any flashed per-field errors and sticky values) above the in-window expense table or empty state; POST validates via `parseExpenseCreate` and PRG-redirects on either path. Each list row now carries a row-level Edit anchor (Issue 08).
+- [src/routes/expenses/build-edit-expense.tsx](./src/routes/expenses/build-edit-expense.md) — Edit + delete flow (Issue 08): `GET /expenses/:id/edit`, `POST /expenses/:id/edit`, `POST /expenses/:id/confirm-edit-new`, `GET /expenses/:id/delete`, `POST /expenses/:id/delete`.
+- [src/routes/expenses/expense-form.tsx](./src/routes/expenses/expense-form.md) — Shared entry/edit form renderer + shared *Confirm new items* page renderer (Issue 08).
 - [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Categories placeholder page (`/categories`).
 - [src/routes/build-tags.tsx](./src/routes/build-tags.md) — Tags placeholder page (`/tags`).
 - [src/routes/build-summary.tsx](./src/routes/build-summary.md) — Summary placeholder page (`/summary`).

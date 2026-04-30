@@ -31,9 +31,6 @@ import {
   parseExpenseCreate,
   parseNewCategoryName,
   parseTagCsv,
-  descriptionMax,
-  categoryNameMax,
-  tagNameMax,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import {
@@ -41,168 +38,19 @@ import {
   redirectWithFormErrors,
   type ExpenseFormValues,
 } from '../../lib/form-state'
+import {
+  renderExpenseForm,
+  renderConfirmNewItems,
+  type ExpenseFormPayloads,
+  type ExpenseFormState,
+} from './expense-form'
 
 const CONFIRM_CREATE_NEW_PATH = '/expenses/confirm-create-new'
-// Generous CSV maxlength: enough for ~8 max-length tags plus separators.
-const tagsCsvMax = (tagNameMax + 2) * 8
 
-type EntryFormState = {
-  fieldErrors: FieldErrors
-  values: ExpenseFormValues
-}
-
-const emptyState = (today: string): EntryFormState => ({
+const emptyState = (today: string): ExpenseFormState => ({
   fieldErrors: {},
   values: { description: '', amount: '', date: today, category: '', tags: '' },
 })
-
-const fieldError = (field: keyof FieldErrors, message?: string) => {
-  if (!message) {
-    return null
-  }
-  return (
-    <p
-      className='text-error text-sm mt-1'
-      data-testid={`expense-form-${field}-error`}
-    >
-      {message}
-    </p>
-  )
-}
-
-const inputClass = (base: string, hasError: boolean) =>
-  hasError ? `${base} input-error` : base
-
-// Serialize a JSON payload safely for embedding inside a <script> tag.
-// Escaping `<` (and `>` / `&` defensively) prevents a stray `</script>`
-// in any data field from breaking out of the script element.
-const safeJsonForScript = (data: unknown): string =>
-  JSON.stringify(data)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
-
-type EntryPayloads = {
-  categories: { name: string }[]
-  tags: { name: string }[]
-}
-
-const renderEntryForm = (state: EntryFormState, payloads: EntryPayloads) => {
-  const { fieldErrors, values } = state
-  return (
-    <form
-      method='post'
-      action={PATHS.EXPENSES}
-      className='mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-start'
-      data-testid='expense-form'
-      noValidate
-    >
-      <div className='flex flex-col md:col-span-2'>
-        <label className='label' htmlFor='expense-form-description'>
-          <span className='label-text'>Description</span>
-        </label>
-        <input
-          id='expense-form-description'
-          name='description'
-          type='text'
-          required
-          maxLength={descriptionMax + 50}
-          className={inputClass('input input-bordered w-full', !!fieldErrors.description)}
-          data-testid='expense-form-description'
-          value={values.description ?? ''}
-        />
-        {fieldError('description', fieldErrors.description)}
-      </div>
-      <div className='flex flex-col'>
-        <label className='label' htmlFor='expense-form-amount'>
-          <span className='label-text'>Amount</span>
-        </label>
-        <input
-          id='expense-form-amount'
-          name='amount'
-          type='text'
-          inputMode='decimal'
-          required
-          className={inputClass('input input-bordered', !!fieldErrors.amount)}
-          data-testid='expense-form-amount'
-          value={values.amount ?? ''}
-        />
-        {fieldError('amount', fieldErrors.amount)}
-      </div>
-      <div className='flex flex-col'>
-        <label className='label' htmlFor='expense-form-date'>
-          <span className='label-text'>Date</span>
-        </label>
-        <input
-          id='expense-form-date'
-          name='date'
-          type='text'
-          required
-          pattern='\d{4}-\d{2}-\d{2}'
-          className={inputClass('input input-bordered', !!fieldErrors.date)}
-          data-testid='expense-form-date'
-          value={values.date ?? ''}
-          placeholder='YYYY-MM-DD'
-        />
-        {fieldError('date', fieldErrors.date)}
-      </div>
-      <div className='flex flex-col'>
-        <label className='label' htmlFor='expense-form-category'>
-          <span className='label-text'>Category</span>
-        </label>
-        <input
-          id='expense-form-category'
-          name='category'
-          type='text'
-          required
-          maxLength={categoryNameMax + 50}
-          className={inputClass('input input-bordered', !!fieldErrors.category)}
-          data-testid='expense-form-category'
-          data-category-combobox
-          value={values.category ?? ''}
-          placeholder='Type a category'
-        />
-        {fieldError('category', fieldErrors.category)}
-      </div>
-      <div className='flex flex-col md:col-span-5'>
-        <label className='label' htmlFor='expense-form-tags'>
-          <span className='label-text'>Tags (comma-separated)</span>
-        </label>
-        <input
-          id='expense-form-tags'
-          name='tags'
-          type='text'
-          maxLength={tagsCsvMax}
-          className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
-          data-testid='expense-form-tags'
-          data-tag-chip-picker
-          value={values.tags ?? ''}
-          placeholder='e.g. food, groceries'
-        />
-        {fieldError('tags', fieldErrors.tags)}
-      </div>
-      <div className='md:col-span-5'>
-        <button
-          type='submit'
-          className='btn btn-primary'
-          data-testid='expense-form-create'
-        >
-          Add expense
-        </button>
-      </div>
-      <script
-        type='application/json'
-        data-testid='categories-data'
-        dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.categories) }}
-      />
-      <script
-        type='application/json'
-        data-testid='tags-data'
-        dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.tags) }}
-      />
-    </form>
-  )
-}
 
 const renderExpenseTable = (rows: ExpenseRow[]) => {
   return (
@@ -215,6 +63,7 @@ const renderExpenseTable = (rows: ExpenseRow[]) => {
             <th>Category</th>
             <th>Tags</th>
             <th className='text-right'>Amount</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -227,6 +76,15 @@ const renderExpenseTable = (rows: ExpenseRow[]) => {
               <td className='text-right' data-testid='expense-row-amount'>
                 {formatCents(row.amountCents)}
               </td>
+              <td>
+                <a
+                  href={`/expenses/${row.id}/edit`}
+                  className='btn btn-sm'
+                  data-testid='expense-row-edit'
+                >
+                  Edit
+                </a>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -237,13 +95,18 @@ const renderExpenseTable = (rows: ExpenseRow[]) => {
 
 const renderExpenses = (
   rows: ExpenseRow[],
-  state: EntryFormState,
-  payloads: EntryPayloads,
+  state: ExpenseFormState,
+  payloads: ExpenseFormPayloads,
 ) => {
   return (
     <div data-testid='expenses-page'>
       <h1 className='text-2xl font-bold mb-4'>Expenses</h1>
-      {renderEntryForm(state, payloads)}
+      {renderExpenseForm({
+        mode: 'create',
+        action: PATHS.EXPENSES,
+        state,
+        payloads,
+      })}
       {rows.length === 0 ? (
         <p className='text-gray-600' data-testid='expenses-empty-state'>
           No expenses yet
@@ -257,91 +120,6 @@ const renderExpenses = (
   )
 }
 
-type ConfirmCreateNewProps = {
-  // Normalized (lowercased, trimmed) new category name, or null when the
-  // category already exists.
-  newCategoryName: string | null
-  // Final category name to display in the preview (existing match name or
-  // the normalized new-category name).
-  finalCategoryName: string
-  // Normalized new-tag names (lowercased, trimmed, de-duplicated). Already
-  // alphabetized by the caller.
-  newTagNames: string[]
-  // Final tag list to display in the preview (alphabetized).
-  finalTagNames: string[]
-  // Raw values from the entry form (exact strings to round-trip on Cancel).
-  values: ExpenseFormValues
-}
-
-const renderConfirmCreateNew = (props: ConfirmCreateNewProps) => {
-  const { newCategoryName, finalCategoryName, newTagNames, finalTagNames, values } = props
-  const amountDisplay = (values.amount ?? '').trim()
-  return (
-    <div
-      className='max-w-xl mx-auto'
-      data-testid='confirm-create-new-page'
-    >
-      <h1 className='text-2xl font-bold mb-4'>Confirm new items</h1>
-      <ul className='mb-4 list-disc list-inside' data-testid='confirm-create-new-list'>
-        {newCategoryName !== null ? (
-          <li data-testid='confirm-create-new-category-line'>
-            Create category <strong>'{newCategoryName}'</strong>
-          </li>
-        ) : null}
-        {newTagNames.map((name) => (
-          <li data-testid='confirm-create-new-tag-line'>
-            Create tag <strong>'{name}'</strong>
-          </li>
-        ))}
-      </ul>
-      <dl className='grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 mb-6'>
-        <dt className='font-semibold'>Description</dt>
-        <dd data-testid='confirm-create-new-description'>
-          {values.description ?? ''}
-        </dd>
-        <dt className='font-semibold'>Amount</dt>
-        <dd data-testid='confirm-create-new-amount'>{amountDisplay}</dd>
-        <dt className='font-semibold'>Date</dt>
-        <dd data-testid='confirm-create-new-date'>{values.date ?? ''}</dd>
-        <dt className='font-semibold'>Category</dt>
-        <dd data-testid='confirm-create-new-category'>{finalCategoryName}</dd>
-        <dt className='font-semibold'>Tags</dt>
-        <dd data-testid='confirm-create-new-tags'>{finalTagNames.join(', ')}</dd>
-      </dl>
-      <form
-        method='post'
-        action={CONFIRM_CREATE_NEW_PATH}
-        className='flex gap-3'
-        data-testid='confirm-create-new-form'
-        noValidate
-      >
-        <input type='hidden' name='description' value={values.description ?? ''} />
-        <input type='hidden' name='amount' value={values.amount ?? ''} />
-        <input type='hidden' name='date' value={values.date ?? ''} />
-        <input type='hidden' name='category' value={values.category ?? ''} />
-        <input type='hidden' name='tags' value={values.tags ?? ''} />
-        <button
-          type='submit'
-          name='action'
-          value='confirm'
-          className='btn btn-primary'
-          data-testid='confirm-create-new-confirm'
-        >
-          Confirm
-        </button>
-        <button
-          type='submit'
-          name='action'
-          value='cancel'
-          className='btn btn-ghost'
-          data-testid='confirm-create-new-cancel'
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
-  )
-}
 
 const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
   const form = await c.req.parseBody()
@@ -387,13 +165,13 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
           'Failed to load expenses. Please try again.',
         )
       }
-      const payloads: EntryPayloads = {
+      const payloads: ExpenseFormPayloads = {
         categories: categoriesResult.value.map((row) => ({ name: row.name })),
         tags: tagsResult.value.map((row) => ({ name: row.name })),
       }
       const today = todayEt()
       const flash = readAndClearFormState(c)
-      const state: EntryFormState = flash
+      const state: ExpenseFormState = flash
         ? {
             fieldErrors: flash.fieldErrors ?? {},
             values: {
@@ -518,7 +296,9 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
       return c.render(
         useLayout(
           c,
-          renderConfirmCreateNew({
+          renderConfirmNewItems({
+            mode: 'create',
+            action: CONFIRM_CREATE_NEW_PATH,
             newCategoryName: normalizedNewCategory,
             finalCategoryName,
             newTagNames: sortedNewTags,

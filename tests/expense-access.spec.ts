@@ -9,6 +9,12 @@
 // embedded `tags-data` payload and the tag-chip-picker e2e spec
 // (`e2e-tests/expenses/07-tag-chip-picker-js.spec.ts`).
 //
+// Issue 08 (edit + delete expense) adds `getExpenseById`,
+// `updateExpenseWithTags`, `updateManyAndExpense`, and `deleteExpense` and
+// mirrors the same decision: their behavior is verified via the Issue 08
+// Playwright specs (`e2e-tests/expenses/09-edit-expense.spec.ts`,
+// `10-edit-with-new-items.spec.ts`, `11-delete-expense.spec.ts`).
+//
 // To run: cd to the project root and run `bun test`.
 // ====================================
 

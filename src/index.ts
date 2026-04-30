@@ -14,6 +14,7 @@ import { HTML_STATUS, SIGN_UP_MODES } from './constants'
 import { renderer } from './renderer'
 import { buildRoot } from './routes/build-root' // PRODUCTION:REMOVE
 import { buildExpenses } from './routes/expenses/build-expenses'
+import { buildEditExpense } from './routes/expenses/build-edit-expense'
 import { buildCategories } from './routes/build-categories'
 import { buildTags } from './routes/build-tags'
 import { buildSummary } from './routes/build-summary'
@@ -173,6 +174,7 @@ setupBetterAuth(app)
 // Route declarations
 buildRoot(app) // PRODUCTION:REMOVE
 buildExpenses(app)
+buildEditExpense(app)
 buildCategories(app)
 buildTags(app)
 buildSummary(app)

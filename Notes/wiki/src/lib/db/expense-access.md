@@ -115,11 +115,39 @@ interface CreateCategoryAndExpenseInput {
 - In a single `db.batch([...])` inserts (a) the optional new category row (lower-cased, fresh UUID), (b) one `tag` row per de-duplicated `newTagNames` entry (lower-cased, fresh UUIDs), (c) the `expense` row, (d) one `expenseTag` row per (de-duplicated combined existing + new) tag id.
 - Unique-name collisions on `category.name` or `tag.name` (`/unique|constraint/i`) surface as `Result.err(new Error('One of the new names collides with an existing row. Please try again.'))`; the confirm POST surfaces this under `category` when a new category was being created and otherwise under `tags`.
 
+### `getExpenseById(db, id): Promise<Result<ExpenseDetailRow | null, Error>>`
+
+- Added in Issue 08. Public wrapper: `withRetry('getExpenseById', () => getExpenseByIdActual(db, id))`.
+- Returns the full row including `categoryId`, `categoryName`, alphabetised `tagNames`, and the parallel `tagIds` array. `Result.ok(null)` for an unknown id (or empty input).
+- Used by the edit page GET to pre-populate the form, by the edit POST to verify the row exists before mutating, and by the delete confirm GET to display details.
+- `ExpenseDetailRow` extends `ExpenseRow` with `categoryId: string` and `tagIds: string[]`.
+
+### `updateExpenseWithTags(db, input): Promise<Result<{ id }, Error>>`
+
+- Added in Issue 08. Public wrapper: `withRetry('updateExpenseWithTags', () => updateExpenseWithTagsActual(db, input))`.
+- Input shape: `{ id, date, description, categoryId, amountCents, tagIds }`. Verifies the expense and category exist (friendly `Result.err` otherwise).
+- Single `db.batch([...])`: updates the expense row (`description`, `amountCents`, `categoryId`, `date`, `updatedAt`), deletes every `expenseTag` row for that expense, then inserts one `expenseTag` row per de-duplicated id in `tagIds`.
+- Used by the edit POST when both the category and every tag already exist (no confirmation page needed). Idempotent: replaying with the same `tagIds` produces no duplicate links.
+
+### `updateManyAndExpense(db, input): Promise<Result<{ id, categoryId, createdTagIds }, Error>>`
+
+- Added in Issue 08. Public wrapper: `withRetry('updateManyAndExpense', () => updateManyAndExpenseActual(db, input))`.
+- Mirrors `createManyAndExpense` but updates an existing expense instead of inserting one. Input: `{ id, newCategoryName | existingCategoryId, newTagNames, existingTagIds, date, description, amountCents }`. Exactly one of `newCategoryName` / `existingCategoryId` must be supplied.
+- Single `db.batch([...])` that (a) optionally inserts a new lower-cased category row, (b) inserts one `tag` row per de-duplicated lower-cased entry in `newTagNames`, (c) updates the existing `expense` row to point at the resolved category id, (d) deletes the prior `expenseTag` link set, then (e) inserts one `expenseTag` row per id in the combined existing + newly-created set.
+- A unique-name collision surfaces as `Result.err(new Error('One of the new names collides with an existing row. Please try again.'))` and rolls back the entire batch. The confirm-edit POST surfaces this under `category` when a new category was being created and otherwise under `tags`.
+
+### `deleteExpense(db, id): Promise<Result<void, Error>>`
+
+- Added in Issue 08. Public wrapper: `withRetry('deleteExpense', () => deleteExpenseActual(db, id))`.
+- Verifies the row exists, then issues `delete from expense where id = ?`. The `ON DELETE CASCADE` on `expenseTag` cleans up link rows automatically; referenced `category` and `tag` rows are left intact.
+- Returns a friendly `Result.err` for an unknown id.
+
 ## Cross-references
 
 - [db-helpers.md](../db-helpers.md) — `withRetry`
 - [db/schema.md](../../db/schema.md) — `expense`, `category`, `tag`, `expenseTag` tables.
-- [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — primary caller (GET renders the list + form, POST calls `createExpense`).
+- [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — primary caller for the list + create flow.
+- [routes/expenses/build-edit-expense.md](../routes/expenses/build-edit-expense.md) — edit + delete flow caller (Issue 08): `getExpenseById`, `updateExpenseWithTags`, `updateManyAndExpense`, `deleteExpense`.
 - [routes/test/database.md](../routes/test/database.md) — `POST /test/database/seed-expenses` and `POST /test/database/seed-categories` populate rows for tests.
 
 ---

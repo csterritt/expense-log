@@ -32,6 +32,20 @@ export const formatCents = (cents: number): string => {
   return `${sign}${wholeStr}.${fracStr}`
 }
 
+/**
+ * Format an integer amount in cents as a plain decimal string with no
+ * grouping separators, suitable for round-tripping through the entry/edit
+ * form's `amount` input (which `parseAmount` then re-validates).
+ *
+ * Examples: 0 -> "0.00", 100 -> "1.00", 123456 -> "1234.56".
+ */
+export const formatCentsPlain = (cents: number): string => {
+  const whole = Math.trunc(cents / 100)
+  const fraction = Math.abs(cents % 100)
+  const fracStr = fraction.toString().padStart(2, '0')
+  return `${whole}.${fracStr}`
+}
+
 // Matches a positive decimal with optional US-style thousands grouping. Either:
 //   - No commas: digits with optional fractional part (e.g. `1234`, `.50`, `12.34`)
 //   - With commas: leading 1-3 digit group, then `,ddd` groups, optional fractional part
