@@ -85,9 +85,7 @@ test.describe('Edit expense — consolidated confirmation flow', () => {
       await page.getByTestId('expense-form-save').click()
 
       await expect(page.getByTestId('confirm-edit-new-page')).toBeVisible()
-      await expect(page.getByTestId('confirm-edit-new-category-line')).toContainText(
-        "'utilities'",
-      )
+      await expect(page.getByTestId('confirm-edit-new-category-line')).toContainText("'utilities'")
       const tagLines = page.getByTestId('confirm-edit-new-tag-line')
       await expect(tagLines).toHaveCount(1)
       await expect(tagLines.first()).toContainText("'internet'")
@@ -131,9 +129,7 @@ test.describe('Edit expense — consolidated confirmation flow', () => {
       await page.getByTestId('expense-form-save').click()
 
       await expect(page.getByTestId('confirm-edit-new-page')).toBeVisible()
-      await expect(page.getByTestId('confirm-edit-new-category-line')).toContainText(
-        "'beverages'",
-      )
+      await expect(page.getByTestId('confirm-edit-new-category-line')).toContainText("'beverages'")
       const tagLines = page.getByTestId('confirm-edit-new-tag-line')
       await expect(tagLines).toHaveCount(1)
       await expect(tagLines.first()).toContainText("'caffeine'")

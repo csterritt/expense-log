@@ -34,10 +34,7 @@ const expectOk = (input: typeof VALID, expected: { amountCents: number }) => {
   }
 }
 
-const expectFieldErr = (
-  input: Partial<typeof VALID>,
-  expectedFields: Array<keyof FieldErrors>,
-) => {
+const expectFieldErr = (input: Partial<typeof VALID>, expectedFields: Array<keyof FieldErrors>) => {
   const r = parseExpenseCreate({ ...VALID, ...input })
   assert.strictEqual(r.isErr, true, `expected err for ${JSON.stringify(input)}`)
   if (r.isErr) {
@@ -250,10 +247,12 @@ describe('parseExpenseCreate', () => {
 
   describe('multi-field failure', () => {
     it('reports errors for every invalid field at once', () => {
-      expectFieldErr(
-        { description: '', amount: '0', date: '2025-13-40', category: '' },
-        ['description', 'amount', 'date', 'category'],
-      )
+      expectFieldErr({ description: '', amount: '0', date: '2025-13-40', category: '' }, [
+        'description',
+        'amount',
+        'date',
+        'category',
+      ])
     })
 
     it('preserves valid fields passing while invalid ones fail', () => {

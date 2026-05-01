@@ -57,7 +57,9 @@ test.describe('Inline category creation (no-JS path)', () => {
       await submitEntryForm(page)
 
       await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
-      await expect(page.getByTestId('confirm-create-new-category-line')).toContainText("'groceries'")
+      await expect(page.getByTestId('confirm-create-new-category-line')).toContainText(
+        "'groceries'",
+      )
       await expect(page.getByTestId('confirm-create-new-description')).toHaveText('Weekly shop')
       await expect(page.getByTestId('confirm-create-new-amount')).toHaveText('42.50')
       await expect(page.getByTestId('confirm-create-new-date')).toHaveText(todayEt())

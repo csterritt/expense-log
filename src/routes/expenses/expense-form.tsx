@@ -47,33 +47,25 @@ const fieldError = (field: keyof FieldErrors, message?: string) => {
     return null
   }
   return (
-    <p
-      className='text-error text-sm mt-1'
-      data-testid={`expense-form-${field}-error`}
-    >
+    <p className='text-error text-sm mt-1' data-testid={`expense-form-${field}-error`}>
       {message}
     </p>
   )
 }
 
-const inputClass = (base: string, hasError: boolean) =>
-  hasError ? `${base} input-error` : base
+const inputClass = (base: string, hasError: boolean) => (hasError ? `${base} input-error` : base)
 
 // Serialize a JSON payload safely for embedding inside a <script> tag.
 // Escaping `<` (and `>` / `&` defensively) prevents a stray `</script>`
 // in any data field from breaking out of the script element.
 const safeJsonForScript = (data: unknown): string =>
-  JSON.stringify(data)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
+  JSON.stringify(data).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
 
 export const renderExpenseForm = (props: RenderExpenseFormProps) => {
   const { mode, action, state, payloads } = props
   const { fieldErrors, values } = state
   const submitLabel = mode === 'edit' ? 'Save changes' : 'Add expense'
-  const submitTestId =
-    mode === 'edit' ? 'expense-form-save' : 'expense-form-create'
+  const submitTestId = mode === 'edit' ? 'expense-form-save' : 'expense-form-create'
   return (
     <form
       method='post'
@@ -149,32 +141,31 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
         />
         {fieldError('category', fieldErrors.category)}
       </div>
-      <div className='flex flex-col md:col-span-4'>
-        <label className='label' htmlFor='expense-form-tags'>
-          <span className='label-text'>Tags (comma-separated)</span>
-        </label>
-        <input
-          id='expense-form-tags'
-          name='tags'
-          type='text'
-          maxLength={tagsCsvMax}
-          className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
-          data-testid='expense-form-tags'
-          data-tag-chip-picker
-          value={values.tags ?? ''}
-          placeholder='e.g. food, groceries'
-        />
-        {fieldError('tags', fieldErrors.tags)}
+      <div className='md:col-span-5 flex flex-row justify-between gap-4'>
+        <div className='flex flex-col flex-grow'>
+          <label className='label' htmlFor='expense-form-tags'>
+            <span className='label-text'>Tags (comma-separated)</span>
+          </label>
+          <input
+            id='expense-form-tags'
+            name='tags'
+            type='text'
+            maxLength={tagsCsvMax}
+            className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
+            data-testid='expense-form-tags'
+            data-tag-chip-picker
+            value={values.tags ?? ''}
+            placeholder='e.g. food, groceries'
+          />
+          {fieldError('tags', fieldErrors.tags)}
+        </div>
+        <div className='self-end'>
+          <button type='submit' className='btn btn-primary' data-testid={submitTestId}>
+            {submitLabel}
+          </button>
+        </div>
       </div>
-      <div className='self-end justify-self-end'>
-        <button
-          type='submit'
-          className='btn btn-primary'
-          data-testid={submitTestId}
-        >
-          {submitLabel}
-        </button>
-      </div>
+
       <script
         type='application/json'
         data-testid='categories-data'
@@ -211,19 +202,11 @@ export type ConfirmNewItemsProps = {
   values: ExpenseFormValues
 }
 
-const formatAmountDisplay = (value: string | undefined): string =>
-  (value ?? '').trim()
+const formatAmountDisplay = (value: string | undefined): string => (value ?? '').trim()
 
 export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
-  const {
-    mode,
-    action,
-    newCategoryName,
-    finalCategoryName,
-    newTagNames,
-    finalTagNames,
-    values,
-  } = props
+  const { mode, action, newCategoryName, finalCategoryName, newTagNames, finalTagNames, values } =
+    props
   const prefix = mode === 'edit' ? 'confirm-edit-new' : 'confirm-create-new'
   return (
     <div className='max-w-xl mx-auto' data-testid={`${prefix}-page`}>

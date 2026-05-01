@@ -54,9 +54,7 @@ export interface CreateExpenseInput {
 export const listCategories = (db: DrizzleClient): Promise<Result<CategoryRow[], Error>> =>
   withRetry('listCategories', () => listCategoriesActual(db))
 
-const listCategoriesActual = async (
-  db: DrizzleClient,
-): Promise<Result<CategoryRow[], Error>> => {
+const listCategoriesActual = async (db: DrizzleClient): Promise<Result<CategoryRow[], Error>> => {
   try {
     const rows = await db
       .select({ id: category.id, name: category.name })
@@ -341,9 +339,7 @@ const findTagsByNamesActual = async (
 export const listTags = (db: DrizzleClient): Promise<Result<TagRow[], Error>> =>
   withRetry('listTags', () => listTagsActual(db))
 
-const listTagsActual = async (
-  db: DrizzleClient,
-): Promise<Result<TagRow[], Error>> => {
+const listTagsActual = async (db: DrizzleClient): Promise<Result<TagRow[], Error>> => {
   try {
     const rows = await db
       .select({ id: tag.id, name: tag.name })
@@ -462,9 +458,7 @@ const getExpenseByIdActual = async (
       .from(expenseTag)
       .innerJoin(tag, eq(tag.id, expenseTag.tagId))
       .where(eq(expenseTag.expenseId, id))
-    const sorted = tagRows
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
+    const sorted = tagRows.slice().sort((a, b) => a.name.localeCompare(b.name))
     return Result.ok({
       id: row.id,
       date: row.date,
@@ -584,14 +578,10 @@ const updateManyAndExpenseActual = async (
     const hasExistingCategory =
       typeof input.existingCategoryId === 'string' && input.existingCategoryId.length > 0
     if (hasNewCategory && hasExistingCategory) {
-      return Result.err(
-        new Error('Provide exactly one of newCategoryName or existingCategoryId.'),
-      )
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
     }
     if (!hasNewCategory && !hasExistingCategory) {
-      return Result.err(
-        new Error('Provide exactly one of newCategoryName or existingCategoryId.'),
-      )
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
     }
 
     const found = await db
@@ -638,9 +628,7 @@ const updateManyAndExpenseActual = async (
     const createdTagIds: string[] = []
     for (const [name, id] of newTagIdByName.entries()) {
       createdTagIds.push(id)
-      statements.push(
-        db.insert(tag).values({ id, name, createdAt: now, updatedAt: now }),
-      )
+      statements.push(db.insert(tag).values({ id, name, createdAt: now, updatedAt: now }))
     }
 
     statements.push(
@@ -681,16 +669,10 @@ const updateManyAndExpenseActual = async (
  * cleans up its link rows automatically. Returns `Result.err` when the row
  * does not exist.
  */
-export const deleteExpense = (
-  db: DrizzleClient,
-  id: string,
-): Promise<Result<void, Error>> =>
+export const deleteExpense = (db: DrizzleClient, id: string): Promise<Result<void, Error>> =>
   withRetry('deleteExpense', () => deleteExpenseActual(db, id))
 
-const deleteExpenseActual = async (
-  db: DrizzleClient,
-  id: string,
-): Promise<Result<void, Error>> => {
+const deleteExpenseActual = async (db: DrizzleClient, id: string): Promise<Result<void, Error>> => {
   try {
     const found = await db
       .select({ id: expense.id })
@@ -735,17 +717,15 @@ const createManyAndExpenseActual = async (
   input: CreateManyAndExpenseInput,
 ): Promise<Result<{ categoryId: string; expenseId: string; createdTagIds: string[] }, Error>> => {
   try {
-    const hasNewCategory = typeof input.newCategoryName === 'string' && input.newCategoryName.trim().length > 0
-    const hasExistingCategory = typeof input.existingCategoryId === 'string' && input.existingCategoryId.length > 0
+    const hasNewCategory =
+      typeof input.newCategoryName === 'string' && input.newCategoryName.trim().length > 0
+    const hasExistingCategory =
+      typeof input.existingCategoryId === 'string' && input.existingCategoryId.length > 0
     if (hasNewCategory && hasExistingCategory) {
-      return Result.err(
-        new Error('Provide exactly one of newCategoryName or existingCategoryId.'),
-      )
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
     }
     if (!hasNewCategory && !hasExistingCategory) {
-      return Result.err(
-        new Error('Provide exactly one of newCategoryName or existingCategoryId.'),
-      )
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
     }
 
     const now = new Date()
@@ -786,9 +766,7 @@ const createManyAndExpenseActual = async (
     const createdTagIds: string[] = []
     for (const [name, id] of newTagNames.entries()) {
       createdTagIds.push(id)
-      statements.push(
-        db.insert(tag).values({ id, name, createdAt: now, updatedAt: now }),
-      )
+      statements.push(db.insert(tag).values({ id, name, createdAt: now, updatedAt: now }))
     }
 
     statements.push(

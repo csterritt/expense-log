@@ -91,13 +91,11 @@ test.describe('Delete expense', () => {
       await page.getByTestId('confirm-delete-expense-confirm').click()
 
       await page.waitForURL(BASE_URLS.EXPENSES)
-      await expect(
-        page.getByTestId('expense-row').filter({ hasText: 'Weekly shop' }),
-      ).toHaveCount(0)
+      await expect(page.getByTestId('expense-row').filter({ hasText: 'Weekly shop' })).toHaveCount(
+        0,
+      )
       await expect(page.getByTestId('expense-row')).toHaveCount(1)
-      await expect(
-        page.getByTestId('expense-row').filter({ hasText: 'Other' }),
-      ).toHaveCount(1)
+      await expect(page.getByTestId('expense-row').filter({ hasText: 'Other' })).toHaveCount(1)
     }),
   )
 

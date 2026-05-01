@@ -256,7 +256,9 @@
     }
 
     const addChip = (rawName) => {
-      const lowered = String(rawName || '').trim().toLowerCase()
+      const lowered = String(rawName || '')
+        .trim()
+        .toLowerCase()
       if (lowered.length === 0) {
         return
       }

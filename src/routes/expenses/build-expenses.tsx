@@ -120,7 +120,6 @@ const renderExpenses = (
   )
 }
 
-
 const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
   const form = await c.req.parseBody()
   return {
@@ -219,20 +218,12 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const lookup = await findCategoryByName(db, validated.value.category)
       if (lookup.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
       }
 
       const tagLookup = await findTagsByNames(db, tagParse.value)
       if (tagLookup.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
       }
       const existingTagByLower = new Map<string, { id: string; name: string }>()
       for (const row of tagLookup.value) {
@@ -262,11 +253,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
           tagIds: existingTagIds,
         })
         if (createResult.isErr) {
-          return redirectWithError(
-            c,
-            PATHS.EXPENSES,
-            'Failed to save expense. Please try again.',
-          )
+          return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
         }
         return redirectWithMessage(c, PATHS.EXPENSES, 'Expense added.')
       }
@@ -277,12 +264,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
       if (categoryIsNew) {
         const nameCheck = parseNewCategoryName(validated.value.category)
         if (nameCheck.isErr) {
-          return redirectWithFormErrors(
-            c,
-            PATHS.EXPENSES,
-            { category: nameCheck.error },
-            rawValues,
-          )
+          return redirectWithFormErrors(c, PATHS.EXPENSES, { category: nameCheck.error }, rawValues)
         }
         normalizedNewCategory = nameCheck.value.toLowerCase()
         finalCategoryName = normalizedNewCategory
@@ -350,19 +332,11 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const lookup = await findCategoryByName(db, validated.value.category)
       if (lookup.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
       }
       const tagLookup = await findTagsByNames(db, tagParse.value)
       if (tagLookup.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
       }
       const existingTagByLower = new Map<string, { id: string; name: string }>()
       for (const row of tagLookup.value) {
@@ -386,12 +360,7 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
       } else {
         const nameCheck = parseNewCategoryName(validated.value.category)
         if (nameCheck.isErr) {
-          return redirectWithFormErrors(
-            c,
-            PATHS.EXPENSES,
-            { category: nameCheck.error },
-            rawValues,
-          )
+          return redirectWithFormErrors(c, PATHS.EXPENSES, { category: nameCheck.error }, rawValues)
         }
         newCategoryName = nameCheck.value
       }

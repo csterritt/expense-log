@@ -89,9 +89,7 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
       await page.waitForURL(BASE_URLS.EXPENSES)
 
       // The new "Weekly shop" row should have alphabetized tags.
-      const weeklyRow = page
-        .getByTestId('expense-row')
-        .filter({ hasText: 'Weekly shop' })
+      const weeklyRow = page.getByTestId('expense-row').filter({ hasText: 'Weekly shop' })
       await expect(weeklyRow).toHaveCount(1)
       await expect(weeklyRow.getByTestId('expense-row-tags')).toHaveText('food, groceries')
     }),
@@ -125,9 +123,7 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
       await page.getByTestId('confirm-create-new-confirm').click()
       await page.waitForURL(BASE_URLS.EXPENSES)
 
-      const rentRow = page
-        .getByTestId('expense-row')
-        .filter({ hasText: 'Rent payment' })
+      const rentRow = page.getByTestId('expense-row').filter({ hasText: 'Rent payment' })
       await expect(rentRow).toHaveCount(1)
       await expect(rentRow.getByTestId('expense-row-category')).toHaveText('groceries')
       await expect(rentRow.getByTestId('expense-row-tags')).toHaveText('rent, utilities')
@@ -144,9 +140,7 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
 
       await page.waitForURL(BASE_URLS.EXPENSES)
       await expect(page.getByTestId('confirm-create-new-page')).toHaveCount(0)
-      const snacksRow = page
-        .getByTestId('expense-row')
-        .filter({ hasText: 'Snacks' })
+      const snacksRow = page.getByTestId('expense-row').filter({ hasText: 'Snacks' })
       await expect(snacksRow).toHaveCount(1)
       await expect(snacksRow.getByTestId('expense-row-tags')).toHaveText('rent')
     }),

@@ -27,59 +27,59 @@ test.describe('JS-disabled fallback (Issue 5/6 server flow untouched)', () => {
 
     try {
       await seedExpenses([
-          {
-            date: todayEt(),
-            description: 'seed',
-            amountCents: 100,
-            categoryName: 'food',
-            tagNames: ['groceries'],
-          },
-        ])
+        {
+          date: todayEt(),
+          description: 'seed',
+          amountCents: 100,
+          categoryName: 'food',
+          tagNames: ['groceries'],
+        },
+      ])
 
-        await page.goto(BASE_URLS.SIGN_IN)
-        await submitSignInForm(page, TEST_USERS.KNOWN_USER)
-        await page.goto(BASE_URLS.EXPENSES)
+      await page.goto(BASE_URLS.SIGN_IN)
+      await submitSignInForm(page, TEST_USERS.KNOWN_USER)
+      await page.goto(BASE_URLS.EXPENSES)
 
-        // No combobox dropdown / chip surface should mount when JS is off.
-        await page.getByTestId('expense-form-category').focus()
-        await expect(page.getByTestId('category-combobox-dropdown')).toHaveCount(0)
-        await expect(page.getByTestId('tag-chip-picker-surface')).toHaveCount(0)
+      // No combobox dropdown / chip surface should mount when JS is off.
+      await page.getByTestId('expense-form-category').focus()
+      await expect(page.getByTestId('category-combobox-dropdown')).toHaveCount(0)
+      await expect(page.getByTestId('tag-chip-picker-surface')).toHaveCount(0)
 
-        // The category and tags inputs should remain plain text inputs.
-        await expect(page.getByTestId('expense-form-category')).toHaveAttribute('type', 'text')
-        await expect(page.getByTestId('expense-form-tags')).toHaveAttribute('type', 'text')
+      // The category and tags inputs should remain plain text inputs.
+      await expect(page.getByTestId('expense-form-category')).toHaveAttribute('type', 'text')
+      await expect(page.getByTestId('expense-form-tags')).toHaveAttribute('type', 'text')
 
-        // All-existing submission goes straight to /expenses with no
-        // confirmation page.
-        await page.getByTestId('expense-form-description').fill('Plain submit')
-        await page.getByTestId('expense-form-amount').fill('3.50')
-        await page.getByTestId('expense-form-date').fill(todayEt())
-        await page.getByTestId('expense-form-category').fill('food')
-        await page.getByTestId('expense-form-tags').fill('groceries')
-        await page.getByTestId('expense-form-create').click()
+      // All-existing submission goes straight to /expenses with no
+      // confirmation page.
+      await page.getByTestId('expense-form-description').fill('Plain submit')
+      await page.getByTestId('expense-form-amount').fill('3.50')
+      await page.getByTestId('expense-form-date').fill(todayEt())
+      await page.getByTestId('expense-form-category').fill('food')
+      await page.getByTestId('expense-form-tags').fill('groceries')
+      await page.getByTestId('expense-form-create').click()
 
-        await page.waitForURL(BASE_URLS.EXPENSES)
-        await expect(page.getByTestId('confirm-create-new-page')).toHaveCount(0)
-        const plainRow = page.getByTestId('expense-row').filter({ hasText: 'Plain submit' })
-        await expect(plainRow).toHaveCount(1)
-        await expect(plainRow.getByTestId('expense-row-tags')).toHaveText('groceries')
+      await page.waitForURL(BASE_URLS.EXPENSES)
+      await expect(page.getByTestId('confirm-create-new-page')).toHaveCount(0)
+      const plainRow = page.getByTestId('expense-row').filter({ hasText: 'Plain submit' })
+      await expect(plainRow).toHaveCount(1)
+      await expect(plainRow.getByTestId('expense-row-tags')).toHaveText('groceries')
 
-        // Brand-new category + new tag CSV reaches the confirmation page.
-        await page.getByTestId('expense-form-description').fill('Brand new')
-        await page.getByTestId('expense-form-amount').fill('9.99')
-        await page.getByTestId('expense-form-date').fill(todayEt())
-        await page.getByTestId('expense-form-category').fill('rent')
-        await page.getByTestId('expense-form-tags').fill('utilities, monthly')
-        await page.getByTestId('expense-form-create').click()
+      // Brand-new category + new tag CSV reaches the confirmation page.
+      await page.getByTestId('expense-form-description').fill('Brand new')
+      await page.getByTestId('expense-form-amount').fill('9.99')
+      await page.getByTestId('expense-form-date').fill(todayEt())
+      await page.getByTestId('expense-form-category').fill('rent')
+      await page.getByTestId('expense-form-tags').fill('utilities, monthly')
+      await page.getByTestId('expense-form-create').click()
 
-        await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
-        await page.getByTestId('confirm-create-new-confirm').click()
-        await page.waitForURL(BASE_URLS.EXPENSES)
+      await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
+      await page.getByTestId('confirm-create-new-confirm').click()
+      await page.waitForURL(BASE_URLS.EXPENSES)
 
-        const newRow = page.getByTestId('expense-row').filter({ hasText: 'Brand new' })
-        await expect(newRow).toHaveCount(1)
-        await expect(newRow.getByTestId('expense-row-category')).toHaveText('rent')
-        await expect(newRow.getByTestId('expense-row-tags')).toHaveText('monthly, utilities')
+      const newRow = page.getByTestId('expense-row').filter({ hasText: 'Brand new' })
+      await expect(newRow).toHaveCount(1)
+      await expect(newRow.getByTestId('expense-row-category')).toHaveText('rent')
+      await expect(newRow.getByTestId('expense-row-tags')).toHaveText('monthly, utilities')
     } finally {
       await context.close()
       await clearDatabase()

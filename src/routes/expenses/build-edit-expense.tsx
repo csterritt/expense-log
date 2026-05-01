@@ -93,11 +93,7 @@ const renderEditPage = (props: EditFormProps) => {
         >
           Delete expense
         </a>
-        <a
-          href={PATHS.EXPENSES}
-          className='btn btn-ghost ml-2'
-          data-testid='expense-edit-back'
-        >
+        <a href={PATHS.EXPENSES} className='btn btn-ghost ml-2' data-testid='expense-edit-back'>
           Back to list
         </a>
       </div>
@@ -122,8 +118,7 @@ const renderDeleteConfirm = (props: DeleteConfirmProps) => {
     <div className='max-w-xl mx-auto' data-testid='confirm-delete-expense-page'>
       <h1 className='text-2xl font-bold mb-4'>Delete expense?</h1>
       <p className='mb-4'>
-        This action cannot be undone. The expense and its tag links will be
-        permanently removed.
+        This action cannot be undone. The expense and its tag links will be permanently removed.
       </p>
       <dl className='grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 mb-6'>
         <dt className='font-semibold'>Date</dt>
@@ -250,11 +245,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const expenseResult = await getExpenseById(db, id)
       if (expenseResult.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to load expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to load expense. Please try again.')
       }
       if (expenseResult.value === null) {
         return redirectWithError(c, PATHS.EXPENSES, 'Expense not found.')
@@ -262,19 +253,11 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const loaded = expenseResult.value
       const categoriesResult = await listCategories(db)
       if (categoriesResult.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to load expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to load expense. Please try again.')
       }
       const tagsResult = await listTags(db)
       if (tagsResult.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to load expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to load expense. Please try again.')
       }
       const payloads: ExpenseFormPayloads = {
         categories: categoriesResult.value.map((row) => ({ name: row.name })),
@@ -282,9 +265,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       }
       const flash = readAndClearFormState(c)
       const state = buildEditState(loaded, flash)
-      return c.render(
-        useLayout(c, renderEditPage({ expenseId: id, state, payloads })),
-      )
+      return c.render(useLayout(c, renderEditPage({ expenseId: id, state, payloads })))
     },
   )
 
@@ -307,11 +288,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const existing = await getExpenseById(db, id)
       if (existing.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
       }
       if (existing.value === null) {
         return redirectWithError(c, PATHS.EXPENSES, 'Expense not found.')
@@ -334,19 +311,11 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
 
       const lookup = await findCategoryByName(db, validated.value.category)
       if (lookup.isErr) {
-        return redirectWithError(
-          c,
-          editPath(id),
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
       }
       const tagLookup = await findTagsByNames(db, tagParse.value)
       if (tagLookup.isErr) {
-        return redirectWithError(
-          c,
-          editPath(id),
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
       }
 
       const diff = computeNewItemsDiff(lookup.value, tagLookup.value, tagParse.value)
@@ -362,11 +331,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
           tagIds: diff.existingTagIds,
         })
         if (updateResult.isErr) {
-          return redirectWithError(
-            c,
-            editPath(id),
-            'Failed to save expense. Please try again.',
-          )
+          return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
         }
         return redirectWithMessage(c, PATHS.EXPENSES, 'Expense updated.')
       }
@@ -377,12 +342,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       if (diff.newCategoryIsNew) {
         const nameCheck = parseNewCategoryName(validated.value.category)
         if (nameCheck.isErr) {
-          return redirectWithFormErrors(
-            c,
-            editPath(id),
-            { category: nameCheck.error },
-            rawValues,
-          )
+          return redirectWithFormErrors(c, editPath(id), { category: nameCheck.error }, rawValues)
         }
         normalizedNewCategory = nameCheck.value.toLowerCase()
         finalCategoryName = normalizedNewCategory
@@ -447,11 +407,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const existing = await getExpenseById(db, id)
       if (existing.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
       }
       if (existing.value === null) {
         return redirectWithError(c, PATHS.EXPENSES, 'Expense not found.')
@@ -459,19 +415,11 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
 
       const lookup = await findCategoryByName(db, validated.value.category)
       if (lookup.isErr) {
-        return redirectWithError(
-          c,
-          editPath(id),
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
       }
       const tagLookup = await findTagsByNames(db, tagParse.value)
       if (tagLookup.isErr) {
-        return redirectWithError(
-          c,
-          editPath(id),
-          'Failed to save expense. Please try again.',
-        )
+        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
       }
       const diff = computeNewItemsDiff(lookup.value, tagLookup.value, tagParse.value)
 
@@ -482,12 +430,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       } else {
         const nameCheck = parseNewCategoryName(validated.value.category)
         if (nameCheck.isErr) {
-          return redirectWithFormErrors(
-            c,
-            editPath(id),
-            { category: nameCheck.error },
-            rawValues,
-          )
+          return redirectWithFormErrors(c, editPath(id), { category: nameCheck.error }, rawValues)
         }
         newCategoryName = nameCheck.value
       }
@@ -524,11 +467,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const result = await getExpenseById(db, id)
       if (result.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to load expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to load expense. Please try again.')
       }
       if (result.value === null) {
         return redirectWithError(c, PATHS.EXPENSES, 'Expense not found.')
@@ -560,11 +499,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const db = createDbClient(c.env.PROJECT_DB)
       const result = await deleteExpense(db, id)
       if (result.isErr) {
-        return redirectWithError(
-          c,
-          PATHS.EXPENSES,
-          'Failed to delete expense. Please try again.',
-        )
+        return redirectWithError(c, PATHS.EXPENSES, 'Failed to delete expense. Please try again.')
       }
       return redirectWithMessage(c, PATHS.EXPENSES, 'Expense deleted.')
     },

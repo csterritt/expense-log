@@ -95,10 +95,7 @@ export type RawExpenseCreate = {
  */
 export const DescriptionSchema = pipe(
   string('Description is required.'),
-  custom<string>(
-    (v) => typeof v === 'string' && v.trim().length > 0,
-    'Description is required.',
-  ),
+  custom<string>((v) => typeof v === 'string' && v.trim().length > 0, 'Description is required.'),
   maxLength(descriptionMax, `Description must be at most ${descriptionMax} characters.`),
 )
 
@@ -124,10 +121,7 @@ export const DateSchema = pipe(
  */
 export const CategorySchema = pipe(
   string('Category is required.'),
-  custom<string>(
-    (v) => typeof v === 'string' && v.trim().length > 0,
-    'Category is required.',
-  ),
+  custom<string>((v) => typeof v === 'string' && v.trim().length > 0, 'Category is required.'),
 )
 
 // ---------- Amount ----------
@@ -139,10 +133,7 @@ export const CategorySchema = pipe(
  */
 export const AmountSchema = pipe(
   string('Amount is required.'),
-  custom<string>(
-    (v) => typeof v === 'string' && v.trim().length > 0,
-    'Amount is required.',
-  ),
+  custom<string>((v) => typeof v === 'string' && v.trim().length > 0, 'Amount is required.'),
 )
 
 /**
@@ -230,10 +221,7 @@ export const parseExpenseCreate = (
  */
 export const NewCategoryNameSchema = pipe(
   string('Category name is required.'),
-  custom<string>(
-    (v) => typeof v === 'string' && v.trim().length > 0,
-    'Category name is required.',
-  ),
+  custom<string>((v) => typeof v === 'string' && v.trim().length > 0, 'Category name is required.'),
   custom<string>(
     (v) => typeof v === 'string' && v.trim().length <= categoryNameMax,
     `Category name must be at most ${categoryNameMax} characters.`,
