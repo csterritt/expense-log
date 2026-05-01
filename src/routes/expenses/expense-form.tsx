@@ -149,7 +149,7 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
         />
         {fieldError('category', fieldErrors.category)}
       </div>
-      <div className='flex flex-col md:col-span-5'>
+      <div className='flex flex-col md:col-span-4'>
         <label className='label' htmlFor='expense-form-tags'>
           <span className='label-text'>Tags (comma-separated)</span>
         </label>
@@ -166,7 +166,7 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
         />
         {fieldError('tags', fieldErrors.tags)}
       </div>
-      <div className='md:col-span-5'>
+      <div className='self-end justify-self-end'>
         <button
           type='submit'
           className='btn btn-primary'

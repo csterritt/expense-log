@@ -85,7 +85,7 @@ const renderEditPage = (props: EditFormProps) => {
         state,
         payloads,
       })}
-      <div className='mt-4'>
+      <div className='mt-4 flex flex-row justify-between'>
         <a
           href={deletePath(expenseId)}
           className='btn btn-error btn-outline'
