@@ -24,7 +24,7 @@ If any are missing, it logs the missing vars and returns `false` (the app still 
 
 1. `secureHeaders` — referrer policy `strict-origin-when-cross-origin`
 2. CSRF protection (`hono/csrf`) — skipped for `/test/*` when test routes are enabled; allows `localhost` origins in dev
-3. `bodyLimit` — 1 KB max in dev (4 KB in production); on overflow uses `redirectWithError` to send the user back to the request `referer` (or `/auth/sign-in` if absent) with the message `'The submitted request was too large. Please try again.'`
+3. `bodyLimit` — 1 KB max in dev (4 KB in production); on overflow returns a plain-text response `'overflow :('` with status 413 (uses `c.text`, not a redirect).
 4. `logger` — Hono request logger
 5. `renderer` — JSX layout renderer
 6. `validateEnvBindings` — runtime check for `BETTER_AUTH_SECRET` and `SIGN_UP_MODE`
@@ -51,6 +51,7 @@ Always registered regardless of mode:
 
 - `buildRoot` — `/` (PRODUCTION:REMOVE)
 - `buildExpenses` — `/expenses` (signed-in only)
+- `buildEditExpense` — `/expenses/:id/edit` and `/expenses/:id/delete` (signed-in only)
 - `buildCategories` — `/categories` (signed-in only)
 - `buildTags` — `/tags` (signed-in only)
 - `buildSummary` — `/summary` (signed-in only)

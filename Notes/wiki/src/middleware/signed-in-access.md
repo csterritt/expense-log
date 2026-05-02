@@ -10,10 +10,9 @@ Protects authenticated-only routes (`/expenses`, `/categories`, `/tags`, `/summa
 
 ### `signedInAccess(c, next): Promise<Response | void>`
 
-1. Sets no-cache headers via `setupNoCacheHeaders`
-2. Checks `c.get('user')` (set by `setupBetterAuthMiddleware`)
-3. If `user` is null → redirects to `PATHS.AUTH.SIGN_IN` with error message `'You must sign in to visit that page'`
-4. Otherwise → calls `next()`
+1. Checks `c.get('user')` and `c.get('session')` (set by Better Auth middleware)
+2. If either is null → redirects to `PATHS.AUTH.SIGN_IN` with error message `'You must sign in to visit that page'`
+3. Otherwise → sets no-cache headers via `setupNoCacheHeaders`, then calls `next()`
 
 ## Cross-references
 

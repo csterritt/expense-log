@@ -10,11 +10,11 @@ Lower-level email transport. Creates a Nodemailer SMTP transporter using `env.SM
 
 ### `sendEmail(env, fromAddress, toAddress, subject, content): Promise<void>`
 
-Validates that `SMTP_SERVER_PORT`, `HOST`, `USER`, and `PASSWORD` are set. Creates a `nodemailer.createTransport` with `secure: true` (TLS), sends the mail, and logs success or throws on error.
+Validates that `SMTP_SERVER_PORT`, `SMTP_SERVER_HOST`, `SMTP_SERVER_USER`, and `SMTP_SERVER_PASSWORD` are set. Creates a `nodemailer.createTransport` with `secure: true` (TLS), sends the mail, and logs success or throws on error.
 
 ### `sendOtpToUserViaEmail(env, email, otp, emailAgent = sendEmail): Promise<Result<boolean, Error>>`
 
-Wraps `sendOtpToUserViaEmailActual` in `async-retry` with `STANDARD_RETRY_OPTIONS`. Sends an HTML email with the OTP code and a 15-minute expiration note. Returns `true` on success, `false` on final error.
+Wraps `sendOtpToUserViaEmailActual` in `async-retry` with `STANDARD_RETRY_OPTIONS`. Sends an HTML email with the OTP code and a 15-minute expiration note from `noreply@cls.cloud` with subject `'Your Mini-Auth Verification Code'`. Returns `Result.ok(true)` on success, `Result.err(Error)` on final failure.
 
 ## Cross-references
 

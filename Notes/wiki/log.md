@@ -198,3 +198,19 @@ Ingested the Issue 08 work that adds the row-level Edit button, the pre-populate
 - **Wiki pages**: added `Notes/wiki/src/routes/expenses/expense-form.md` and `.../build-edit-expense.md`; updated `expense-access.md` (four new helpers + cross-link), `money.md` (`formatCentsPlain`), `build-expenses.md` (Edit button + shared-renderer cross-link), `source-code.md` (catalog), `e2e-tests.md` (three new spec entries), and added the three matching spec wiki pages under `Notes/wiki/e2e-tests/expenses/`. `index.md` did not need changes (no new top-level sections).
 
 Verification: `npx playwright test e2e-tests/expenses/` passes 36/36 (10 new + 26 prior expense specs).
+
+## [2026-05-02] lint | Accuracy audit of wiki against source code
+
+Full audit of all 73 source files against their wiki documentation. Found and fixed 12 issues:
+
+- **`types.d.md`** — was completely wrong; described a global `test` variable that no longer exists. Rewrote to reflect Hono module augmentation and `Bindings` interface.
+- **`style.md`** — described Tailwind v3 directives (`@tailwind base/components/utilities`); replaced with v4 `@import`/`@plugin`/`@theme` syntax and 15 font families.
+- **`better-auth-response-interceptor.md`** — described old handler logic with fictional error codes. Rewrote to match actual implementation: form-to-JSON conversion, status-code dispatch (200/401/403/400/500), and `EMAIL_NOT_VERIFIED` handling.
+- **`index.md`** — body-limit overflow wrongly said it uses `redirectWithError`; corrected to `c.text('overflow :(', 413)`. Also added missing `buildEditExpense` to always-registered routes.
+- **`renderer.md`** — title was `'Worker, D1, Drizzle'`; corrected to `'Expense Log'`.
+- **`lib/auth.md`** — trusted origins listed old URLs `localhost:8787`, `cls.cloud`; corrected to `localhost:3000`, `127.0.0.1:3000`, `alternateOrigin`.
+- **`signed-in-access.md`** — step order was inverted (no-cache before auth check); corrected to auth check → redirect → no-cache → next().
+- **`build-sign-in.md`** — wrong `data-testid` values (`signin-email-input` → `email-input`, etc.) and wrong success message text; all corrected.
+- **`send-email.md`** — SMTP env var names missing `SMTP_SERVER_` prefix; return type described as boolean instead of `Result`. Both fixed.
+- **`version.md`** — claimed version used for stylesheet cache-busting; corrected to footer display only (`Copyright © 2025 V-{version}`).
+- **`source-code.md`** — file count was 71; corrected to 73.

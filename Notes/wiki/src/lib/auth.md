@@ -17,7 +17,7 @@ Builds a better-auth instance with the following configuration:
 - **Email Verification** — `sendVerificationEmail` callback sends a confirmation email via `sendConfirmationEmail()` from `email-service.ts`
 - **Password Reset** — `sendResetPassword` callback sends a reset email via `sendPasswordResetEmail()` from `email-service.ts`
 - **Session** — expires in `THIRTY_DAYS_IN_SECONDS`, updates every `ONE_DAY_IN_SECONDS`, cookie cache enabled with `FIVE_MINUTES_IN_SECONDS` max age
-- **Trusted Origins** — `['http://localhost:3000', 'http://localhost:8787', 'https://cls.cloud', 'https://mini-auth.cls.cloud']`
+- **Trusted Origins** — `['http://localhost:3000', 'http://127.0.0.1:3000', alternateOrigin]` (dev only; production origins are commented out)
 - **Redirect after sign-in** — `redirectTo: '/expenses'`
 - **Secret** — `env.BETTER_AUTH_SECRET`
 

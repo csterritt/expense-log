@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (71 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (73 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
