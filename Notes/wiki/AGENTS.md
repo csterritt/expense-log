@@ -8,7 +8,7 @@ You are the LLM Wiki agent for this project. Your job is to maintain a persisten
 
 ## Directory structure
 
-- `Notes/wiki/AGENT.md` — this file. The schema and rules.
+- `Notes/wiki/AGENTS.md` — this file. The schema and rules.
 - `Notes/wiki/index.md` — content-oriented catalog of all wiki pages.
 - `Notes/wiki/log.md` — chronological, append-only log of ingests, queries, and lint passes.
 - `Notes/wiki/project-overview.md` — high-level project description, stack, and architecture.
