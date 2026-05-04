@@ -2,6 +2,17 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-05-04] ingest | Issue 09 category management page
+
+Ingested the Issue 09 category management implementation.
+
+- **Schema**: `category` names now use `category_name_lower_unique` on `lower(name)` for case-insensitive uniqueness; migration `0003_misty_prodigy.sql` drops the old unique index and creates the lower-name index.
+- **Validators**: `src/lib/expense-validators.ts` now exports category-management parsers for create, rename, merge confirm, and delete, with lowercase normalization and field-level errors.
+- **Repository helpers**: `src/lib/db/expense-access.ts` now includes `createCategory`, `renameCategory`, `countCategoryExpenses`, `mergeCategory`, and `deleteCategory`; merge atomically repoints `expense` and `recurring` rows before deleting the source category, and delete reports referencing expense counts.
+- **Route**: `/categories` now renders the signed-in management page and handles create, simple rename, merge confirmation/confirm/cancel, and delete flows using real HTML forms and DaisyUI/Tailwind styling.
+- **Tests**: `tests/expense-validators.spec.ts` covers category validators; `tests/expense-access.spec.ts` adds an in-memory SQLite harness for category repository helpers; `e2e-tests/expenses/12-category-management.spec.ts` covers UI flows.
+- **Verification**: focused unit tests pass. Formatting passes on touched files. `npx tsc --noEmit` still reports only the existing test-environment type issues (`bun:test` ambient types and existing `send-email` mock env typing). Focused Playwright was blocked because the local Chromium binary is not installed.
+
 ## [2026-04-21] ingest | Initial project scan
 
 Scanned the entire codebase to establish baseline wiki.

@@ -145,21 +145,11 @@ Use showboat to create a code walkthrough of the implementation. Run `uvx showbo
 
 ---
 
-### 15. UI walkthrough
-
-**Type**: UI WALKTHROUGH
-**Output**: A new walkthrough directory exists at `Notes/walkthroughs/09-categories-management-page/ui-walkthrough` containing a user-flow walkthrough with screenshots for category list, create, duplicate error, rename, merge confirmation, delete blocked, and delete success.
-**Depends on**: 12
-
-Use showboat and rodney to create a UI walkthrough of the user-facing category management flow. Run `uvx showboat --help` and `uvx rodney --help` first if needed, start the app with the project’s open-sign-up development command, and place all generated files in the specified walkthrough directory.
-
----
-
-### 16. Human review
+### 15. Human review
 
 **Type**: REVIEW
 **Output**: A human has reviewed the completed Issue 09 implementation, verified the manual checklist from `Notes/issues/09-categories-management-page.md`, and confirmed the merge/delete semantics are acceptable before proceeding to the next issue.
-**Depends on**: 14, 15
+**Depends on**: 14
 
 Review the final diff, run the focused and full relevant test suites, and manually verify `/categories` using the issue’s checklist. Pay particular attention to data-loss risks in merge/delete flows and to whether case-insensitive uniqueness is truly enforced at both validator and database layers.
 

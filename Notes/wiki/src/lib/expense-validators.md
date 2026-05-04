@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Validation for the expense-create form, introduced in Issue 04. Replaces the local `validateExpenseForm` helper that the Issue 03 build used to inline a single composed error string. The new module runs every field through its own valibot schema (no short-circuiting), folds the resulting messages into a `FieldErrors` record, and — on success — returns the parsed values with `amount` already converted to integer cents so callers don't have to call `parseAmount` again.
+Validation for expense forms and category-management forms. Introduced in Issue 04 for expense creation, then extended for inline category/tag creation, edit flows, and Issue 09 category management. The module runs fields through dedicated validators, folds messages into a `FieldErrors` record, and returns parsed values on success.
 
 Database-level concerns (e.g. whether the referenced `categoryId` exists) are still enforced by `createExpense`, not here.
 
@@ -27,10 +27,11 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 
 ## Types
 
-- `FieldErrors` — `{ description?, amount?, date?, category?, tags? }`. A missing key means that field passed validation. The `tags` slot is added in Issue 06 for the CSV input.
+- `FieldErrors` — `{ description?, amount?, date?, category?, tags?, name?, id?, sourceId?, targetId? }`. A missing key means that field passed validation. Issue 09 added the category-management slots.
 - `RawExpenseCreate` — the four raw string fields read from the form body (`description`, `amount`, `date`, `category`).
 - `ParsedExpenseCreate` — `{ description, amountCents, date, category }` (note the `amountCents`, not `amount`; and `category` is the trimmed typed name, not an id).
 - `ExpenseCreateInput` — `InferOutput<typeof ExpenseCreateSchema>`, exported for completeness.
+- Category-management raw/parsed types: `RawCategoryCreate`, `ParsedCategoryCreate`, `RawCategoryRename`, `ParsedCategoryRename`, `RawCategoryMergeConfirm`, `ParsedCategoryMergeConfirm`, `RawCategoryDelete`, `ParsedCategoryDelete`.
 
 ## Main entry point
 
@@ -52,13 +53,22 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 - Returns `Result.ok([])` for an empty / all-whitespace CSV (zero tags is a valid submission).
 - Returns `Result.err(\`Tag names must be at most ${tagNameMax} characters.\`)` when any kept entry exceeds the limit. The POST handler surfaces that string under the `tags` field via `redirectWithFormErrors(c, PATHS.EXPENSES, { tags: err }, values)`.
 
+### Category-management validators (Issue 09)
+
+- `CategoryManagementNameSchema` aliases `NewCategoryNameSchema`, but `parseCategoryManagementName` lowercases the valid trimmed name before returning it.
+- `parseCategoryCreate(raw)` validates `{ name }`, trims, requires non-empty, enforces `categoryNameMax`, normalizes to lowercase, and returns `{ name }` or `{ name: message }`.
+- `parseCategoryRename(raw)` validates both `id` and normalized `name`, returning both field errors when both are malformed.
+- `parseCategoryMergeConfirm(raw)` validates `sourceId` and `targetId`, and rejects equal ids with `targetId: 'Choose two different categories.'`.
+- `parseCategoryDelete(raw)` validates a required `id` and returns a trimmed id.
+
 ## Cross-references
 
 - [money.md](money.md) — `parseAmount` is the underlying numeric validator.
 - [et-date.md](et-date.md) — `isValidYmd` enforces calendar dates.
 - [form-state.md](form-state.md) — the POST handler hands `FieldErrors` to `redirectWithFormErrors` for round-tripping.
 - [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — entry-form POST handler that consumes `parseExpenseCreate`.
-- [../../tests/expense-validators.spec.md](../../tests/expense-validators.spec.md) — unit coverage (21 tests).
+- [../routes/build-categories.md](../routes/build-categories.md) — category-management POST handlers consuming Issue 09 validators.
+- [../../tests/expense-validators.spec.md](../../tests/expense-validators.spec.md) — unit coverage.
 
 ---
 

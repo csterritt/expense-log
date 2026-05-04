@@ -87,12 +87,16 @@ export const interestedEmail = sqliteTable('interestedEmail', {
 /**
  * Category table schema definition
  */
-export const category = sqliteTable('category', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull().unique(),
-  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
-})
+export const category = sqliteTable(
+  'category',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [uniqueIndex('category_name_lower_unique').on(sql`lower(${table.name})`)],
+)
 
 /**
  * Tag table schema definition

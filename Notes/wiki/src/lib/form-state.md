@@ -10,14 +10,14 @@ The payload is JSON-encoded into a dedicated `COOKIES.FORM_ERRORS` cookie that i
 
 ## Types
 
-- `ExpenseFormValues` — sticky values for the entry form: `{ description?, amount?, date?, category?, tags? }`. Each field is the raw string the user typed, not the parsed form, so the input redisplays exactly what they entered. (Issue 05 renamed `categoryId` → `category` when the entry form switched to a free-form text input. Issue 06 added `tags` for the CSV input.)
-- `FormState` — `{ fieldErrors: FieldErrors, values: ExpenseFormValues }`. Generic enough that future forms can reuse it; today only the expense entry form uses it.
+- `ExpenseFormValues` — sticky values for the entry/category forms: `{ description?, amount?, date?, category?, tags?, name?, id?, sourceId?, targetId? }`. Each field is the raw string the user typed, not the parsed form, so the input redisplays exactly what they entered. (Issue 05 renamed `categoryId` → `category` when the entry form switched to a free-form text input. Issue 06 added `tags` for the CSV input. Issue 09 added category-management fields.)
+- `FormState` — `{ fieldErrors: FieldErrors, values: ExpenseFormValues }`. Generic enough that the expense entry form and category management page can both reuse it.
 
 ## Exports
 
 ### `redirectWithFormErrors(c, redirectUrl, fieldErrors, values): Response`
 
-Stashes `{ fieldErrors, values }` in the `FORM_ERRORS` cookie (JSON-stringified, then `encodeURIComponent`-wrapped so cookie reserved characters never break parsing) and returns a `303 See Other` redirect to `redirectUrl`. Used by the `POST /expenses` handler when `parseExpenseCreate` returns `Err`.
+Stashes `{ fieldErrors, values }` in the `FORM_ERRORS` cookie (JSON-stringified, then `encodeURIComponent`-wrapped so cookie reserved characters never break parsing) and returns a `303 See Other` redirect to `redirectUrl`. Used by the `POST /expenses` handler when `parseExpenseCreate` returns `Err` and by `/categories` create/rename handlers for field-level category errors.
 
 ### `readAndClearFormState(c): FormState | undefined`
 
@@ -29,7 +29,8 @@ Reads the `FORM_ERRORS` cookie via `retrieveCookie`, **unconditionally clears it
 - [cookie-support.md](cookie-support.md) — `addCookie`, `retrieveCookie`, `removeCookie` primitives.
 - [../constants.md](../constants.md) — `COOKIES.FORM_ERRORS`, `COOKIES.STANDARD_COOKIE_OPTIONS`, `HTML_STATUS.SEE_OTHER`.
 - [redirects.md](redirects.md) — sibling helpers for the simpler single-string flash cases (`redirectWithMessage`, `redirectWithError`).
-- [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — only consumer today; uses both helpers.
+- [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — expense form consumer.
+- [../routes/build-categories.md](../routes/build-categories.md) — category create/rename form consumer.
 
 ---
 

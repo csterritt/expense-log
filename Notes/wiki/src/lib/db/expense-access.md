@@ -75,6 +75,41 @@ interface CreateCategoryAndExpenseInput {
 - Returns `{ id, name }` rows from `category`, sorted case-insensitively by `lower(name) ASC` (consistent with the list-view tiebreak convention).
 - Used by the entry form on `/expenses` to populate the category `<select>`.
 
+### `createCategory(db, name): Promise<Result<CategoryRow, Error>>`
+
+- Added in Issue 09. Public wrapper: `withRetry('createCategory', () => createCategoryActual(db, name))`.
+- Trims and lowercases the name, rejects empty input, checks for existing names via `findCategoryByNameActual`, and catches database unique/constraint failures as friendly duplicate errors.
+- Returns the inserted `{ id, name }` row.
+
+### `renameCategory(db, input): Promise<Result<CategoryRow, Error>>`
+
+- Added in Issue 09. Public wrapper: `withRetry('renameCategory', () => renameCategoryActual(db, input))`.
+- Verifies the source category exists, lowercases the new name, rejects case-insensitive duplicates on any other category, updates `name` and `updatedAt`, and returns `{ id, name }`.
+- The route performs a preflight duplicate lookup to offer merge confirmation before calling this helper for simple renames.
+
+### `countCategoryExpenses(db, categoryId): Promise<Result<number, Error>>`
+
+- Added in Issue 09 for the merge confirmation page.
+- Wraps the private expense-reference count in `withRetry`.
+
+### `mergeCategory(db, input): Promise<Result<{ reassignedExpenseCount: number }, Error>>`
+
+- Added in Issue 09. Public wrapper: `withRetry('mergeCategory', () => mergeCategoryActual(db, input))`.
+- Rejects identical source/target ids and verifies both categories exist.
+- Counts source expenses before mutation, then atomically batches:
+  1. update every `expense.categoryId` from source to target,
+  2. update every `recurring.categoryId` from source to target,
+  3. delete the source category.
+- Returns the number of reassigned source expenses.
+
+### `deleteCategory(db, id): Promise<Result<void, Error>>`
+
+- Added in Issue 09. Public wrapper: `withRetry('deleteCategory', () => deleteCategoryActual(db, id))`.
+- Verifies the category exists.
+- Blocks deletion when regular expenses reference it, returning an error that includes the exact expense count.
+- Blocks deletion when recurring templates reference it.
+- Deletes only unreferenced categories; FK `restrict` remains a database-level backstop.
+
 ### `createExpense(db, input): Promise<Result<{ id: string }, Error>>`
 
 - Public wrapper: `withRetry('createExpense', () => createExpenseActual(db, input))`.
@@ -145,7 +180,8 @@ interface CreateCategoryAndExpenseInput {
 ## Cross-references
 
 - [db-helpers.md](../db-helpers.md) — `withRetry`
-- [db/schema.md](../../db/schema.md) — `expense`, `category`, `tag`, `expenseTag` tables.
+- [db/schema.md](../../db/schema.md) — `expense`, `category`, `tag`, `expenseTag`, and `recurring` tables.
+- [routes/build-categories.md](../../routes/build-categories.md) — category management caller (Issue 09).
 - [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — primary caller for the list + create flow.
 - [routes/expenses/build-edit-expense.md](../routes/expenses/build-edit-expense.md) — edit + delete flow caller (Issue 08): `getExpenseById`, `updateExpenseWithTags`, `updateManyAndExpense`, `deleteExpense`.
 - [routes/test/database.md](../routes/test/database.md) — `POST /test/database/seed-expenses` and `POST /test/database/seed-categories` populate rows for tests.

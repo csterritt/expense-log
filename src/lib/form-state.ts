@@ -32,6 +32,10 @@ export type ExpenseFormValues = {
   date?: string
   category?: string
   tags?: string
+  name?: string
+  id?: string
+  sourceId?: string
+  targetId?: string
 }
 
 /**

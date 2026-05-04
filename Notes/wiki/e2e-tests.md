@@ -1,6 +1,6 @@
 # E2E Tests Catalog
 
-Catalog of all Playwright end-to-end tests under `e2e-tests/` (55 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
+Catalog of all Playwright end-to-end tests under `e2e-tests/` (56 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
 
 ## Support utilities (`e2e-tests/support/`)
 
@@ -45,6 +45,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (55 spec files + 1
 - [e2e-tests/expenses/09-edit-expense.spec.ts](./e2e-tests/expenses/09-edit-expense.spec.md) — Issue 08. All-existing edit-save flow: the edit page pre-populates every field (alphabetised tags, plain-decimal amount); changing the amount, description, and date saves and re-renders correctly on `/expenses`; an unknown id redirects back to `/expenses`.
 - [e2e-tests/expenses/10-edit-with-new-items.spec.ts](./e2e-tests/expenses/10-edit-with-new-items.spec.md) — Issue 08. Edit-flow consolidated *Confirm new items* page (`mode='edit'`): adding a brand-new tag routes through `confirm-edit-new-page` and saves on confirm; Cancel preserves every typed value and makes no DB changes; brand-new category + new tag lists both lines and saves on confirm.
 - [e2e-tests/expenses/11-delete-expense.spec.ts](./e2e-tests/expenses/11-delete-expense.spec.md) — Issue 08. Delete flow: `confirm-delete-expense-page` shows every detail; Cancel returns to the edit page with no changes; Confirm deletes the row (cascading the `expenseTag` links) and removes it from the list while leaving siblings intact; an unknown id redirects.
+- [e2e-tests/expenses/12-category-management.spec.ts](./e2e-tests/expenses/12-category-management.spec.md) — Issue 09. Category management page flows: create + duplicate validation, over-limit sticky validation, simple rename, rename collision merge confirmation/confirm/cancel, and delete blocked/success behavior.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 

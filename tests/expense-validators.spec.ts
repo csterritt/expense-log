@@ -7,6 +7,10 @@ import { describe, it } from 'bun:test'
 import assert from 'node:assert'
 
 import {
+  parseCategoryCreate,
+  parseCategoryDelete,
+  parseCategoryMergeConfirm,
+  parseCategoryRename,
   parseExpenseCreate,
   parseNewCategoryName,
   parseTagCsv,
@@ -263,6 +267,98 @@ describe('parseExpenseCreate', () => {
         assert.ok(r.error.amount)
         assert.strictEqual(r.error.date, undefined)
         assert.strictEqual(r.error.category, undefined)
+      }
+    })
+  })
+})
+
+describe('category management validators', () => {
+  describe('parseCategoryCreate', () => {
+    it('trims and lowercases valid names', () => {
+      const r = parseCategoryCreate({ name: '  Groceries  ' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { name: 'groceries' })
+      }
+    })
+
+    it('rejects empty names with a field error', () => {
+      const r = parseCategoryCreate({ name: '   ' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.name)
+      }
+    })
+
+    it('rejects categoryNameMax + 1 characters', () => {
+      const r = parseCategoryCreate({ name: 'a'.repeat(categoryNameMax + 1) })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.name)
+      }
+    })
+  })
+
+  describe('parseCategoryRename', () => {
+    it('returns id and normalized name', () => {
+      const r = parseCategoryRename({ id: 'cat-1', name: '  Utilities  ' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { id: 'cat-1', name: 'utilities' })
+      }
+    })
+
+    it('reports both id and name errors', () => {
+      const r = parseCategoryRename({ id: '', name: '' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.id)
+        assert.ok(r.error.name)
+      }
+    })
+  })
+
+  describe('parseCategoryMergeConfirm', () => {
+    it('returns source and target ids', () => {
+      const r = parseCategoryMergeConfirm({ sourceId: 'source', targetId: 'target' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { sourceId: 'source', targetId: 'target' })
+      }
+    })
+
+    it('rejects matching source and target ids', () => {
+      const r = parseCategoryMergeConfirm({ sourceId: 'same', targetId: 'same' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.targetId)
+      }
+    })
+
+    it('reports missing source and target ids', () => {
+      const r = parseCategoryMergeConfirm({ sourceId: '', targetId: '' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.sourceId)
+        assert.ok(r.error.targetId)
+      }
+    })
+  })
+
+  describe('parseCategoryDelete', () => {
+    it('returns trimmed id', () => {
+      const r = parseCategoryDelete({ id: '  cat-1  ' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { id: 'cat-1' })
+      }
+    })
+
+    it('rejects missing id', () => {
+      const r = parseCategoryDelete({ id: '' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.id)
       }
     })
   })

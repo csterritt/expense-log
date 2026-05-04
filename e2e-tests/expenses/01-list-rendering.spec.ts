@@ -36,8 +36,8 @@ test.describe('Expenses list rendering', () => {
     'renders only in-window expenses, sorted date desc then case-insensitive description asc',
     testWithDatabase(async ({ page }) => {
       const today = todayEt()
-      const thisMonthEarly = ymdMonthsAgo(today, 0, 5)
-      const thisMonthEarlySame = ymdMonthsAgo(today, 0, 5)
+      const thisMonthEarly = today
+      const thisMonthEarlySame = today
       const oneMonthBack = ymdMonthsAgo(today, 1, 15)
       const twoMonthsBack = ymdMonthsAgo(today, 2, 10)
       const outsideWindow = ymdMonthsAgo(today, 4, 1)

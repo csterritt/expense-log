@@ -61,6 +61,10 @@ export type FieldErrors = {
   date?: string
   category?: string
   tags?: string
+  name?: string
+  id?: string
+  sourceId?: string
+  targetId?: string
 }
 
 /**
@@ -84,6 +88,42 @@ export type RawExpenseCreate = {
   amount: string
   date: string
   category: string
+}
+
+export type RawCategoryCreate = {
+  name: string
+}
+
+export type ParsedCategoryCreate = {
+  name: string
+}
+
+export type RawCategoryRename = {
+  id: string
+  name: string
+}
+
+export type ParsedCategoryRename = {
+  id: string
+  name: string
+}
+
+export type RawCategoryMergeConfirm = {
+  sourceId: string
+  targetId: string
+}
+
+export type ParsedCategoryMergeConfirm = {
+  sourceId: string
+  targetId: string
+}
+
+export type RawCategoryDelete = {
+  id: string
+}
+
+export type ParsedCategoryDelete = {
+  id: string
 }
 
 // ---------- Description ----------
@@ -241,6 +281,90 @@ export const parseNewCategoryName = (input: string): Result<string, string> => {
     return Result.err(message)
   }
   return Result.ok(value)
+}
+
+export const CategoryManagementNameSchema = NewCategoryNameSchema
+
+const parseCategoryManagementName = (input: unknown): Result<string, string> => {
+  const value = typeof input === 'string' ? input.trim() : ''
+  const message = firstIssueMessage(CategoryManagementNameSchema, value)
+  if (message) {
+    return Result.err(message)
+  }
+  return Result.ok(value.toLowerCase())
+}
+
+const parseRequiredId = (input: unknown, message: string): Result<string, string> => {
+  const value = typeof input === 'string' ? input.trim() : ''
+  if (value.length === 0) {
+    return Result.err(message)
+  }
+  return Result.ok(value)
+}
+
+export const parseCategoryCreate = (
+  raw: RawCategoryCreate,
+): Result<ParsedCategoryCreate, FieldErrors> => {
+  const name = parseCategoryManagementName(raw.name)
+  if (name.isErr) {
+    return Result.err({ name: name.error })
+  }
+  return Result.ok({ name: name.value })
+}
+
+export const parseCategoryRename = (
+  raw: RawCategoryRename,
+): Result<ParsedCategoryRename, FieldErrors> => {
+  const errors: FieldErrors = {}
+  const id = parseRequiredId(raw.id, 'Category is required.')
+  if (id.isErr) {
+    errors.id = id.error
+  }
+  const name = parseCategoryManagementName(raw.name)
+  if (name.isErr) {
+    errors.name = name.error
+  }
+  if (Object.keys(errors).length > 0) {
+    return Result.err(errors)
+  }
+  if (id.isErr || name.isErr) {
+    return Result.err(errors)
+  }
+  return Result.ok({ id: id.value, name: name.value })
+}
+
+export const parseCategoryMergeConfirm = (
+  raw: RawCategoryMergeConfirm,
+): Result<ParsedCategoryMergeConfirm, FieldErrors> => {
+  const errors: FieldErrors = {}
+  const sourceId = parseRequiredId(raw.sourceId, 'Source category is required.')
+  if (sourceId.isErr) {
+    errors.sourceId = sourceId.error
+  }
+  const targetId = parseRequiredId(raw.targetId, 'Target category is required.')
+  if (targetId.isErr) {
+    errors.targetId = targetId.error
+  }
+  if (sourceId.isOk && targetId.isOk && sourceId.value === targetId.value) {
+    errors.targetId = 'Choose two different categories.'
+  }
+  if (Object.keys(errors).length > 0) {
+    return Result.err(errors)
+  }
+  if (sourceId.isErr || targetId.isErr) {
+    return Result.err(errors)
+  }
+  return Result.ok({ sourceId: sourceId.value, targetId: targetId.value })
+}
+
+export const parseCategoryDelete = (
+  raw: RawCategoryDelete,
+): Result<ParsedCategoryDelete, FieldErrors> => {
+  const id = parseRequiredId(raw.id, 'Category is required.')
+  if (id.isErr) {
+    return Result.err({ id: id.error })
+  }
+  return Result.ok({ id: id.value })
 }
 
 // ---------- Tag CSV (Issue 6) ----------

@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases. Pins the contract that `parseExpenseCreate` accepts a representative valid input per field, rejects every failure case enumerated in the issues, and reports **every** invalid field at once on multi-field failures (not just the first).
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, and extended in Issue 09 with category-management validators. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (36 total)
+## Test cases (46 total)
 
 ### `description`
 
@@ -55,10 +55,18 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - `reports errors for every invalid field at once` — submits `{ description: '', amount: '0', date: '2025-13-40', category: '' }` and asserts errors exist for `description`, `amount`, `date`, `category` simultaneously.
 - `preserves valid fields passing while invalid ones fail` — only `description` and `amount` invalid; asserts `errors.date` and `errors.category` are `undefined`.
 
+### Category management validators (Issue 09, 10 cases)
+
+- `parseCategoryCreate` trims and lowercases valid names, rejects empty names, and rejects `categoryNameMax + 1`.
+- `parseCategoryRename` returns id plus normalized name, and reports both `id` and `name` errors when both are invalid.
+- `parseCategoryMergeConfirm` returns source/target ids, rejects identical ids under `targetId`, and reports missing source/target ids.
+- `parseCategoryDelete` returns a trimmed id and rejects a missing id.
+
 ## Cross-references
 
 - [../src/lib/expense-validators.md](../src/lib/expense-validators.md) — module under test.
 - [../src/lib/money.md](../src/lib/money.md) — `parseAmount` provides the underlying amount-rejection contract; this spec doesn't re-test those bodies, only that the messages surface unchanged through `parseExpenseCreate`.
+- [expense-access.spec.md](expense-access.spec.md) — companion Issue 09 repository helper tests.
 - [money.spec.md](money.spec.md), [et-date.spec.md](et-date.spec.md) — sibling unit specs covering the lower-level validators.
 
 ---

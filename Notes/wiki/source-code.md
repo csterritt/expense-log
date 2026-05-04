@@ -22,7 +22,7 @@ Catalog of all source files under `src/` (73 files total), organized by category
 ## Database
 
 - [src/db/client.ts](./src/db/client.md) — Drizzle ORM client factory for D1 database.
-- [src/db/schema.ts](./src/db/schema.md) — Drizzle schema definitions: user, session, account, verification, singleUseCode, interestedEmail. Includes inferred TypeScript types for all tables.
+- [src/db/schema.ts](./src/db/schema.md) — Drizzle schema definitions for auth and expense-tracking tables. Category names now use a unique `lower(name)` index for case-insensitive uniqueness while preserving `expense`/`recurring` category FK restrictions.
 
 ## Libraries (`src/lib/`)
 
@@ -30,11 +30,11 @@ Catalog of all source files under `src/` (73 files total), organized by category
 - [src/lib/cookie-support.ts](./src/lib/cookie-support.md) — Cookie parsing, serialization, and deletion utilities.
 - [src/lib/db-helpers.ts](./src/lib/db-helpers.md) — Shared `withRetry` and `toResult` wrappers used by `db/auth-access.ts` and `db/expense-access.ts`.
 - [src/lib/db/auth-access.ts](./src/lib/db/auth-access.md) — Auth DB access helpers (retry + Result): `getUserWithAccountByEmail`, `claimSingleUseCode`, `addInterestedEmail`, `deleteUserAccount`.
-- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense DB access helpers (retry + Result): `listExpenses` with tag hydration, `listCategories`, `listTags`, `findCategoryByName`, `findTagsByNames`, `createExpense`, `createExpenseWithTags`, `createCategoryAndExpense`, `createManyAndExpense`.
+- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense/category/tag DB access helpers (retry + Result): list/read/create/update/delete expense flows plus Issue 09 category management helpers `createCategory`, `renameCategory`, `mergeCategory`, and `deleteCategory`.
 - [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
 - [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`.
-- [src/lib/expense-validators.ts](./src/lib/expense-validators.md) — Per-field validators for the expense entry form; `parseExpenseCreate` collects every field's error and returns parsed cents on success.
-- [src/lib/form-state.ts](./src/lib/form-state.md) — Single-use flash payload (`{fieldErrors, values}`) for re-rendering a form on the next GET after a validation-failure redirect.
+- [src/lib/expense-validators.ts](./src/lib/expense-validators.md) — Per-field validators for expense entry/edit plus category management (`parseCategoryCreate`, `parseCategoryRename`, `parseCategoryMergeConfirm`, `parseCategoryDelete`).
+- [src/lib/form-state.ts](./src/lib/form-state.md) — Single-use flash payload (`{fieldErrors, values}`) for re-rendering expense/category forms on the next GET after a validation-failure redirect.
 - [src/lib/generate-code.ts](./src/lib/generate-code.md) — Single-use sign-up code generation utility.
 - [src/lib/money.ts](./src/lib/money.md) — Money formatting helpers; provides `formatCents` and `parseAmount` for the expense list and entry form.
 - [src/lib/po-notify.ts](./src/lib/po-notify.md) — Pushover notification integration (optional).
@@ -67,7 +67,7 @@ All five routes are signed-in-only via the `signedInAccess` middleware. Four are
 - [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list + entry form page (`/expenses`); GET renders the form (with any flashed per-field errors and sticky values) above the in-window expense table or empty state; POST validates via `parseExpenseCreate` and PRG-redirects on either path. Each list row now carries a row-level Edit anchor (Issue 08).
 - [src/routes/expenses/build-edit-expense.tsx](./src/routes/expenses/build-edit-expense.md) — Edit + delete flow (Issue 08): `GET /expenses/:id/edit`, `POST /expenses/:id/edit`, `POST /expenses/:id/confirm-edit-new`, `GET /expenses/:id/delete`, `POST /expenses/:id/delete`.
 - [src/routes/expenses/expense-form.tsx](./src/routes/expenses/expense-form.md) — Shared entry/edit form renderer + shared *Confirm new items* page renderer (Issue 08).
-- [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Categories placeholder page (`/categories`).
+- [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Signed-in category management page (`/categories`) with create, rename, merge-on-collision confirmation, and delete flows.
 - [src/routes/build-tags.tsx](./src/routes/build-tags.md) — Tags placeholder page (`/tags`).
 - [src/routes/build-summary.tsx](./src/routes/build-summary.md) — Summary placeholder page (`/summary`).
 - [src/routes/build-recurring.tsx](./src/routes/build-recurring.md) — Recurring placeholder page (`/recurring`).

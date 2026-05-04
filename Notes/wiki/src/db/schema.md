@@ -85,14 +85,18 @@ Waitlist emails for interest sign-up mode.
 
 ### `category`
 
-Expense categories. Names are unique.
+Expense categories. Names are unique case-insensitively through the `category_name_lower_unique` unique index on `lower(name)`.
 
 | Column      | Type                | Constraints     |
 | ----------- | ------------------- | --------------- |
 | `id`        | text                | primaryKey      |
-| `name`      | text                | notNull, unique |
+| `name`      | text                | notNull         |
 | `createdAt` | integer (timestamp) | notNull         |
 | `updatedAt` | integer (timestamp) | notNull         |
+
+Unique indexes:
+
+- `category_name_lower_unique` on `lower(name)` — enforces lowercase-normalized category uniqueness while preserving the original `name` column and existing foreign-key relationships.
 
 ### `tag`
 

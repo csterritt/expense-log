@@ -18,7 +18,7 @@ Content-oriented catalog of all pages in this wiki.
 
 ## Meta
 
-- [AGENT.md](AGENT.md) — Wiki schema, conventions, and agent rules.
+- [AGENTS.md](AGENTS.md) — Wiki schema, conventions, and agent rules.
 - [wiki-rules.md](wiki-rules.md) — Original LLM Wiki pattern description (read-only source).
 
 ## Log
