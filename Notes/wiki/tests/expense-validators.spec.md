@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, and extended in Issue 09 with category-management validators. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, and extended in Issue 10 with tag-management validators. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (46 total)
+## Test cases (59 total)
 
 ### `description`
 
@@ -62,11 +62,31 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - `parseCategoryMergeConfirm` returns source/target ids, rejects identical ids under `targetId`, and reports missing source/target ids.
 - `parseCategoryDelete` returns a trimmed id and rejects a missing id.
 
+### Tag management validators (Issue 10, 13 cases)
+
+- `parseTagCreate`:
+  - `trims and lowercases valid names` — `'  Travel  '` → `{ name: 'travel' }`.
+  - `rejects empty names with a field error` — `'   '` → `{ name: message }`.
+  - `rejects tagNameMax + 1 characters` — over-limit name → `{ name: message }`.
+  - `accepts exactly tagNameMax characters` — exact-limit name → `{ name: 'aaa...' }`.
+  - `normalizes mixed-case duplicate targets as the same lowercased name` — `'TRAVEL'` and `'travel'` both normalize to `'travel'`.
+- `parseTagRename`:
+  - `returns id and normalized name` — `{ id: 'tag-1', name: '  Trips  ' }` → `{ id: 'tag-1', name: 'trips' }`.
+  - `reports both id and name errors` — empty id and empty name produce errors on both fields.
+  - `rejects tagNameMax + 1 char name` — over-limit name produces a `name` error.
+- `parseTagMergeConfirm`:
+  - `returns source and target ids` — valid source/target pass through as-is.
+  - `rejects matching source and target ids` — identical ids produce `targetId: 'Choose two different tags.'`.
+  - `reports missing source and target ids` — both empty produce both field errors.
+- `parseTagDelete`:
+  - `returns trimmed id` — `'  tag-1  '` → `{ id: 'tag-1' }`.
+  - `rejects missing id` — empty id → `{ id: message }`.
+
 ## Cross-references
 
 - [../src/lib/expense-validators.md](../src/lib/expense-validators.md) — module under test.
 - [../src/lib/money.md](../src/lib/money.md) — `parseAmount` provides the underlying amount-rejection contract; this spec doesn't re-test those bodies, only that the messages surface unchanged through `parseExpenseCreate`.
-- [expense-access.spec.md](expense-access.spec.md) — companion Issue 09 repository helper tests.
+- [expense-access.spec.md](expense-access.spec.md) — companion Issue 09/10 repository helper tests.
 - [money.spec.md](money.spec.md), [et-date.spec.md](et-date.spec.md) — sibling unit specs covering the lower-level validators.
 
 ---

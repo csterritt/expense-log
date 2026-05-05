@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Validation for expense forms and category-management forms. Introduced in Issue 04 for expense creation, then extended for inline category/tag creation, edit flows, and Issue 09 category management. The module runs fields through dedicated validators, folds messages into a `FieldErrors` record, and returns parsed values on success.
+Validation for expense forms, category-management forms, and tag-management forms. Introduced in Issue 04 for expense creation, then extended for inline category/tag creation, edit flows, Issue 09 category management, and Issue 10 tag management. The module runs fields through dedicated validators, folds messages into a `FieldErrors` record, and returns parsed values on success.
 
 Database-level concerns (e.g. whether the referenced `categoryId` exists) are still enforced by `createExpense`, not here.
 
@@ -61,6 +61,19 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 - `parseCategoryMergeConfirm(raw)` validates `sourceId` and `targetId`, and rejects equal ids with `targetId: 'Choose two different categories.'`.
 - `parseCategoryDelete(raw)` validates a required `id` and returns a trimmed id.
 
+### Tag-management validators (Issue 10)
+
+Tag validators mirror the category-management pattern exactly, with the parallel types `RawTagCreate`, `ParsedTagCreate`, `RawTagRename`, `ParsedTagRename`, `RawTagMergeConfirm`, `ParsedTagMergeConfirm`, `RawTagDelete`, `ParsedTagDelete`.
+
+- `TagManagementNameSchema` — `pipe(string, custom non-empty after trim, custom trim.length <= tagNameMax)`. Separate from `NewCategoryNameSchema` to allow independent evolution.
+- `parseTagManagementName` (private) — trims, validates against `TagManagementNameSchema`, returns lowercase on success.
+- `parseTagCreate(raw)` validates `{ name }`, trims, requires non-empty, enforces `tagNameMax`, normalizes to lowercase, returns `{ name }` or `{ name: message }`.
+- `parseTagRename(raw)` validates both `id` and normalized `name`, returning both field errors when both are malformed.
+- `parseTagMergeConfirm(raw)` validates `sourceId` and `targetId`, and rejects equal ids with `targetId: 'Choose two different tags.'`.
+- `parseTagDelete(raw)` validates a required `id` and returns a trimmed id.
+
+Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the entry/edit form tag CSV field and is distinct from the tag management validators above.
+
 ## Cross-references
 
 - [money.md](money.md) — `parseAmount` is the underlying numeric validator.
@@ -68,6 +81,7 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 - [form-state.md](form-state.md) — the POST handler hands `FieldErrors` to `redirectWithFormErrors` for round-tripping.
 - [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — entry-form POST handler that consumes `parseExpenseCreate`.
 - [../routes/build-categories.md](../routes/build-categories.md) — category-management POST handlers consuming Issue 09 validators.
+- [../routes/build-tags.md](../routes/build-tags.md) — tag-management POST handlers consuming Issue 10 validators.
 - [../../tests/expense-validators.spec.md](../../tests/expense-validators.spec.md) — unit coverage.
 
 ---

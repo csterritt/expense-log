@@ -2,6 +2,17 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-05-05] ingest | Issue 10 tag management page
+
+Ingested the Issue 10 tag management implementation.
+
+- **Route**: `src/routes/build-tags.tsx` now exports a full `buildTags(app)` implementation replacing the placeholder. Registers `GET /tags`, `POST /tags`, `POST /tags/:id/rename`, `POST /tags/merge-confirm`, and `POST /tags/:id/delete`, all gated by `signedInAccess`. On rename collision it renders an inline merge-confirm page (`tag-merge-confirm-page`) with source/target names, expense count (`merge-expense-count`), and confirm/cancel controls (`confirm-merge-tag-action`, `cancel-merge-tag-action`). `deleteTag` is blocked when `expenseTag` references exist and reports the count. `back-to-expenses-action` link provided.
+- **Validators**: `src/lib/expense-validators.ts` now exports `parseTagCreate`, `parseTagRename`, `parseTagMergeConfirm`, `parseTagDelete`, and the supporting `TagManagementNameSchema` / `parseTagManagementName`. Tag-management types mirror the Issue 09 category pattern. Equal-id merge attempts produce `'Choose two different tags.'` on `targetId`.
+- **Repository helpers**: `src/lib/db/expense-access.ts` now includes `createTag`, `renameTag`, `countTagExpenses`, `mergeTag`, and `deleteTag`. `mergeTag` deduplicates `expenseTag` rows atomically (non-colliding rows repointed, colliding source rows deleted) and defensively mirrors that logic on `recurringTag`. All helpers wrapped with `withRetry` and return `Result`.
+- **Unit tests**: `tests/expense-validators.spec.ts` adds a 13-case `tag management validators` block covering `parseTagCreate`, `parseTagRename`, `parseTagMergeConfirm`, `parseTagDelete` — mirrors the Issue 09 category block. `tests/expense-access.spec.ts` extends the SQLite harness with `tag`, `expenseTag`, `recurringTag` tables and adds 7 tag-repository test cases, including a deduplication scenario for `mergeTag`.
+- **E2E tests**: `e2e-tests/expenses/13-tag-management.spec.ts` (6 tests) covers create/duplicate-validation, over-limit sticky validation, simple rename, merge-confirm/confirm, merge-confirm/cancel, and delete blocked/success.
+- **Wiki pages updated**: `src/routes/build-tags.md` (full rewrite from placeholder), `src/lib/expense-validators.md` (added Issue 10 section + cross-reference), `src/lib/db/expense-access.md` (added five new helper sections + updated cross-references), `tests/expense-validators.spec.md` (added 13 tag cases, updated total to 59), `tests/expense-access.spec.md` (updated setup and test cases for tag harness), `source-code.md` (updated build-tags description), `e2e-tests.md` (count 56 → 57, added spec entry), `unit-tests.md` (updated two catalog entries). New page: `e2e-tests/expenses/13-tag-management.spec.md`.
+
 ## [2026-05-04] ingest | Issue 09 category management page
 
 Ingested the Issue 09 category management implementation.
