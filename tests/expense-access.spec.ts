@@ -23,13 +23,17 @@ import { and, eq, ne, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/bun-sqlite'
 import assert from 'node:assert'
 
-import { category, expense, recurring, schema } from '../src/db/schema'
+import { category, expense, expenseTag, recurring, tag, schema } from '../src/db/schema'
 import {
   createCategory,
+  createTag,
   deleteCategory,
+  deleteTag,
   findCategoryByName,
   mergeCategory,
+  mergeTag,
   renameCategory,
+  renameTag,
 } from '../src/lib/db/expense-access'
 import type { DrizzleClient } from '../src/local-types'
 
@@ -59,6 +63,16 @@ const createTestDb = async (): Promise<TestDb> => {
   sqlite.run(
     'CREATE TABLE expense (id TEXT PRIMARY KEY, description TEXT NOT NULL, amountCents INTEGER NOT NULL, categoryId TEXT NOT NULL REFERENCES category(id) ON DELETE RESTRICT, date TEXT NOT NULL, recurringId TEXT REFERENCES recurring(id) ON DELETE SET NULL, occurrenceDate TEXT, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
   )
+  sqlite.run(
+    'CREATE TABLE tag (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
+  )
+  sqlite.run('CREATE UNIQUE INDEX tag_name_lower_unique ON tag (lower(name))')
+  sqlite.run(
+    'CREATE TABLE expenseTag (expenseId TEXT NOT NULL REFERENCES expense(id) ON DELETE CASCADE, tagId TEXT NOT NULL REFERENCES tag(id) ON DELETE RESTRICT, PRIMARY KEY (expenseId, tagId))',
+  )
+  sqlite.run(
+    'CREATE TABLE recurringTag (recurringId TEXT NOT NULL REFERENCES recurring(id) ON DELETE CASCADE, tagId TEXT NOT NULL REFERENCES tag(id) ON DELETE RESTRICT, PRIMARY KEY (recurringId, tagId))',
+  )
   const db = drizzle(sqlite, { schema })
   return Object.assign(db, {
     batch: async (queries: readonly RunnableQuery[]): Promise<unknown[]> => {
@@ -84,6 +98,19 @@ const seedExpense = async (db: TestDb, id: string, categoryId: string): Promise<
     createdAt: now,
     updatedAt: now,
   })
+}
+
+const seedTag = async (db: TestDb, id: string, name: string): Promise<void> => {
+  const now = new Date()
+  await db.insert(tag).values({ id, name, createdAt: now, updatedAt: now })
+}
+
+const seedExpenseTag = async (
+  db: TestDb,
+  expenseId: string,
+  tagId: string,
+): Promise<void> => {
+  await db.insert(expenseTag).values({ expenseId, tagId })
 }
 
 const expenseCategoryIds = async (db: TestDb): Promise<string[]> => {
@@ -238,5 +265,170 @@ describe('category repository helpers', () => {
     if (result.isErr) {
       assert.match(result.error.message, /Recurring expenses reference/)
     }
+  })
+})
+
+describe('tag repository helpers', () => {
+  it('createTag stores lowercase names and rejects case-insensitive duplicates', async () => {
+    const db = await createTestDb()
+    const created = await createTag(db, '  Travel  ')
+    assert.strictEqual(created.isOk, true)
+    if (created.isOk) {
+      assert.strictEqual(created.value.name, 'travel')
+    }
+
+    const duplicate = await createTag(db, 'TRAVEL')
+    assert.strictEqual(duplicate.isErr, true)
+    if (duplicate.isErr) {
+      assert.match(duplicate.error.message, /already exists/)
+    }
+
+    const rows = await db.select({ name: tag.name }).from(tag)
+    assert.strictEqual(rows.length, 1)
+    assert.strictEqual(rows[0]?.name, 'travel')
+  })
+
+  it('renameTag updates the tag name and timestamp', async () => {
+    const db = await createTestDb()
+    await seedTag(db, 'tag-1', 'travel')
+    const before = await db
+      .select({ updatedAt: tag.updatedAt })
+      .from(tag)
+      .where(eq(tag.id, 'tag-1'))
+      .limit(1)
+
+    const result = await renameTag(db, { id: 'tag-1', name: '  Trips  ' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.deepStrictEqual(result.value, { id: 'tag-1', name: 'trips' })
+    }
+
+    const after = await db
+      .select({ name: tag.name, updatedAt: tag.updatedAt })
+      .from(tag)
+      .where(eq(tag.id, 'tag-1'))
+      .limit(1)
+    assert.strictEqual(after[0]?.name, 'trips')
+    assert.ok(Number(after[0]?.updatedAt) >= Number(before[0]?.updatedAt))
+  })
+
+  it('renameTag detects case-insensitive collision before merge', async () => {
+    const db = await createTestDb()
+    await seedTag(db, 'tag-1', 'travel')
+    await seedTag(db, 'tag-2', 'trips')
+
+    const duplicate = await db
+      .select({ id: tag.id })
+      .from(tag)
+      .where(and(sql`lower(${tag.name}) = lower(${'TRIPS'})`, ne(tag.id, 'tag-1')))
+      .limit(1)
+    assert.strictEqual(duplicate[0]?.id, 'tag-2')
+
+    const result = await renameTag(db, { id: 'tag-1', name: 'TRIPS' })
+    assert.strictEqual(result.isErr, true)
+    if (result.isErr) {
+      assert.match(result.error.message, /already exists/)
+    }
+  })
+
+  it('mergeTag repoints all expenseTag rows from source to target and removes source tag', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'source', 'travel')
+    await seedTag(db, 'target', 'trips')
+    await seedTag(db, 'other', 'dining')
+    await seedExpense(db, 'exp-1', 'cat-1')
+    await seedExpense(db, 'exp-2', 'cat-1')
+    await seedExpense(db, 'exp-3', 'cat-1')
+    await seedExpenseTag(db, 'exp-1', 'source')
+    await seedExpenseTag(db, 'exp-2', 'source')
+    await seedExpenseTag(db, 'exp-3', 'other')
+
+    const result = await mergeTag(db, { sourceId: 'source', targetId: 'target' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.deepStrictEqual(result.value, { reassignedExpenseCount: 2 })
+    }
+
+    const expTagRows = await db
+      .select({ expenseId: expenseTag.expenseId, tagId: expenseTag.tagId })
+      .from(expenseTag)
+    const tagIds = expTagRows.map((r) => r.tagId).sort()
+    assert.deepStrictEqual(tagIds, ['other', 'target', 'target'])
+
+    const tags = await db.select({ id: tag.id }).from(tag)
+    assert.deepStrictEqual(tags.map((r) => r.id).sort(), ['other', 'target'])
+
+    const expTagDupes = await db
+      .select({ expenseId: expenseTag.expenseId, tagId: expenseTag.tagId })
+      .from(expenseTag)
+      .where(eq(expenseTag.tagId, 'target'))
+    const expenseIds = expTagDupes.map((r) => r.expenseId)
+    assert.strictEqual(expenseIds.length, new Set(expenseIds).size)
+  })
+
+  it('mergeTag deduplicates expenseTag rows when an expense already has both source and target', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'source', 'travel')
+    await seedTag(db, 'target', 'trips')
+    await seedExpense(db, 'exp-1', 'cat-1')
+    await seedExpense(db, 'exp-2', 'cat-1')
+    await seedExpenseTag(db, 'exp-1', 'source')
+    await seedExpenseTag(db, 'exp-1', 'target')
+    await seedExpenseTag(db, 'exp-2', 'source')
+
+    const result = await mergeTag(db, { sourceId: 'source', targetId: 'target' })
+    assert.strictEqual(result.isOk, true)
+
+    const expTagRows = await db
+      .select({ expenseId: expenseTag.expenseId, tagId: expenseTag.tagId })
+      .from(expenseTag)
+    assert.strictEqual(expTagRows.length, 2)
+    const pairs = expTagRows.map((r) => `${r.expenseId}:${r.tagId}`).sort()
+    assert.deepStrictEqual(pairs, ['exp-1:target', 'exp-2:target'])
+
+    const tags = await db.select({ id: tag.id }).from(tag)
+    assert.deepStrictEqual(tags.map((r) => r.id).sort(), ['target'])
+  })
+
+  it('deleteTag fails with the exact referencing expense count when referenced', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-1', 'travel')
+    await seedExpense(db, 'exp-1', 'cat-1')
+    await seedExpense(db, 'exp-2', 'cat-1')
+    await seedExpenseTag(db, 'exp-1', 'tag-1')
+    await seedExpenseTag(db, 'exp-2', 'tag-1')
+
+    const result = await deleteTag(db, 'tag-1')
+    assert.strictEqual(result.isErr, true)
+    if (result.isErr) {
+      assert.match(result.error.message, /2 expenses reference/)
+    }
+
+    const tags = await db.select({ id: tag.id }).from(tag)
+    assert.deepStrictEqual(
+      tags.map((r) => r.id),
+      ['tag-1'],
+    )
+  })
+
+  it('deleteTag succeeds for an unreferenced tag', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-1', 'travel')
+    await seedTag(db, 'tag-2', 'dining')
+    await seedExpense(db, 'exp-1', 'cat-1')
+    await seedExpenseTag(db, 'exp-1', 'tag-2')
+
+    const result = await deleteTag(db, 'tag-1')
+    assert.strictEqual(result.isOk, true)
+
+    const tags = await db.select({ id: tag.id }).from(tag)
+    assert.deepStrictEqual(
+      tags.map((r) => r.id),
+      ['tag-2'],
+    )
   })
 })

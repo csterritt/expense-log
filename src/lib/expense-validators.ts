@@ -367,6 +367,121 @@ export const parseCategoryDelete = (
   return Result.ok({ id: id.value })
 }
 
+// ---------- Tag management (Issue 10) ----------
+
+export type RawTagCreate = {
+  name: string
+}
+
+export type ParsedTagCreate = {
+  name: string
+}
+
+export type RawTagRename = {
+  id: string
+  name: string
+}
+
+export type ParsedTagRename = {
+  id: string
+  name: string
+}
+
+export type RawTagMergeConfirm = {
+  sourceId: string
+  targetId: string
+}
+
+export type ParsedTagMergeConfirm = {
+  sourceId: string
+  targetId: string
+}
+
+export type RawTagDelete = {
+  id: string
+}
+
+export type ParsedTagDelete = {
+  id: string
+}
+
+export const TagManagementNameSchema = pipe(
+  string('Tag name is required.'),
+  custom<string>((v) => typeof v === 'string' && v.trim().length > 0, 'Tag name is required.'),
+  custom<string>(
+    (v) => typeof v === 'string' && v.trim().length <= tagNameMax,
+    `Tag name must be at most ${tagNameMax} characters.`,
+  ),
+)
+
+const parseTagManagementName = (input: unknown): Result<string, string> => {
+  const value = typeof input === 'string' ? input.trim() : ''
+  const message = firstIssueMessage(TagManagementNameSchema, value)
+  if (message) {
+    return Result.err(message)
+  }
+  return Result.ok(value.toLowerCase())
+}
+
+export const parseTagCreate = (raw: RawTagCreate): Result<ParsedTagCreate, FieldErrors> => {
+  const name = parseTagManagementName(raw.name)
+  if (name.isErr) {
+    return Result.err({ name: name.error })
+  }
+  return Result.ok({ name: name.value })
+}
+
+export const parseTagRename = (raw: RawTagRename): Result<ParsedTagRename, FieldErrors> => {
+  const errors: FieldErrors = {}
+  const id = parseRequiredId(raw.id, 'Tag is required.')
+  if (id.isErr) {
+    errors.id = id.error
+  }
+  const name = parseTagManagementName(raw.name)
+  if (name.isErr) {
+    errors.name = name.error
+  }
+  if (Object.keys(errors).length > 0) {
+    return Result.err(errors)
+  }
+  if (id.isErr || name.isErr) {
+    return Result.err(errors)
+  }
+  return Result.ok({ id: id.value, name: name.value })
+}
+
+export const parseTagMergeConfirm = (
+  raw: RawTagMergeConfirm,
+): Result<ParsedTagMergeConfirm, FieldErrors> => {
+  const errors: FieldErrors = {}
+  const sourceId = parseRequiredId(raw.sourceId, 'Source tag is required.')
+  if (sourceId.isErr) {
+    errors.sourceId = sourceId.error
+  }
+  const targetId = parseRequiredId(raw.targetId, 'Target tag is required.')
+  if (targetId.isErr) {
+    errors.targetId = targetId.error
+  }
+  if (sourceId.isOk && targetId.isOk && sourceId.value === targetId.value) {
+    errors.targetId = 'Choose two different tags.'
+  }
+  if (Object.keys(errors).length > 0) {
+    return Result.err(errors)
+  }
+  if (sourceId.isErr || targetId.isErr) {
+    return Result.err(errors)
+  }
+  return Result.ok({ sourceId: sourceId.value, targetId: targetId.value })
+}
+
+export const parseTagDelete = (raw: RawTagDelete): Result<ParsedTagDelete, FieldErrors> => {
+  const id = parseRequiredId(raw.id, 'Tag is required.')
+  if (id.isErr) {
+    return Result.err({ id: id.error })
+  }
+  return Result.ok({ id: id.value })
+}
+
 // ---------- Tag CSV (Issue 6) ----------
 
 /**

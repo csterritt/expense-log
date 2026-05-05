@@ -14,6 +14,10 @@ import {
   parseExpenseCreate,
   parseNewCategoryName,
   parseTagCsv,
+  parseTagCreate,
+  parseTagDelete,
+  parseTagMergeConfirm,
+  parseTagRename,
   descriptionMax,
   categoryNameMax,
   tagNameMax,
@@ -356,6 +360,124 @@ describe('category management validators', () => {
 
     it('rejects missing id', () => {
       const r = parseCategoryDelete({ id: '' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.id)
+      }
+    })
+  })
+})
+
+describe('tag management validators', () => {
+  describe('parseTagCreate', () => {
+    it('trims and lowercases valid names', () => {
+      const r = parseTagCreate({ name: '  Travel  ' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { name: 'travel' })
+      }
+    })
+
+    it('rejects empty names with a field error', () => {
+      const r = parseTagCreate({ name: '   ' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.name)
+      }
+    })
+
+    it('rejects tagNameMax + 1 characters', () => {
+      const r = parseTagCreate({ name: 'a'.repeat(tagNameMax + 1) })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.name)
+      }
+    })
+
+    it('accepts exactly tagNameMax characters', () => {
+      const r = parseTagCreate({ name: 'a'.repeat(tagNameMax) })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.strictEqual(r.value.name, 'a'.repeat(tagNameMax))
+      }
+    })
+
+    it('normalizes mixed-case duplicate targets as the same lowercased name', () => {
+      const r1 = parseTagCreate({ name: 'TRAVEL' })
+      const r2 = parseTagCreate({ name: 'travel' })
+      assert.strictEqual(r1.isOk, true)
+      assert.strictEqual(r2.isOk, true)
+      if (r1.isOk && r2.isOk) {
+        assert.strictEqual(r1.value.name, r2.value.name)
+      }
+    })
+  })
+
+  describe('parseTagRename', () => {
+    it('returns id and normalized name', () => {
+      const r = parseTagRename({ id: 'tag-1', name: '  Trips  ' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { id: 'tag-1', name: 'trips' })
+      }
+    })
+
+    it('reports both id and name errors', () => {
+      const r = parseTagRename({ id: '', name: '' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.id)
+        assert.ok(r.error.name)
+      }
+    })
+
+    it('rejects tagNameMax + 1 char name', () => {
+      const r = parseTagRename({ id: 'tag-1', name: 'a'.repeat(tagNameMax + 1) })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.name)
+      }
+    })
+  })
+
+  describe('parseTagMergeConfirm', () => {
+    it('returns source and target ids', () => {
+      const r = parseTagMergeConfirm({ sourceId: 'source', targetId: 'target' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { sourceId: 'source', targetId: 'target' })
+      }
+    })
+
+    it('rejects matching source and target ids', () => {
+      const r = parseTagMergeConfirm({ sourceId: 'same', targetId: 'same' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.targetId)
+      }
+    })
+
+    it('reports missing source and target ids', () => {
+      const r = parseTagMergeConfirm({ sourceId: '', targetId: '' })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.sourceId)
+        assert.ok(r.error.targetId)
+      }
+    })
+  })
+
+  describe('parseTagDelete', () => {
+    it('returns trimmed id', () => {
+      const r = parseTagDelete({ id: '  tag-1  ' })
+      assert.strictEqual(r.isOk, true)
+      if (r.isOk) {
+        assert.deepStrictEqual(r.value, { id: 'tag-1' })
+      }
+    })
+
+    it('rejects missing id', () => {
+      const r = parseTagDelete({ id: '' })
       assert.strictEqual(r.isErr, true)
       if (r.isErr) {
         assert.ok(r.error.id)

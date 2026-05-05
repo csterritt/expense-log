@@ -169,6 +169,43 @@ export const seedExpenses = async (rows: SeedExpenseRow[]): Promise<void> => {
   }
 }
 
+export interface SeedTagRow {
+  name: string
+}
+
+/**
+ * Seed database with a list of tags.
+ * Calls test-only server endpoint to insert rows directly.
+ */
+export const seedTags = async (rows: SeedTagRow[]): Promise<void> => {
+  try {
+    const response = await fetch('http://localhost:3000/test/database/seed-tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rows),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      created?: number
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed tags')
+    }
+
+    console.log(`Tags seeded successfully: ${result.created} created`)
+  } catch (error) {
+    console.error('Failed to seed tags:', error)
+    throw error
+  }
+}
+
 /**
  * Seed database with test data
  * Calls test-only server endpoint to seed database
