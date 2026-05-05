@@ -1,5 +1,6 @@
 ---
-trigger: always_on
+name: styling-html-and-tsx
+description: Rules for styling HTML and TSX in this project
 ---
 
 For styling, use DaisyUI and TailwindCSS.

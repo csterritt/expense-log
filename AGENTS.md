@@ -5,6 +5,7 @@ This is a Cloudflare Worker expense-tracking app (with built-in authentication) 
 ## Directories
 
 - `Notes/AGENTS.md` — all about the project documentation system
+- `Notes/skills/AGENTS.md` — all about the skills you can use
 - `tests/` — unit tests
 - `e2e-tests/` — end-to-end tests
 - `src/` — source code
