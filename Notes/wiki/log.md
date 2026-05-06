@@ -2,6 +2,18 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-05-07] ingest | Issue 11 expense list filter bar
+
+Ingested the Issue 11 expense-list filtering implementation.
+
+- **DB layer**: `ListExpenseFilters` now accepts optional `description`, `from`, `to`, `categoryId`, `tagIds`, and `tagMode` ('or'|'and'). All fields are optional — passing `{}` returns every expense. Tag OR uses a set-union subquery; tag AND uses a `GROUP BY … HAVING count(distinct tagId) = N` subquery, both resolved before the main query to stay compatible with D1.
+- **Validator**: `parseExpenseListFilters(raw)` added to `src/lib/expense-validators.ts`. Returns `{ hasFilterParams, filters, fieldErrors }`. `hasFilterParams` is true when any recognized key appears in the raw query object (even empty). Handles repeated `tagId` values (array), deduplicates, normalises `tagMode` (defaults `'or'`), validates `from`/`to` as `YYYY-MM-DD`, and trims `description` (whitespace-only → no filter).
+- **Route**: `GET /expenses` now reads query-string params via `c.req.query()` + `c.req.queries('tagId')`, parses via `parseExpenseListFilters`, and — when `hasFilterParams` is false (first load) — falls back to the default 2-month ET window. The rendered page receives both the full `CategoryRow[]` and `TagRow[]` lists alongside the filter state.
+- **UI**: `renderFilterBar` added to `build-expenses.tsx`. Renders a card with description text input, from/to date inputs, category `<select>`, tag checkboxes (one per tag), tag-mode radios (any/all), a Filter button, and a "Clear filters" link (visible only when at least one filter is active). All inputs carry `data-testid` attributes for Playwright targeting.
+- **Unit tests**: `tests/expense-access.spec.ts` adds `listExpenses filters (Issue 11)` describe block (14 cases). `tests/expense-validators.spec.ts` adds `parseExpenseListFilters (Issue 11)` block (19 cases). Both pass (`109 pass, 0 fail`).
+- **E2E specs**: three new specs: `14-filter-description-dates.spec.ts` (8 tests), `15-filter-category-tags.spec.ts` (7 tests), `16-filter-combined-clear.spec.ts` (7 tests).
+- **Wiki pages updated**: `source-code.md` (expense-access, expense-validators, build-expenses entries), `e2e-tests.md` (count 57 → 60, added three spec entries), `unit-tests.md` (updated two catalog entries).
+
 ## [2026-05-05] ingest | Issue 10 tag management page
 
 Ingested the Issue 10 tag management implementation.

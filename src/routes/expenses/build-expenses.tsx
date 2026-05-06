@@ -23,15 +23,19 @@ import {
   findCategoryByName,
   findTagsByNames,
   createManyAndExpense,
+  type CategoryRow,
   type ExpenseRow,
+  type TagRow,
 } from '../../lib/db/expense-access'
 import { formatCents } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseExpenseCreate,
+  parseExpenseListFilters,
   parseNewCategoryName,
   parseTagCsv,
   type FieldErrors,
+  type ParsedExpenseListFilters,
 } from '../../lib/expense-validators'
 import {
   readAndClearFormState,
@@ -51,6 +55,169 @@ const emptyState = (today: string): ExpenseFormState => ({
   fieldErrors: {},
   values: { description: '', amount: '', date: today, category: '', tags: '' },
 })
+
+const renderFilterBar = (
+  categories: CategoryRow[],
+  tags: TagRow[],
+  activeFilters: ParsedExpenseListFilters,
+  filterErrors: FieldErrors,
+) => {
+  const activeCategoryId = activeFilters.categoryId ?? ''
+  const activeTagMode = activeFilters.tagMode ?? 'or'
+  const activeTagIds = new Set(activeFilters.tagIds ?? [])
+  const hasAnyFilter =
+    (activeFilters.description && activeFilters.description.length > 0) ||
+    activeFilters.from ||
+    activeFilters.to ||
+    activeCategoryId.length > 0 ||
+    activeTagIds.size > 0
+
+  return (
+    <form method='get' action={PATHS.EXPENSES} className='mb-6' data-testid='expense-filter-bar'>
+      <div className='card bg-base-200 p-4'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+          <div className='form-control'>
+            <label className='label' for='filter-description'>
+              <span className='label-text'>Description</span>
+            </label>
+            <input
+              id='filter-description'
+              type='text'
+              name='description'
+              className='input input-bordered'
+              placeholder='Search...'
+              value={activeFilters.description ?? ''}
+              data-testid='filter-description'
+            />
+          </div>
+
+          <div className='form-control'>
+            <label className='label' for='filter-from'>
+              <span className='label-text'>From</span>
+            </label>
+            <input
+              id='filter-from'
+              type='date'
+              name='from'
+              className={`input input-bordered${filterErrors.date ? ' input-error' : ''}`}
+              value={activeFilters.from ?? ''}
+              data-testid='filter-from'
+            />
+          </div>
+
+          <div className='form-control'>
+            <label className='label' for='filter-to'>
+              <span className='label-text'>To</span>
+            </label>
+            <input
+              id='filter-to'
+              type='date'
+              name='to'
+              className={`input input-bordered${filterErrors.date ? ' input-error' : ''}`}
+              value={activeFilters.to ?? ''}
+              data-testid='filter-to'
+            />
+            {filterErrors.date && (
+              <label className='label'>
+                <span className='label-text-alt text-error' data-testid='filter-date-error'>
+                  {filterErrors.date}
+                </span>
+              </label>
+            )}
+          </div>
+
+          <div className='form-control'>
+            <label className='label' for='filter-category'>
+              <span className='label-text'>Category</span>
+            </label>
+            <select
+              id='filter-category'
+              name='categoryId'
+              className='select select-bordered'
+              data-testid='filter-category'
+            >
+              <option value=''>All categories</option>
+              {categories.map((cat) => (
+                <option value={cat.id} selected={cat.id === activeCategoryId}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {tags.length > 0 && (
+          <div className='mt-4'>
+            <div className='label'>
+              <span className='label-text font-semibold'>Tags</span>
+              <span className='label-text-alt'>
+                <label className='label cursor-pointer gap-2'>
+                  <span>Any</span>
+                  <input
+                    type='radio'
+                    name='tagMode'
+                    value='or'
+                    className='radio radio-sm'
+                    checked={activeTagMode === 'or'}
+                    data-testid='filter-tag-mode-or'
+                  />
+                  <input
+                    type='radio'
+                    name='tagMode'
+                    value='and'
+                    className='radio radio-sm'
+                    checked={activeTagMode === 'and'}
+                    data-testid='filter-tag-mode-and'
+                  />
+                  <span>All</span>
+                </label>
+              </span>
+            </div>
+            <div className='flex flex-wrap gap-2' data-testid='filter-tags'>
+              {tags.map((t) => (
+                <label className='label cursor-pointer gap-1'>
+                  <input
+                    type='checkbox'
+                    name='tagId'
+                    value={t.id}
+                    className='checkbox checkbox-sm'
+                    checked={activeTagIds.has(t.id)}
+                    data-testid={`filter-tag-${t.name}`}
+                  />
+                  <span className='label-text'>{t.name}</span>
+                </label>
+              ))}
+            </div>
+            {filterErrors.tags && (
+              <p className='text-error text-sm mt-1' data-testid='filter-tags-error'>
+                {filterErrors.tags}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className='mt-4 flex gap-2'>
+          <button
+            type='submit'
+            className='btn btn-primary btn-sm'
+            data-testid='filter-submit'
+          >
+            Filter
+          </button>
+          {hasAnyFilter && (
+            <a
+              href={PATHS.EXPENSES}
+              className='btn btn-ghost btn-sm'
+              data-testid='filter-clear'
+            >
+              Clear filters
+            </a>
+          )}
+        </div>
+      </div>
+    </form>
+  )
+}
 
 const renderExpenseTable = (rows: ExpenseRow[]) => {
   return (
@@ -97,6 +264,10 @@ const renderExpenses = (
   rows: ExpenseRow[],
   state: ExpenseFormState,
   payloads: ExpenseFormPayloads,
+  allCategories: CategoryRow[],
+  allTags: TagRow[],
+  activeFilters: ParsedExpenseListFilters,
+  filterErrors: FieldErrors,
 ) => {
   return (
     <div data-testid='expenses-page'>
@@ -107,6 +278,7 @@ const renderExpenses = (
         state,
         payloads,
       })}
+      {renderFilterBar(allCategories, allTags, activeFilters, filterErrors)}
       {rows.length === 0 ? (
         <p className='text-gray-600' data-testid='expenses-empty-state'>
           No expenses yet
@@ -138,9 +310,25 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
     secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
-      const range = defaultRangeEt()
       const db = createDbClient(c.env.PROJECT_DB)
-      const expensesResult = await listExpenses(db, range)
+
+      const rawQ = c.req.query()
+      const rawTagId = c.req.queries('tagId')
+      const rawFilters = {
+        description: rawQ['description'],
+        from: rawQ['from'],
+        to: rawQ['to'],
+        categoryId: rawQ['categoryId'],
+        tagId: rawTagId !== undefined && rawTagId.length > 0 ? rawTagId : rawQ['tagId'],
+        tagMode: rawQ['tagMode'],
+      }
+      const { hasFilterParams, filters, fieldErrors: filterErrors } = parseExpenseListFilters(rawFilters)
+
+      const activeFilters = hasFilterParams
+        ? filters
+        : { ...defaultRangeEt(), tagIds: [], tagMode: 'or' as const }
+
+      const expensesResult = await listExpenses(db, activeFilters)
       if (expensesResult.isErr) {
         return redirectWithError(
           c,
@@ -182,7 +370,20 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
             },
           }
         : emptyState(today)
-      return c.render(useLayout(c, renderExpenses(expensesResult.value, state, payloads)))
+      return c.render(
+        useLayout(
+          c,
+          renderExpenses(
+            expensesResult.value,
+            state,
+            payloads,
+            categoriesResult.value,
+            tagsResult.value,
+            activeFilters,
+            filterErrors,
+          ),
+        ),
+      )
     },
   )
 

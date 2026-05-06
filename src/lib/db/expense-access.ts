@@ -30,8 +30,12 @@ export interface ExpenseRow {
 }
 
 export interface ListExpenseFilters {
-  from: string
-  to: string
+  from?: string
+  to?: string
+  description?: string
+  categoryId?: string
+  tagIds?: string[]
+  tagMode?: 'or' | 'and'
 }
 
 export interface CategoryRow {
@@ -142,6 +146,60 @@ const listExpensesActual = async (
   filters: ListExpenseFilters,
 ): Promise<Result<ExpenseRow[], Error>> => {
   try {
+    const conditions: ReturnType<typeof eq>[] = []
+
+    if (filters.from && filters.from.length > 0) {
+      conditions.push(gte(expense.date, filters.from))
+    }
+    if (filters.to && filters.to.length > 0) {
+      conditions.push(lte(expense.date, filters.to))
+    }
+
+    const descTrimmed = typeof filters.description === 'string' ? filters.description.trim() : ''
+    if (descTrimmed.length > 0) {
+      conditions.push(sql`lower(${expense.description}) like lower(${'%' + descTrimmed + '%'})`)
+    }
+
+    if (filters.categoryId && filters.categoryId.length > 0) {
+      conditions.push(eq(expense.categoryId, filters.categoryId))
+    }
+
+    const activeTagIds =
+      Array.isArray(filters.tagIds) && filters.tagIds.length > 0 ? filters.tagIds : null
+
+    if (activeTagIds !== null) {
+      if (filters.tagMode === 'and') {
+        // AND: expense must have all of the listed tags.
+        // Use a subquery that finds expenses lacking any of the required tags.
+        const expensesWithAllTags = db
+          .select({ expenseId: expenseTag.expenseId })
+          .from(expenseTag)
+          .where(inArray(expenseTag.tagId, activeTagIds))
+          .groupBy(expenseTag.expenseId)
+          .having(sql`count(distinct ${expenseTag.tagId}) = ${activeTagIds.length}`)
+        const subqueryRows = await expensesWithAllTags
+        if (subqueryRows.length === 0) {
+          return Result.ok([])
+        }
+        const matchingIds = subqueryRows.map((r) => r.expenseId)
+        conditions.push(inArray(expense.id, matchingIds))
+      } else {
+        // OR (default): expense must have at least one of the listed tags.
+        const orSubquery = db
+          .select({ expenseId: expenseTag.expenseId })
+          .from(expenseTag)
+          .where(inArray(expenseTag.tagId, activeTagIds))
+        const orRows = await orSubquery
+        if (orRows.length === 0) {
+          return Result.ok([])
+        }
+        const matchingIds = [...new Set(orRows.map((r) => r.expenseId))]
+        conditions.push(inArray(expense.id, matchingIds))
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
     const rows = await db
       .select({
         id: expense.id,
@@ -152,7 +210,7 @@ const listExpensesActual = async (
       })
       .from(expense)
       .innerJoin(category, eq(category.id, expense.categoryId))
-      .where(and(gte(expense.date, filters.from), lte(expense.date, filters.to)))
+      .where(whereClause)
       .orderBy(desc(expense.date), asc(sql`lower(${expense.description})`))
 
     if (rows.length === 0) {

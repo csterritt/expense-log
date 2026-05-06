@@ -12,6 +12,7 @@ import {
   parseCategoryMergeConfirm,
   parseCategoryRename,
   parseExpenseCreate,
+  parseExpenseListFilters,
   parseNewCategoryName,
   parseTagCsv,
   parseTagCreate,
@@ -483,5 +484,126 @@ describe('tag management validators', () => {
         assert.ok(r.error.id)
       }
     })
+  })
+})
+
+describe('parseExpenseListFilters (Issue 11)', () => {
+  it('reports hasFilterParams false when no params are present', () => {
+    const r = parseExpenseListFilters({})
+    assert.strictEqual(r.hasFilterParams, false)
+    assert.deepStrictEqual(r.filters.tagIds, [])
+    assert.strictEqual(r.filters.tagMode, 'or')
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('reports hasFilterParams true when at least one param is present', () => {
+    const r = parseExpenseListFilters({ description: '' })
+    assert.strictEqual(r.hasFilterParams, true)
+  })
+
+  it('trims description and returns it when non-empty', () => {
+    const r = parseExpenseListFilters({ description: '  Lunch  ' })
+    assert.strictEqual(r.filters.description, 'Lunch')
+  })
+
+  it('treats whitespace-only description as absent (no filter applied)', () => {
+    const r = parseExpenseListFilters({ description: '   ' })
+    assert.strictEqual(r.filters.description, undefined)
+  })
+
+  it('parses a valid from date', () => {
+    const r = parseExpenseListFilters({ from: '2024-03-01' })
+    assert.strictEqual(r.filters.from, '2024-03-01')
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('returns a field error for a bad from date', () => {
+    const r = parseExpenseListFilters({ from: '2024-13-99' })
+    assert.strictEqual(r.filters.from, undefined)
+    assert.ok(r.fieldErrors.date)
+  })
+
+  it('parses a valid to date', () => {
+    const r = parseExpenseListFilters({ to: '2024-12-31' })
+    assert.strictEqual(r.filters.to, '2024-12-31')
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('returns a field error for a bad to date', () => {
+    const r = parseExpenseListFilters({ to: 'not-a-date' })
+    assert.strictEqual(r.filters.to, undefined)
+    assert.ok(r.fieldErrors.date)
+  })
+
+  it('open-from: only from set, to absent', () => {
+    const r = parseExpenseListFilters({ from: '2024-01-01' })
+    assert.strictEqual(r.filters.from, '2024-01-01')
+    assert.strictEqual(r.filters.to, undefined)
+  })
+
+  it('open-to: only to set, from absent', () => {
+    const r = parseExpenseListFilters({ to: '2024-12-31' })
+    assert.strictEqual(r.filters.to, '2024-12-31')
+    assert.strictEqual(r.filters.from, undefined)
+  })
+
+  it('both-set: from and to both present', () => {
+    const r = parseExpenseListFilters({ from: '2024-01-01', to: '2024-12-31' })
+    assert.strictEqual(r.filters.from, '2024-01-01')
+    assert.strictEqual(r.filters.to, '2024-12-31')
+  })
+
+  it('both-absent: from and to both undefined', () => {
+    const r = parseExpenseListFilters({})
+    assert.strictEqual(r.filters.from, undefined)
+    assert.strictEqual(r.filters.to, undefined)
+  })
+
+  it('collects and deduplicates multiple tagId values', () => {
+    const r = parseExpenseListFilters({ tagId: ['id-1', 'id-2', 'id-1'] })
+    assert.deepStrictEqual(r.filters.tagIds, ['id-1', 'id-2'])
+  })
+
+  it('handles a single tagId string', () => {
+    const r = parseExpenseListFilters({ tagId: 'single-id' })
+    assert.deepStrictEqual(r.filters.tagIds, ['single-id'])
+  })
+
+  it('tagMode defaults to or when absent', () => {
+    const r = parseExpenseListFilters({})
+    assert.strictEqual(r.filters.tagMode, 'or')
+  })
+
+  it('tagMode accepts or explicitly', () => {
+    const r = parseExpenseListFilters({ tagMode: 'or' })
+    assert.strictEqual(r.filters.tagMode, 'or')
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('tagMode accepts and', () => {
+    const r = parseExpenseListFilters({ tagMode: 'and' })
+    assert.strictEqual(r.filters.tagMode, 'and')
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('tagMode rejects unknown values', () => {
+    const r = parseExpenseListFilters({ tagMode: 'xor' })
+    assert.ok(r.fieldErrors.tags)
+    assert.strictEqual(r.filters.tagMode, 'or')
+  })
+
+  it('categoryId is parsed when present', () => {
+    const r = parseExpenseListFilters({ categoryId: 'cat-1' })
+    assert.strictEqual(r.filters.categoryId, 'cat-1')
+  })
+
+  it('non-string categoryId (absent) produces no categoryId', () => {
+    const r = parseExpenseListFilters({})
+    assert.strictEqual(r.filters.categoryId, undefined)
+  })
+
+  it('empty categoryId is treated as absent', () => {
+    const r = parseExpenseListFilters({ categoryId: '  ' })
+    assert.strictEqual(r.filters.categoryId, undefined)
   })
 })

@@ -482,6 +482,141 @@ export const parseTagDelete = (raw: RawTagDelete): Result<ParsedTagDelete, Field
   return Result.ok({ id: id.value })
 }
 
+// ---------- Expense list filter parser (Issue 11) ----------
+
+/**
+ * Raw query-string values from the expense list filter bar.
+ * All fields are optional; repeated `tagId` values are passed as an array.
+ */
+export type RawExpenseListFilters = {
+  description?: string
+  from?: string
+  to?: string
+  categoryId?: string
+  tagId?: string | string[]
+  tagMode?: string
+}
+
+/**
+ * Normalized output from `parseExpenseListFilters`.
+ */
+export type ParsedExpenseListFilters = {
+  description?: string
+  from?: string
+  to?: string
+  categoryId?: string
+  tagIds: string[]
+  tagMode: 'or' | 'and'
+}
+
+/**
+ * Result of parsing the expense list filter query string.
+ * `hasFilterParams` is true when any filter query parameter was present in the
+ * raw input, so the route layer can apply the default date window on first load
+ * only when this is false.
+ */
+export type ExpenseListFilterResult = {
+  hasFilterParams: boolean
+  filters: ParsedExpenseListFilters
+  fieldErrors: FieldErrors
+}
+
+/**
+ * Parse and normalise the expense-list filter query string.
+ *
+ * - `description`: trimmed; empty/whitespace becomes "filter not applied"
+ * - `from`/`to`: each independently optional; validated as `YYYY-MM-DD`
+ * - `categoryId`: optional string; non-string values rejected
+ * - `tagId`: repeated param collapsed into deduplicated array
+ * - `tagMode`: defaults to `'or'`; only `'or'` and `'and'` accepted
+ *
+ * `hasFilterParams` is `true` when at least one filter key was present in
+ * `raw` (even if its value is empty/invalid), so the route can distinguish a
+ * fresh first load from an explicit filter submission.
+ */
+export const parseExpenseListFilters = (raw: RawExpenseListFilters): ExpenseListFilterResult => {
+  const FILTER_KEYS: Array<keyof RawExpenseListFilters> = [
+    'description',
+    'from',
+    'to',
+    'categoryId',
+    'tagId',
+    'tagMode',
+  ]
+  const hasFilterParams = FILTER_KEYS.some((k) => raw[k] !== undefined)
+
+  const fieldErrors: FieldErrors = {}
+
+  const descriptionTrimmed =
+    typeof raw.description === 'string' ? raw.description.trim() : undefined
+  const description =
+    descriptionTrimmed !== undefined && descriptionTrimmed.length > 0
+      ? descriptionTrimmed
+      : undefined
+
+  let from: string | undefined
+  if (typeof raw.from === 'string' && raw.from.trim().length > 0) {
+    const trimmed = raw.from.trim()
+    if (isValidYmd(trimmed)) {
+      from = trimmed
+    } else {
+      fieldErrors.date = 'From date must be a valid date (YYYY-MM-DD).'
+    }
+  }
+
+  let to: string | undefined
+  if (typeof raw.to === 'string' && raw.to.trim().length > 0) {
+    const trimmed = raw.to.trim()
+    if (isValidYmd(trimmed)) {
+      to = trimmed
+    } else {
+      fieldErrors.date = fieldErrors.date
+        ? fieldErrors.date
+        : 'To date must be a valid date (YYYY-MM-DD).'
+    }
+  }
+
+  let categoryId: string | undefined
+  if (typeof raw.categoryId === 'string' && raw.categoryId.trim().length > 0) {
+    categoryId = raw.categoryId.trim()
+  }
+
+  const tagIdRaw = raw.tagId
+  const rawTagIds: string[] = Array.isArray(tagIdRaw)
+    ? tagIdRaw
+    : typeof tagIdRaw === 'string'
+      ? [tagIdRaw]
+      : []
+  const seenTagIds = new Set<string>()
+  const tagIds: string[] = []
+  for (const t of rawTagIds) {
+    if (typeof t === 'string' && t.trim().length > 0 && !seenTagIds.has(t.trim())) {
+      seenTagIds.add(t.trim())
+      tagIds.push(t.trim())
+    }
+  }
+
+  let tagMode: 'or' | 'and' = 'or'
+  if (raw.tagMode === 'and') {
+    tagMode = 'and'
+  } else if (raw.tagMode !== undefined && raw.tagMode !== 'or' && raw.tagMode !== '') {
+    fieldErrors.tags = 'Tag mode must be "or" or "and".'
+  }
+
+  return {
+    hasFilterParams,
+    filters: {
+      description,
+      from,
+      to,
+      categoryId,
+      tagIds,
+      tagMode,
+    },
+    fieldErrors,
+  }
+}
+
 // ---------- Tag CSV (Issue 6) ----------
 
 /**

@@ -30,6 +30,7 @@ import {
   deleteCategory,
   deleteTag,
   findCategoryByName,
+  listExpenses,
   mergeCategory,
   mergeTag,
   renameCategory,
@@ -430,5 +431,282 @@ describe('tag repository helpers', () => {
       tags.map((r) => r.id),
       ['tag-2'],
     )
+  })
+})
+
+// ====================================
+// listExpenses filter tests (Issue 11)
+// ====================================
+
+const seedExpenseFull = async (
+  db: TestDb,
+  id: string,
+  categoryId: string,
+  date: string,
+  description: string,
+  amountCents = 100,
+): Promise<void> => {
+  const now = new Date()
+  await db.insert(expense).values({
+    id,
+    description,
+    amountCents,
+    categoryId,
+    date,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
+describe('listExpenses filters (Issue 11)', () => {
+  it('returns all expenses when no filters are set', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-03-01', 'Apple')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2024-02-01', 'Banana')
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id).sort()
+      assert.deepStrictEqual(ids, ['e1', 'e2'])
+    }
+  })
+
+  it('filters by from date (open-to)', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-03-15', 'March')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2024-01-10', 'January')
+
+    const result = await listExpenses(db, { from: '2024-03-01' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['e1'])
+    }
+  })
+
+  it('filters by to date (open-from)', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-03-15', 'March')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2024-01-10', 'January')
+
+    const result = await listExpenses(db, { to: '2024-02-01' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['e2'])
+    }
+  })
+
+  it('filters by both from and to dates', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-03-15', 'March')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2024-01-10', 'January')
+    await seedExpenseFull(db, 'e3', 'cat-1', '2024-02-20', 'February')
+
+    const result = await listExpenses(db, { from: '2024-02-01', to: '2024-03-10' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['e3'])
+    }
+  })
+
+  it('returns all when both from and to are absent', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2020-01-01', 'Old')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2025-12-31', 'Future')
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id).sort()
+      assert.deepStrictEqual(ids, ['e1', 'e2'])
+    }
+  })
+
+  it('filters description case-insensitively (substring match)', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-01-01', 'Grocery Store')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2024-01-02', 'GROCERY ONLINE')
+    await seedExpenseFull(db, 'e3', 'cat-1', '2024-01-03', 'Gas Station')
+
+    const result = await listExpenses(db, { description: 'grocery' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id).sort()
+      assert.deepStrictEqual(ids, ['e1', 'e2'])
+    }
+  })
+
+  it('treats empty/whitespace-only description as no filter', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-01-01', 'Alpha')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2024-01-02', 'Beta')
+
+    const result = await listExpenses(db, { description: '   ' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id).sort()
+      assert.deepStrictEqual(ids, ['e1', 'e2'])
+    }
+  })
+
+  it('filters by categoryId', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-food', 'food')
+    await seedCategory(db, 'cat-utils', 'utilities')
+    await seedExpenseFull(db, 'e1', 'cat-food', '2024-01-01', 'Lunch')
+    await seedExpenseFull(db, 'e2', 'cat-utils', '2024-01-01', 'Electric')
+
+    const result = await listExpenses(db, { categoryId: 'cat-food' })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['e1'])
+    }
+  })
+
+  it('tagMode or returns expenses with any of the listed tags', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-alpha', 'alpha')
+    await seedTag(db, 'tag-beta', 'beta')
+    await seedExpenseFull(db, 'e-none', 'cat-1', '2024-01-01', 'no tags')
+    await seedExpenseFull(db, 'e-alpha', 'cat-1', '2024-01-02', 'only alpha')
+    await seedExpenseFull(db, 'e-beta', 'cat-1', '2024-01-03', 'only beta')
+    await seedExpenseFull(db, 'e-both', 'cat-1', '2024-01-04', 'both tags')
+    await seedExpenseTag(db, 'e-alpha', 'tag-alpha')
+    await seedExpenseTag(db, 'e-beta', 'tag-beta')
+    await seedExpenseTag(db, 'e-both', 'tag-alpha')
+    await seedExpenseTag(db, 'e-both', 'tag-beta')
+
+    const result = await listExpenses(db, {
+      tagIds: ['tag-alpha', 'tag-beta'],
+      tagMode: 'or',
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id).sort()
+      assert.deepStrictEqual(ids, ['e-alpha', 'e-beta', 'e-both'])
+    }
+  })
+
+  it('tagMode and returns only expenses with all listed tags', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-alpha', 'alpha')
+    await seedTag(db, 'tag-beta', 'beta')
+    await seedExpenseFull(db, 'e-none', 'cat-1', '2024-01-01', 'no tags')
+    await seedExpenseFull(db, 'e-alpha', 'cat-1', '2024-01-02', 'only alpha')
+    await seedExpenseFull(db, 'e-beta', 'cat-1', '2024-01-03', 'only beta')
+    await seedExpenseFull(db, 'e-both', 'cat-1', '2024-01-04', 'both tags')
+    await seedExpenseTag(db, 'e-alpha', 'tag-alpha')
+    await seedExpenseTag(db, 'e-beta', 'tag-beta')
+    await seedExpenseTag(db, 'e-both', 'tag-alpha')
+    await seedExpenseTag(db, 'e-both', 'tag-beta')
+
+    const result = await listExpenses(db, {
+      tagIds: ['tag-alpha', 'tag-beta'],
+      tagMode: 'and',
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['e-both'])
+    }
+  })
+
+  it('tagMode and is meaningfully different from or', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-alpha', 'alpha')
+    await seedTag(db, 'tag-beta', 'beta')
+    await seedExpenseFull(db, 'e-alpha', 'cat-1', '2024-01-02', 'only alpha')
+    await seedExpenseFull(db, 'e-beta', 'cat-1', '2024-01-03', 'only beta')
+    await seedExpenseFull(db, 'e-both', 'cat-1', '2024-01-04', 'both tags')
+    await seedExpenseTag(db, 'e-alpha', 'tag-alpha')
+    await seedExpenseTag(db, 'e-beta', 'tag-beta')
+    await seedExpenseTag(db, 'e-both', 'tag-alpha')
+    await seedExpenseTag(db, 'e-both', 'tag-beta')
+
+    const orResult = await listExpenses(db, {
+      tagIds: ['tag-alpha', 'tag-beta'],
+      tagMode: 'or',
+    })
+    const andResult = await listExpenses(db, {
+      tagIds: ['tag-alpha', 'tag-beta'],
+      tagMode: 'and',
+    })
+    assert.strictEqual(orResult.isOk, true)
+    assert.strictEqual(andResult.isOk, true)
+    if (orResult.isOk && andResult.isOk) {
+      assert.strictEqual(orResult.value.length, 3)
+      assert.strictEqual(andResult.value.length, 1)
+    }
+  })
+
+  it('combines filters with AND across fields', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-food', 'food')
+    await seedCategory(db, 'cat-utils', 'utilities')
+    await seedTag(db, 'tag-alpha', 'alpha')
+    await seedExpenseFull(db, 'e1', 'cat-food', '2024-03-01', 'Lunch grocery')
+    await seedExpenseFull(db, 'e2', 'cat-food', '2024-01-01', 'Lunch old')
+    await seedExpenseFull(db, 'e3', 'cat-utils', '2024-03-01', 'Lunch utilities')
+    await seedExpenseFull(db, 'e4', 'cat-food', '2024-03-01', 'Dinner grocery')
+    await seedExpenseTag(db, 'e1', 'tag-alpha')
+    await seedExpenseTag(db, 'e4', 'tag-alpha')
+
+    const result = await listExpenses(db, {
+      from: '2024-02-01',
+      description: 'lunch',
+      categoryId: 'cat-food',
+      tagIds: ['tag-alpha'],
+      tagMode: 'or',
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['e1'])
+    }
+  })
+
+  it('result ordering is date desc then case-insensitive description asc', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-03-01', 'Beta')
+    await seedExpenseFull(db, 'e2', 'cat-1', '2024-03-01', 'alpha')
+    await seedExpenseFull(db, 'e3', 'cat-1', '2024-02-01', 'Gamma')
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['e2', 'e1', 'e3'])
+    }
+  })
+
+  it('tag names are returned alphabetically sorted per row', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-z', 'zzz')
+    await seedTag(db, 'tag-a', 'aaa')
+    await seedExpenseFull(db, 'e1', 'cat-1', '2024-01-01', 'Lunch')
+    await seedExpenseTag(db, 'e1', 'tag-z')
+    await seedExpenseTag(db, 'e1', 'tag-a')
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.deepStrictEqual(result.value[0]?.tagNames, ['aaa', 'zzz'])
+    }
   })
 })

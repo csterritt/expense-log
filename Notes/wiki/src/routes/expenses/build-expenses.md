@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Route builder for the expenses page (`/expenses`) — the post-sign-in landing page that replaced the legacy `/private` route. Issue 02 added the date-filtered list rendering. Issue 03 added the entry form and POST handler. Issue 04 replaced the local `validateExpenseForm` helper with the shared [`parseExpenseCreate`](../../lib/expense-validators.md) and added per-field error rendering plus sticky values via the [`form-state`](../../lib/form-state.md) flash helper. Issue 05 swapped the category `<select>` for a free-form text input and added the inline-category-creation flow: typed names that don't match an existing category route through a consolidated confirmation page before any DB writes happen. Issue 06 added a tags CSV input alongside the category input, generalised the confirmation page to a *Confirm new items* view that lists every new name (categories + tags) the submission would create, and renamed the confirm POST to `/expenses/confirm-create-new`. Issue 08 extracted the entry-form JSX and the *Confirm new items* JSX into the shared [`expense-form.tsx`](expense-form.md) module (so the new edit flow can reuse them in `mode='edit'`), added a row-level Edit button (`expense-row-edit`) per list row that links to `/expenses/:id/edit`, and added a corresponding empty `<th></th>` to keep the header column count aligned.
+Route builder for the expenses page (`/expenses`) — the post-sign-in landing page that replaced the legacy `/private` route. Issue 02 added the date-filtered list rendering. Issue 03 added the entry form and POST handler. Issue 04 replaced the local `validateExpenseForm` helper with the shared [`parseExpenseCreate`](../../lib/expense-validators.md) and added per-field error rendering plus sticky values via the [`form-state`](../../lib/form-state.md) flash helper. Issue 05 swapped the category `<select>` for a free-form text input and added the inline-category-creation flow: typed names that don't match an existing category route through a consolidated confirmation page before any DB writes happen. Issue 06 added a tags CSV input alongside the category input, generalised the confirmation page to a *Confirm new items* view that lists every new name (categories + tags) the submission would create, and renamed the confirm POST to `/expenses/confirm-create-new`. Issue 08 extracted the entry-form JSX and the *Confirm new items* JSX into the shared [`expense-form.tsx`](expense-form.md) module (so the new edit flow can reuse them in `mode='edit'`), added a row-level Edit button (`expense-row-edit`) per list row that links to `/expenses/:id/edit`, and added a corresponding empty `<th></th>` to keep the header column count aligned. Issue 11 added the filter bar with description, date range, category dropdown, and tag checkboxes (OR/AND mode).
 
 ## Export
 
@@ -19,17 +19,19 @@ Registers three routes, all gated by `signedInAccess` and wrapped in `secureHead
 ### Internal helpers
 
 - The entry-form and confirm-page JSX live in [`expense-form.tsx`](expense-form.md) as of Issue 08; this module just calls `renderExpenseForm({ mode: 'create', action: PATHS.EXPENSES, ... })` and `renderConfirmNewItems({ mode: 'create', action: '/expenses/confirm-create-new', ... })`. The previous `renderEntryForm` / `renderConfirmCreateNew` private helpers were removed in that refactor.
+- `renderFilterBar(categories, tags, activeFilters, filterErrors)` — pure view helper (Issue 11). Renders a form with description input, from/to date inputs, category dropdown, tag checkboxes with OR/AND mode radio buttons, and a Filter submit button. Shows a "Clear filters" link when any filter is active. Reflects active filter values in form inputs.
 - `renderExpenseTable(rows)` — pure view helper. Each row is an `expense-row` with cells for `expense-row-{date,description,category,tags,amount}` plus (Issue 08) a final cell containing `<a data-testid='expense-row-edit' href='/expenses/:id/edit' class='btn btn-sm'>Edit</a>`. The table header carries an empty `<th></th>` to balance the column count.
 - `readRawBody(c)` — small helper that runs `c.req.parseBody()` and coerces each known field (`description`, `amount`, `date`, `category`, `tags`, `action`) to a defaulted string.
 - `emptyState(today)` — default entry-form state for first-page loads and post-success redirects.
 
 ### GET behaviour
 
-1. Calls `defaultRangeEt()` to compute the default `[from, to]` window (current month plus the previous two ET months).
-2. Runs `listExpenses(db, range)` only — Issue 05 removed the `listCategories` call because the category field is now a free-form text input.
-3. If the `Result` is `Err`, calls `redirectWithError` to send the user to `/auth/sign-in` with the message `'Failed to load expenses. Please try again.'`.
-4. Calls `readAndClearFormState(c)` to consume any single-use flash payload set by a prior failed POST or Cancel. If present, its `fieldErrors` and `values` populate the form state (with the date value falling back to `todayEt()` when the flash didn't include one).
-5. Renders the entry form above the empty state or list table.
+1. Parses query string via `parseExpenseListFilters` to extract filter parameters (description, from, to, categoryId, tagId[], tagMode). Returns `hasFilterParams` flag to distinguish first load from explicit filter submission.
+2. When `hasFilterParams` is false, applies default 2-month window via `defaultRangeEt()`; otherwise uses parsed filters.
+3. Calls `listExpenses(db, activeFilters)`, `listCategories(db)`, and `listTags(db)` to fetch data for the list table and filter bar.
+4. If any `Result` is `Err`, calls `redirectWithError` to send the user to `/auth/sign-in` with the message `'Failed to load expenses. Please try again.'`.
+5. Calls `readAndClearFormState(c)` to consume any single-use flash payload set by a prior failed POST or Cancel. If present, its `fieldErrors` and `values` populate the form state (with the date value falling back to `todayEt()` when the flash didn't include one).
+6. Renders the entry form, filter bar (with active filters reflected), and empty state or list table.
 
 ### POST `/expenses` behaviour
 
@@ -62,6 +64,7 @@ Registers three routes, all gated by `signedInAccess` and wrapped in `secureHead
   - `expense-form-tags` — Issue 06 added a single text input named `tags` (CSV). Optional, `maxLength={(tagNameMax + 2) * 8}` (sized for ~8 max-length tags + separators), placeholder `'e.g. food, groceries'`. Sticky value comes straight from `state.values.tags` (the raw typed CSV, including duplicates and original casing).
   - `expense-form-create` — submit button.
   - Each field also renders `expense-form-{field}-error` next to the input when a matching error is present (`description`, `amount`, `date`, `category`, `tags`).
+- Filter bar (Issue 11, `data-testid='expense-filter-bar'`): GET form with description text input, from/to date inputs, category dropdown with "All categories" option, tag checkboxes (only shown when tags exist), OR/AND mode radio buttons, Filter submit button, and Clear filters link (only shown when filters are active).
 - Below the form: empty state (`expenses-empty-state`) when there are no rows, otherwise the Issue 02 `expenses-table` with `expense-row`/`expense-row-*` cells. Each row's `expense-row-tags` cell shows the alphabetised tag list (or empty span when no tags).
 - Confirmation page (rendered inline on any-new POSTs, no redirect): `confirm-create-new-page` wrapper, `confirm-create-new-list` containing zero-or-one `confirm-create-new-category-line` and zero-or-more alphabetised `confirm-create-new-tag-line`s, five `confirm-create-new-{description,amount,date,category,tags}` `<dd>`s mirror the typed/normalised values, and the form's two submit buttons share `name='action'` with values `'confirm'` and `'cancel'` (testids `confirm-create-new-confirm` and `confirm-create-new-cancel`).
 - The global flash-message banner rendered by `useLayout` still fires for success (`Expense added.`) and generic DB-error paths; per-field validation errors are rendered inline at the inputs rather than as a single combined banner.

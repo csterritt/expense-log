@@ -25,10 +25,16 @@ interface ExpenseRow {
 
 ```ts
 interface ListExpenseFilters {
-  from: string
-  to: string
+  from?: string
+  to?: string
+  description?: string
+  categoryId?: string
+  tagIds?: string[]
+  tagMode?: 'or' | 'and'
 }
 ```
+
+Added in Issue 11 for the expense list filter bar. All fields are optional.
 
 ### `CategoryRow`
 
@@ -66,8 +72,17 @@ interface CreateCategoryAndExpenseInput {
 ### `listExpenses(db, filters): Promise<Result<ExpenseRow[], Error>>`
 
 - Public wrapper: calls `withRetry('listExpenses', () => listExpensesActual(db, filters))`.
-- Private `listExpensesActual` joins `expense` -> `category` to fetch the category name, filters by `expense.date BETWEEN filters.from AND filters.to` (inclusive), and sorts by `date DESC`, then `lower(description) ASC` for the case-insensitive tiebreak.
+- Private `listExpensesActual` joins `expense` -> `category` to fetch the category name. Filters by:
+  - `expense.date >= filters.from` (when provided)
+  - `expense.date <= filters.to` (when provided)
+  - `lower(description) LIKE lower('%description%')` (case-insensitive substring, when provided)
+  - `categoryId` exact match (when provided)
+  - Tag filtering: when `tagIds` provided, uses subqueries on `expenseTag`:
+    - `tagMode === 'and'`: expense must have all listed tags (uses `GROUP BY expenseId HAVING count(distinct tagId) = N`)
+    - `tagMode === 'or'` (default): expense must have at least one listed tag
+- Sorts by `date DESC`, then `lower(description) ASC` for the case-insensitive tiebreak.
 - Hydrates `tagNames` via a single secondary query that joins `expenseTag` -> `tag`, grouped by `expenseId` in a `Map`.
+- Issue 11 extended the filter support from simple date ranges to the full filter bar.
 
 ### `listCategories(db): Promise<Result<CategoryRow[], Error>>`
 
