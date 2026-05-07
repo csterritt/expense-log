@@ -2,6 +2,18 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-05-07] ingest | Issue 12 summary page
+
+Ingested the Issue 12 summary page implementation.
+
+- **`src/lib/et-date.ts`**: added `monthKeyEt(ymd)` and `yearKeyEt(ymd)` helpers that extract `YYYY-MM` and `YYYY` prefixes from valid `YYYY-MM-DD` ET-anchored date strings. Both use pure string slicing, reuse `isValidYmd` for validation, and are designed for stable lexicographic sorting in the `summarize` Date grouping.
+- **`src/lib/db/expense-access.ts`**: added `SummaryRow` interface (`dateKey`, `categoryName`, `tagName`, `totalCents`, `count`), `SummarizeFilters` interface (`groupBy`, `from`, `to`, optional `categoryId`/`tagIds`/`tagMode`), and `summarize(db, filters)` helper. The implementation selects expenses within the date range (with optional category/tag filtering), uses `monthKeyEt`/`yearKeyEt` to extract date keys, applies tag double-counting (expenses with N tags contribute fully to each of their N tag rows), groups by composite key `${dateKey}|${categoryName}|${tagName}`, and returns rows sorted lexicographically.
+- **`src/lib/expense-validators.ts`**: added `RawSummaryQuery`, `ParsedSummaryQuery` types and `parseSummaryQuery(raw)` validator. Parses query-string params with defaults (`groupBy: 'month'`, date range via `defaultRangeEt()`), validates `from`/`to` as `YYYY-MM-DD`, enforces `from <= to`, collapses repeated `tagId` params into a de-duplicated array, and returns per-field errors on validation failure.
+- **`src/routes/build-summary.tsx`**: replaced the placeholder with a full implementation. GET handler parses the query string via `parseSummaryQuery`, calls `summarize` in parallel with `listCategories`/`listTags`, and renders a filter bar (group-by selector, from/to dates, category dropdown, tag checkboxes with Any/All mode, Apply button) plus a summary table (Date/Category/Tag/Total/Count columns, grand total footer, empty state). All inputs use controlled `value`/`selected`/`checked` attributes; form uses GET submission for URL-based state.
+- **Unit tests**: `tests/et-date.spec.ts` added coverage for `monthKeyEt` and `yearKeyEt` (DST boundaries, month/year edges, invalid input rejection). `tests/expense-access.spec.ts` added `summarize` test block covering category/date/tag grouping, tag double-counting, date-range filtering, and empty sets. `tests/expense-validators.spec.ts` added `parseSummaryQuery` test block covering defaults, validation, and edge cases.
+- **E2E specs**: two new specs under `e2e-tests/expenses/`: `16-summary-default-and-grouping.spec.ts` (5 tests covering first load, default month grouping, year grouping switch, grand total, category dropdown) and `17-summary-date-range-and-empty.spec.ts` (5 tests covering date-range filtering, empty states, category filter, tag filter).
+- **Wiki pages updated**: `src/lib/et-date.md` (added `monthKeyEt`/`yearKeyEt` sections + cross-references), `src/lib/db/expense-access.md` (added `SummaryRow`, `SummarizeFilters`, `summarize` sections + cross-reference), `src/lib/expense-validators.md` (added summary query parser section + cross-reference), `src/routes/build-summary.md` (full rewrite from placeholder), `e2e-tests.md` (count 60 → 62, added two spec entries).
+
 ## [2026-05-07] ingest | Issue 11 expense list filter bar
 
 Ingested the Issue 11 expense-list filtering implementation.

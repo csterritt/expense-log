@@ -6,7 +6,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
 
-import { todayEt, defaultRangeEt, isValidYmd } from '../src/lib/et-date'
+import { todayEt, defaultRangeEt, isValidYmd, monthKeyEt, yearKeyEt } from '../src/lib/et-date'
 
 describe('todayEt', () => {
   it('returns ET date just before EST->EDT spring-forward boundary', () => {
@@ -98,5 +98,45 @@ describe('isValidYmd', () => {
   it('accepts ordinary dates', () => {
     assert.strictEqual(isValidYmd('2024-01-01'), true)
     assert.strictEqual(isValidYmd('1999-12-31'), true)
+  })
+})
+
+describe('monthKeyEt', () => {
+  it('returns YYYY-MM prefix for a valid date', () => {
+    assert.strictEqual(monthKeyEt('2024-03-15'), '2024-03')
+  })
+
+  it('returns YYYY-MM for January', () => {
+    assert.strictEqual(monthKeyEt('2024-01-01'), '2024-01')
+  })
+
+  it('returns YYYY-MM for December', () => {
+    assert.strictEqual(monthKeyEt('2024-12-31'), '2024-12')
+  })
+
+  it('throws on invalid date', () => {
+    assert.throws(() => monthKeyEt('2024-13-01'))
+  })
+
+  it('throws on empty string', () => {
+    assert.throws(() => monthKeyEt(''))
+  })
+})
+
+describe('yearKeyEt', () => {
+  it('returns YYYY prefix for a valid date', () => {
+    assert.strictEqual(yearKeyEt('2024-03-15'), '2024')
+  })
+
+  it('returns YYYY for a different year', () => {
+    assert.strictEqual(yearKeyEt('1999-12-31'), '1999')
+  })
+
+  it('throws on invalid date', () => {
+    assert.throws(() => yearKeyEt('2024-13-01'))
+  })
+
+  it('throws on empty string', () => {
+    assert.throws(() => yearKeyEt(''))
   })
 })

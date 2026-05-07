@@ -14,6 +14,7 @@ import {
   parseExpenseCreate,
   parseExpenseListFilters,
   parseNewCategoryName,
+  parseSummaryQuery,
   parseTagCsv,
   parseTagCreate,
   parseTagDelete,
@@ -605,5 +606,109 @@ describe('parseExpenseListFilters (Issue 11)', () => {
   it('empty categoryId is treated as absent', () => {
     const r = parseExpenseListFilters({ categoryId: '  ' })
     assert.strictEqual(r.filters.categoryId, undefined)
+  })
+})
+
+describe('parseSummaryQuery (Issue 14)', () => {
+  it('defaults groupBy to month, from/to to defaultRangeEt', () => {
+    const r = parseSummaryQuery({})
+    assert.strictEqual(r.isOk, true)
+    if (r.isOk) {
+      assert.strictEqual(r.value.groupBy, 'month')
+      assert.ok(r.value.from.length === 10)
+      assert.ok(r.value.to.length === 10)
+      assert.ok(r.value.from <= r.value.to)
+      assert.deepStrictEqual(r.value.tagIds, [])
+      assert.strictEqual(r.value.tagMode, 'or')
+    }
+  })
+
+  it('accepts groupBy year', () => {
+    const r = parseSummaryQuery({ groupBy: 'year' })
+    assert.strictEqual(r.isOk, true)
+    if (r.isOk) {
+      assert.strictEqual(r.value.groupBy, 'year')
+    }
+  })
+
+  it('rejects invalid groupBy', () => {
+    const r = parseSummaryQuery({ groupBy: 'week' })
+    assert.strictEqual(r.isErr, true)
+    if (r.isErr) {
+      assert.ok(r.error.groupBy)
+    }
+  })
+
+  it('parses valid from and to dates', () => {
+    const r = parseSummaryQuery({ from: '2024-01-01', to: '2024-03-31' })
+    assert.strictEqual(r.isOk, true)
+    if (r.isOk) {
+      assert.strictEqual(r.value.from, '2024-01-01')
+      assert.strictEqual(r.value.to, '2024-03-31')
+    }
+  })
+
+  it('rejects invalid from date', () => {
+    const r = parseSummaryQuery({ from: '2024-13-99' })
+    assert.strictEqual(r.isErr, true)
+    if (r.isErr) {
+      assert.ok(r.error.date)
+    }
+  })
+
+  it('rejects invalid to date', () => {
+    const r = parseSummaryQuery({ to: 'not-a-date' })
+    assert.strictEqual(r.isErr, true)
+    if (r.isErr) {
+      assert.ok(r.error.date)
+    }
+  })
+
+  it('rejects from after to', () => {
+    const r = parseSummaryQuery({ from: '2024-12-31', to: '2024-01-01' })
+    assert.strictEqual(r.isErr, true)
+    if (r.isErr) {
+      assert.ok(r.error.date)
+    }
+  })
+
+  it('parses categoryId', () => {
+    const r = parseSummaryQuery({ categoryId: 'cat-1' })
+    assert.strictEqual(r.isOk, true)
+    if (r.isOk) {
+      assert.strictEqual(r.value.categoryId, 'cat-1')
+    }
+  })
+
+  it('collects and deduplicates tagIds', () => {
+    const r = parseSummaryQuery({ tagId: ['id-1', 'id-2', 'id-1'] })
+    assert.strictEqual(r.isOk, true)
+    if (r.isOk) {
+      assert.deepStrictEqual(r.value.tagIds, ['id-1', 'id-2'])
+    }
+  })
+
+  it('defaults tagMode to or', () => {
+    const r = parseSummaryQuery({})
+    assert.strictEqual(r.isOk, true)
+    if (r.isOk) {
+      assert.strictEqual(r.value.tagMode, 'or')
+    }
+  })
+
+  it('accepts tagMode and', () => {
+    const r = parseSummaryQuery({ tagMode: 'and' })
+    assert.strictEqual(r.isOk, true)
+    if (r.isOk) {
+      assert.strictEqual(r.value.tagMode, 'and')
+    }
+  })
+
+  it('rejects invalid tagMode', () => {
+    const r = parseSummaryQuery({ tagMode: 'xor' })
+    assert.strictEqual(r.isErr, true)
+    if (r.isErr) {
+      assert.ok(r.error.tags)
+    }
   })
 })

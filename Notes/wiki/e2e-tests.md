@@ -1,6 +1,6 @@
 # E2E Tests Catalog
 
-Catalog of all Playwright end-to-end tests under `e2e-tests/` (60 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
+Catalog of all Playwright end-to-end tests under `e2e-tests/` (62 spec files + 11 support files), organized by feature area. Each file links to its individual wiki page.
 
 ## Support utilities (`e2e-tests/support/`)
 
@@ -50,6 +50,8 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (60 spec files + 1
 - [e2e-tests/expenses/14-filter-description-dates.spec.ts](./e2e-tests/expenses/14-filter-description-dates.spec.md) — Issue 11. Filter bar rendering; first-load default 2-month window; description substring/case-insensitive search; from-only, to-only, both, neither date filters; filter values reflected in inputs after submit.
 - [e2e-tests/expenses/15-filter-category-tags.spec.ts](./e2e-tests/expenses/15-filter-category-tags.spec.md) — Issue 11. Category dropdown filters to matching category; all-categories option returns all; tag checkboxes visible when tags exist; tag OR returns expenses with any selected tag; tag AND returns only expenses with all selected tags; tag selection persists.
 - [e2e-tests/expenses/16-filter-combined-clear.spec.ts](./e2e-tests/expenses/16-filter-combined-clear.spec.md) — Issue 11. Combined description + from + category filter; Clear filters absent on first load; Clear appears after applying a filter; Clear link navigates to unfiltered page and resets inputs; no-match yields empty state; Clear after no-match restores results; description + tag OR is additive AND between both fields.
+- [e2e-tests/expenses/16-summary-default-and-grouping.spec.ts](./e2e-tests/expenses/16-summary-default-and-grouping.spec.md) — Issue 12. Summary page first load shows filter bar and table; default grouping by month with correct aggregates; switching to year grouping shows yearly aggregates; grand total row shows correct aggregates; filter bar shows category dropdown with seeded categories.
+- [e2e-tests/expenses/17-summary-date-range-and-empty.spec.ts](./e2e-tests/expenses/17-summary-date-range-and-empty.spec.md) — Issue 12. Date range filter narrows results to matching period; empty state shown when no expenses match filters; empty state shown when no expenses exist at all; category filter narrows results to matching category; tag filter narrows results to matching tag.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 

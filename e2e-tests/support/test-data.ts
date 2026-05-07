@@ -121,4 +121,5 @@ export const BASE_URLS = {
   SIGN_OUT: 'http://localhost:3000/auth/sign-out',
   PROFILE: 'http://localhost:3000/profile',
   PROFILE_DELETE_CONFIRM: 'http://localhost:3000/profile/delete-confirm',
+  SUMMARY: 'http://localhost:3000/summary',
 } as const

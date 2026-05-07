@@ -82,6 +82,7 @@ Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the 
 - [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — entry-form POST handler that consumes `parseExpenseCreate`.
 - [../routes/build-categories.md](../routes/build-categories.md) — category-management POST handlers consuming Issue 09 validators.
 - [../routes/build-tags.md](../routes/build-tags.md) — tag-management POST handlers consuming Issue 10 validators.
+- [../routes/build-summary.md](../routes/build-summary.md) — summary page GET handler consuming `parseSummaryQuery` (Issue 12).
 - [../../tests/expense-validators.spec.md](../../tests/expense-validators.spec.md) — unit coverage.
 
 ---
