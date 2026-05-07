@@ -17,16 +17,20 @@ import { signedInAccess } from '../../middleware/signed-in-access'
 import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import {
   listExpenses,
-  listCategories,
-  listTags,
   createExpenseWithTags,
-  findCategoryByName,
-  findTagsByNames,
   createManyAndExpense,
-  type CategoryRow,
   type ExpenseRow,
-  type TagRow,
 } from '../../lib/db/expense-access'
+import {
+  listCategories,
+  findCategoryByName,
+  type CategoryRow,
+} from '../../lib/db/category-access'
+import {
+  listTags,
+  findTagsByNames,
+  type TagRow,
+} from '../../lib/db/tag-access'
 import { formatCents } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {

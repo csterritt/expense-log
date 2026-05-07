@@ -22,21 +22,24 @@ import { describe, it } from 'bun:test'
 import { and, eq, ne, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/bun-sqlite'
 import assert from 'node:assert'
+import { Result } from 'true-myth'
 
 import { category, expense, expenseTag, recurring, tag, schema } from '../src/db/schema'
+import { listExpenses } from '../src/lib/db/expense-access'
 import {
   createCategory,
-  createTag,
   deleteCategory,
-  deleteTag,
   findCategoryByName,
-  listExpenses,
   mergeCategory,
-  mergeTag,
   renameCategory,
+} from '../src/lib/db/category-access'
+import {
+  createTag,
+  deleteTag,
+  mergeTag,
   renameTag,
-  summarize,
-} from '../src/lib/db/expense-access'
+} from '../src/lib/db/tag-access'
+import { summarize } from '../src/lib/db/summary-access'
 import type { DrizzleClient } from '../src/local-types'
 
 type RunnableQuery = {

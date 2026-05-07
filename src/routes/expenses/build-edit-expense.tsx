@@ -16,14 +16,18 @@ import { useLayout } from '../build-layout'
 import { signedInAccess } from '../../middleware/signed-in-access'
 import {
   getExpenseById,
-  listCategories,
-  listTags,
-  findCategoryByName,
-  findTagsByNames,
   updateExpenseWithTags,
   updateManyAndExpense,
   deleteExpense,
 } from '../../lib/db/expense-access'
+import {
+  listCategories,
+  findCategoryByName,
+} from '../../lib/db/category-access'
+import {
+  listTags,
+  findTagsByNames,
+} from '../../lib/db/tag-access'
 import { formatCents, formatCentsPlain } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {

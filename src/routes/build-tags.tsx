@@ -22,7 +22,7 @@ import {
   mergeTag,
   renameTag,
   type TagRow,
-} from '../lib/db/expense-access'
+} from '../lib/db/tag-access'
 import {
   parseTagCreate,
   parseTagDelete,

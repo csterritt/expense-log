@@ -11,12 +11,16 @@ import { useLayout } from './build-layout'
 import { signedInAccess } from '../middleware/signed-in-access'
 import {
   summarize,
-  listCategories,
-  listTags,
   type SummaryRow,
+} from '../lib/db/summary-access'
+import {
+  listCategories,
   type CategoryRow,
+} from '../lib/db/category-access'
+import {
+  listTags,
   type TagRow,
-} from '../lib/db/expense-access'
+} from '../lib/db/tag-access'
 import { formatCents } from '../lib/money'
 import {
   parseSummaryQuery,

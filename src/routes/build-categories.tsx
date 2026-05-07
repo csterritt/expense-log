@@ -23,7 +23,7 @@ import {
   mergeCategory,
   renameCategory,
   type CategoryRow,
-} from '../lib/db/expense-access'
+} from '../lib/db/category-access'
 import {
   parseCategoryCreate,
   parseCategoryDelete,
