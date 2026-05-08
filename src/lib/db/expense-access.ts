@@ -183,10 +183,12 @@ const listExpensesActual = async (
     }
 
     const tagsByExpenseId = new Map<string, string[]>()
+    const expenseIds = rows.map((r) => r.id)
     const tagRows = await db
       .select({ expenseId: expenseTag.expenseId, tagName: tag.name })
       .from(expenseTag)
       .innerJoin(tag, eq(tag.id, expenseTag.tagId))
+      .where(inArray(expenseTag.expenseId, expenseIds))
 
     for (const row of tagRows) {
       const bucket = tagsByExpenseId.get(row.expenseId)
