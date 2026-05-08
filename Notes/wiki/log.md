@@ -2,6 +2,20 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-05-08] refactor | Issue 14B: Refactor build-expenses.tsx into multiple files
+
+Refactored the monolithic `build-expenses.tsx` (597 lines) into a thin orchestrator plus five separate modules to improve code organization and separation of concerns.
+
+- **`src/routes/expenses/expense-list-renderer.tsx`** (new) — Extracted render functions: `renderFilterBar`, `renderExpenseTable`, `renderExpenses`. Pure render functions with no side effects, preserving all imports and types.
+- **`src/routes/expenses/expense-form-helpers.ts`** (new) — Extracted helper functions: `emptyState`, `readRawBody`. Pure utility functions for form state creation and body parsing.
+- **`src/routes/expenses/expense-get-handler.ts`** (new) — Extracted GET handler logic into `handleExpensesGet`. Imports from `expense-list-renderer` for rendering, keeps all database access, filter parsing, and error handling.
+- **`src/routes/expenses/expense-post-handler.ts`** (new) — Extracted POST handler logic into `handleExpensesPost`. Imports from `expense-form-helpers`, keeps all validation, database lookup, and confirmation page rendering.
+- **`src/routes/expenses/expense-confirm-post-handler.ts`** (new) — Extracted confirmation POST handler logic into `handleExpensesConfirmPost`. Imports from `expense-form-helpers`, keeps all validation, database operations for creating new categories/tags, and final expense creation.
+- **`src/routes/expenses/build-expenses.tsx`** (refactored) — Reduced from 597 lines to 42 lines. Now a thin orchestrator that imports the three handler functions and registers them with the Hono app. Retains the `CONFIRM_CREATE_NEW_PATH` constant and exports `buildExpenses` with the same signature.
+- **Verification**: Unit tests pass (212 pass, 0 fail). E2E tests could not run due to dev server environment issues (unrelated to refactoring). The public API (`buildExpenses` function) remains unchanged, so no import updates were needed in `src/index.ts`.
+- **Wiki pages created**: Individual pages for all five new modules under `Notes/wiki/src/routes/expenses/`, plus updated `build-expenses.tsx.md` to reflect its new orchestrator role.
+- **Catalogs updated**: `source-code.md` (count 73 → 78, added five new entries and updated build-expenses description).
+
 ## [2026-05-07] ingest | Issue 12 summary page
 
 Ingested the Issue 12 summary page implementation.

@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (73 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (78 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
@@ -64,7 +64,12 @@ Catalog of all source files under `src/` (73 files total), organized by category
 
 All five routes are signed-in-only via the `signedInAccess` middleware. Two (`/summary`, `/recurring`) are still placeholder pages awaiting feature implementation.
 
-- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Expense list + entry form page (`/expenses`); GET renders the form (with any flashed per-field errors and sticky values) above a filter bar and the expense table or empty state; POST validates via `parseExpenseCreate` and PRG-redirects on either path. Issue 11: the GET handler parses query-string filter params via `parseExpenseListFilters`; on first load (no params) falls back to the default 2-month ET window; on explicit submission applies the parsed filters. The `renderFilterBar` component includes inputs for description (text), from/to (date), category (select), tag checkboxes, tag-mode radios (any/all), a Filter button, and a Clear filters link that appears only when at least one filter is active.
+- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Route builder for the expenses list page. Refactored in Issue 14B to be a thin orchestrator that delegates to separate handler modules. Registers GET `/expenses` (via `handleExpensesGet`), POST `/expenses` (via `handleExpensesPost`), and POST `/expenses/confirm-create-new` (via `handleExpensesConfirmPost`). All routes use `secureHeaders` and `signedInAccess` middleware.
+- [src/routes/expenses/expense-list-renderer.tsx](./src/routes/expenses/expense-list-renderer.tsx.md) — Render functions for the expenses list page. Exports `renderFilterBar`, `renderExpenseTable`, and `renderExpenses` for the filter bar, expense table, and complete page layout respectively. Extracted from `build-expenses.tsx` in Issue 14B.
+- [src/routes/expenses/expense-form-helpers.ts](./src/routes/expenses/expense-form-helpers.ts.md) — Helper functions for expense form handling. Exports `emptyState` (creates default form state) and `readRawBody` (parses request body). Extracted from `build-expenses.tsx` in Issue 14B.
+- [src/routes/expenses/expense-get-handler.ts](./src/routes/expenses/expense-get-handler.ts.md) — GET handler for `/expenses`. Parses query-string filters, loads expenses/categories/tags, applies default 2-month window on first load, and renders the page. Extracted from `build-expenses.tsx` in Issue 14B.
+- [src/routes/expenses/expense-post-handler.ts](./src/routes/expenses/expense-post-handler.ts.md) — POST handler for `/expenses`. Validates expense data, parses tags, looks up existing categories/tags, detects new items, and either creates the expense directly or renders a confirmation page. Extracted from `build-expenses.tsx` in Issue 14B.
+- [src/routes/expenses/expense-confirm-post-handler.ts](./src/routes/expenses/expense-confirm-post-handler.ts.md) — POST handler for `/expenses/confirm-create-new`. Handles cancel action, defensive re-validation, and atomic creation of new categories/tags/expense. Extracted from `build-expenses.tsx` in Issue 14B.
 - [src/routes/expenses/build-edit-expense.tsx](./src/routes/expenses/build-edit-expense.md) — Edit + delete flow (Issue 08): `GET /expenses/:id/edit`, `POST /expenses/:id/edit`, `POST /expenses/:id/confirm-edit-new`, `GET /expenses/:id/delete`, `POST /expenses/:id/delete`.
 - [src/routes/expenses/expense-form.tsx](./src/routes/expenses/expense-form.md) — Shared entry/edit form renderer + shared *Confirm new items* page renderer (Issue 08).
 - [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Signed-in category management page (`/categories`) with create, rename, merge-on-collision confirmation, and delete flows.
