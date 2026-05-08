@@ -20,8 +20,7 @@ export const getCurrentTime = (c: Context, ...args: (string | number | Date)[]):
       return new Date()
     }
 
-    // @ts-ignore
-    return new Date(...args)
+    return new Date(...(args as ConstructorParameters<typeof Date>))
   }
 
   // if (args.length === 0) { // PRODUCTION:UNCOMMENT
@@ -39,8 +38,7 @@ export const getCurrentTime = (c: Context, ...args: (string | number | Date)[]):
     return new Date(new Date().getTime() + delta)
   }
 
-  // @ts-ignore
-  return new Date(new Date(...args).getTime() + delta)
+  return new Date(new Date(...(args as ConstructorParameters<typeof Date>)).getTime() + delta)
 }
 
 export const setCurrentDelta = (c: Context, delta: number): void => {

@@ -75,8 +75,8 @@ const validateEnvironmentVariables = (): boolean => {
   const missingVars: string[] = []
 
   for (const varName of requiredVars) {
-    // @ts-ignore
-    if (!env[varName] || env[varName]?.trim() === '') {
+    const envValue = (env as unknown as Record<string, string | undefined>)[varName]
+    if (!envValue || envValue.trim() === '') {
       missingVars.push(varName)
     }
   }

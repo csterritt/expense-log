@@ -11,14 +11,12 @@ import { getCurrentTime, setCurrentDelta, clearCurrentDelta } from '../src/lib/t
 const approximatelyEqual = (v1: number, v2: number, epsilon = 0.001) => Math.abs(v1 - v2) < epsilon
 
 const makeFakeContext = () => {
-  const storage = new Map()
+  const storage = new Map<string, string>()
   const cookieStorage = {
-    get: (name: string) => {
-      // @ts-ignore
+    get: (name: string): string | undefined => {
       return storage.get(name)
     },
-    set: (name: string, value: string) => {
-      // @ts-ignore
+    set: (name: string, value: string): void => {
       storage.set(name, value)
     },
   }
