@@ -46,10 +46,18 @@ interface SignUpErrorResponse {
   error?: { message?: string }
 }
 
+/**
+ * Response with status code
+ */
 interface StatusResponse {
   status: number
 }
 
+/**
+ * Synthetic duplicate response from better-auth
+ * When requireEmailVerification=true and a duplicate email is used,
+ * better-auth returns this structure instead of throwing an error
+ */
 interface SyntheticDuplicateResponse {
   token: null
   user: { emailVerified: boolean }
@@ -78,6 +86,11 @@ export const isSyntheticDuplicateResponse = (
   )
 }
 
+/**
+ * Type guard to check if a response is an error response
+ * @param response - The response to check
+ * @returns True if the response is an error response
+ */
 const isErrorResponse = (response: unknown): response is SignUpErrorResponse => {
   return (
     typeof response === 'object' &&
@@ -87,6 +100,12 @@ const isErrorResponse = (response: unknown): response is SignUpErrorResponse => 
   )
 }
 
+/**
+ * Extract the HTTP status code from a response
+ * Handles both Response objects and objects with a status property
+ * @param response - The response to extract status from
+ * @returns The status code or null if not found
+ */
 export const getResponseStatus = (response: unknown): number | null => {
   if (response instanceof Response) {
     return response.status

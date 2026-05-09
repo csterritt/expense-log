@@ -13,6 +13,9 @@ import { category, expense, expenseTag, tag } from '../../db/schema'
 import type { DrizzleClient } from '../../local-types'
 import { withRetry } from '../db-helpers'
 
+/**
+ * Input for creating a new category and expense together
+ */
 export interface CreateCategoryAndExpenseInput {
   newCategoryName: string
   date: string
@@ -20,6 +23,9 @@ export interface CreateCategoryAndExpenseInput {
   amountCents: number
 }
 
+/**
+ * Expense row with category name and tag names
+ */
 export interface ExpenseRow {
   id: string
   date: string
@@ -29,6 +35,9 @@ export interface ExpenseRow {
   tagNames: string[]
 }
 
+/**
+ * Filter options for listing expenses
+ */
 export interface ListExpenseFilters {
   from?: string
   to?: string
@@ -38,6 +47,9 @@ export interface ListExpenseFilters {
   tagMode?: 'or' | 'and'
 }
 
+/**
+ * Input for creating an expense
+ */
 export interface CreateExpenseInput {
   date: string
   description: string
@@ -279,6 +291,9 @@ const createCategoryAndExpenseActual = async (
   }
 }
 
+/**
+ * Input for creating an expense with tags
+ */
 export interface CreateExpenseWithTagsInput {
   date: string
   description: string
@@ -340,6 +355,9 @@ const createExpenseWithTagsActual = async (
   }
 }
 
+/**
+ * Expense detail row with category ID and tag IDs
+ */
 export interface ExpenseDetailRow extends ExpenseRow {
   categoryId: string
   tagIds: string[]
@@ -402,6 +420,9 @@ const getExpenseByIdActual = async (
   }
 }
 
+/**
+ * Input for updating an expense with tags
+ */
 export interface UpdateExpenseWithTagsInput {
   id: string
   date: string
@@ -471,6 +492,9 @@ const updateExpenseWithTagsActual = async (
   }
 }
 
+/**
+ * Input for updating an expense with optional new category and tags
+ */
 export interface UpdateManyAndExpenseInput {
   id: string
   newCategoryName: string | null
@@ -617,6 +641,9 @@ const deleteExpenseActual = async (db: DrizzleClient, id: string): Promise<Resul
   }
 }
 
+/**
+ * Input for creating an expense with optional new category and tags
+ */
 export interface CreateManyAndExpenseInput {
   newCategoryName: string | null
   existingCategoryId: string | null

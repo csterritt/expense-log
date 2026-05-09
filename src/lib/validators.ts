@@ -21,7 +21,12 @@ import {
 } from 'valibot'
 import { VALIDATION } from '../constants'
 
-// Email validation function
+/**
+ * Email validation function
+ * Checks if the value is a valid email string matching the email pattern
+ * @param value - The value to validate
+ * @returns True if the value is a valid email, false otherwise
+ */
 const validateEmail = (value: unknown) => {
   if (typeof value !== 'string') {
     return false
@@ -30,8 +35,18 @@ const validateEmail = (value: unknown) => {
   return VALIDATION.EMAIL_PATTERN.test(v)
 }
 
-// Name validation: only letters, numbers, hyphens, underscores, and spaces
+/**
+ * Name validation pattern
+ * Only allows letters, numbers, hyphens, underscores, and spaces
+ */
 const NAME_PATTERN = /^[a-zA-Z0-9_\- ]+$/
+
+/**
+ * Name character validation function
+ * Checks if the value is a valid name string containing only allowed characters
+ * @param value - The value to validate
+ * @returns True if the value is a valid name, false otherwise
+ */
 const validateNameCharacters = (value: unknown): boolean => {
   if (typeof value !== 'string') {
     return false

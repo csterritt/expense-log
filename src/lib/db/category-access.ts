@@ -85,6 +85,13 @@ const findCategoryByNameActual = async (
   }
 }
 
+/**
+ * Create a new category with the given name
+ * Normalizes the name to lowercase and checks for duplicates
+ * @param db - Database instance
+ * @param name - Category name to create
+ * @returns Promise<Result<CategoryRow, Error>>
+ */
 export const createCategory = (
   db: DrizzleClient,
   name: string,
@@ -122,6 +129,13 @@ const createCategoryActual = async (
   }
 }
 
+/**
+ * Rename an existing category
+ * Normalizes the new name to lowercase and checks for duplicates
+ * @param db - Database instance
+ * @param input - Category rename data (id and new name)
+ * @returns Promise<Result<CategoryRow, Error>>
+ */
 export const renameCategory = (
   db: DrizzleClient,
   input: RenameCategoryInput,
@@ -180,6 +194,12 @@ const countExpensesForCategory = async (db: DrizzleClient, categoryId: string): 
   return Number(rows[0]?.count ?? 0)
 }
 
+/**
+ * Count the number of expenses associated with a category
+ * @param db - Database instance
+ * @param categoryId - Category ID to count expenses for
+ * @returns Promise<Result<number, Error>>
+ */
 export const countCategoryExpenses = (
   db: DrizzleClient,
   categoryId: string,
@@ -208,6 +228,13 @@ const countRecurringForCategory = async (
   return Number(rows[0]?.count ?? 0)
 }
 
+/**
+ * Merge one category into another
+ * Reassigns all expenses and recurring expenses from source to target, then deletes source
+ * @param db - Database instance
+ * @param input - Merge data (source and target category IDs)
+ * @returns Promise<Result<{ reassignedExpenseCount: number }, Error>>
+ */
 export const mergeCategory = (
   db: DrizzleClient,
   input: MergeCategoryInput,
@@ -252,6 +279,13 @@ const mergeCategoryActual = async (
   }
 }
 
+/**
+ * Delete a category by ID
+ * Fails if the category has associated expenses or recurring expenses
+ * @param db - Database instance
+ * @param id - Category ID to delete
+ * @returns Promise<Result<void, Error>>
+ */
 export const deleteCategory = (db: DrizzleClient, id: string): Promise<Result<void, Error>> =>
   withRetry('deleteCategory', () => deleteCategoryActual(db, id))
 

@@ -82,7 +82,7 @@ export type ParsedExpenseCreate = {
 }
 
 /**
- * Raw string shape expected from the entry form submission.
+ * Raw string shape expected from the entry form submission
  */
 export type RawExpenseCreate = {
   description: string
@@ -91,38 +91,62 @@ export type RawExpenseCreate = {
   category: string
 }
 
+/**
+ * Raw input for creating a category
+ */
 export type RawCategoryCreate = {
   name: string
 }
 
+/**
+ * Parsed and validated category creation data
+ */
 export type ParsedCategoryCreate = {
   name: string
 }
 
+/**
+ * Raw input for renaming a category
+ */
 export type RawCategoryRename = {
   id: string
   name: string
 }
 
+/**
+ * Parsed and validated category rename data
+ */
 export type ParsedCategoryRename = {
   id: string
   name: string
 }
 
+/**
+ * Raw input for confirming a category merge
+ */
 export type RawCategoryMergeConfirm = {
   sourceId: string
   targetId: string
 }
 
+/**
+ * Parsed and validated category merge confirmation data
+ */
 export type ParsedCategoryMergeConfirm = {
   sourceId: string
   targetId: string
 }
 
+/**
+ * Raw input for deleting a category
+ */
 export type RawCategoryDelete = {
   id: string
 }
 
+/**
+ * Parsed and validated category delete data
+ */
 export type ParsedCategoryDelete = {
   id: string
 }
@@ -190,6 +214,12 @@ export const ExpenseCreateSchema = object({
 
 export type ExpenseCreateInput = InferOutput<typeof ExpenseCreateSchema>
 
+/**
+ * Extract the first error message from a Valibot schema validation result
+ * @param schema - The Valibot schema to validate against
+ * @param value - The value to validate
+ * @returns The first error message if validation fails, undefined otherwise
+ */
 const firstIssueMessage = (
   schema: BaseSchema<unknown, unknown, BaseIssue<unknown>>,
   value: unknown,
@@ -270,10 +300,9 @@ export const NewCategoryNameSchema = pipe(
 )
 
 /**
- * Validate a typed new-category name. On success returns the trimmed input
- * (case-preserving — final lowercasing is performed by the DB helper before
- * insert). On failure returns a single user-facing error string suitable to
- * place under the entry-form `category` field.
+ * Validate a new category name
+ * @param input - The new category name to validate
+ * @returns Result.ok(trimmed input) on success, Result.err(error message) on failure
  */
 export const parseNewCategoryName = (input: string): Result<string, string> => {
   const value = typeof input === 'string' ? input.trim() : ''
@@ -284,8 +313,18 @@ export const parseNewCategoryName = (input: string): Result<string, string> => {
   return Result.ok(value)
 }
 
+/**
+ * Valibot schema for category management (create/rename) name validation
+ * Reuses the new category name schema
+ */
 export const CategoryManagementNameSchema = NewCategoryNameSchema
 
+/**
+ * Parse and validate a category management name
+ * Trims, lowercases, and validates the input
+ * @param input - The raw input to parse
+ * @returns Result with lowercased name on success, error message on failure
+ */
 const parseCategoryManagementName = (input: unknown): Result<string, string> => {
   const value = typeof input === 'string' ? input.trim() : ''
   const message = firstIssueMessage(CategoryManagementNameSchema, value)
@@ -295,6 +334,12 @@ const parseCategoryManagementName = (input: unknown): Result<string, string> => 
   return Result.ok(value.toLowerCase())
 }
 
+/**
+ * Parse and validate a required ID field
+ * @param input - The raw input to parse
+ * @param message - The error message to return if validation fails
+ * @returns Result with trimmed ID on success, error message on failure
+ */
 const parseRequiredId = (input: unknown, message: string): Result<string, string> => {
   const value = typeof input === 'string' ? input.trim() : ''
   if (value.length === 0) {
@@ -303,6 +348,11 @@ const parseRequiredId = (input: unknown, message: string): Result<string, string
   return Result.ok(value)
 }
 
+/**
+ * Parse and validate category creation data
+ * @param raw - Raw category creation input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseCategoryCreate = (
   raw: RawCategoryCreate,
 ): Result<ParsedCategoryCreate, FieldErrors> => {
@@ -313,6 +363,11 @@ export const parseCategoryCreate = (
   return Result.ok({ name: name.value })
 }
 
+/**
+ * Parse and validate category rename data
+ * @param raw - Raw category rename input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseCategoryRename = (
   raw: RawCategoryRename,
 ): Result<ParsedCategoryRename, FieldErrors> => {
@@ -334,6 +389,11 @@ export const parseCategoryRename = (
   return Result.ok({ id: id.value, name: name.value })
 }
 
+/**
+ * Parse and validate category merge confirmation data
+ * @param raw - Raw category merge confirmation input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseCategoryMergeConfirm = (
   raw: RawCategoryMergeConfirm,
 ): Result<ParsedCategoryMergeConfirm, FieldErrors> => {
@@ -358,6 +418,11 @@ export const parseCategoryMergeConfirm = (
   return Result.ok({ sourceId: sourceId.value, targetId: targetId.value })
 }
 
+/**
+ * Parse and validate category delete data
+ * @param raw - Raw category delete input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseCategoryDelete = (
   raw: RawCategoryDelete,
 ): Result<ParsedCategoryDelete, FieldErrors> => {
@@ -370,42 +435,69 @@ export const parseCategoryDelete = (
 
 // ---------- Tag management (Issue 10) ----------
 
+/**
+ * Raw input for creating a tag
+ */
 export type RawTagCreate = {
   name: string
 }
 
+/**
+ * Parsed and validated tag creation data
+ */
 export type ParsedTagCreate = {
   name: string
 }
 
+/**
+ * Raw input for renaming a tag
+ */
 export type RawTagRename = {
   id: string
   name: string
 }
 
+/**
+ * Parsed and validated tag rename data
+ */
 export type ParsedTagRename = {
   id: string
   name: string
 }
 
+/**
+ * Raw input for confirming a tag merge
+ */
 export type RawTagMergeConfirm = {
   sourceId: string
   targetId: string
 }
 
+/**
+ * Parsed and validated tag merge confirmation data
+ */
 export type ParsedTagMergeConfirm = {
   sourceId: string
   targetId: string
 }
 
+/**
+ * Raw input for deleting a tag
+ */
 export type RawTagDelete = {
   id: string
 }
 
+/**
+ * Parsed and validated tag delete data
+ */
 export type ParsedTagDelete = {
   id: string
 }
 
+/**
+ * Valibot schema for tag management (create/rename) name validation
+ */
 export const TagManagementNameSchema = pipe(
   string('Tag name is required.'),
   custom<string>((v) => typeof v === 'string' && v.trim().length > 0, 'Tag name is required.'),
@@ -415,6 +507,12 @@ export const TagManagementNameSchema = pipe(
   ),
 )
 
+/**
+ * Parse and validate a tag management name
+ * Trims, lowercases, and validates the input
+ * @param input - The raw input to parse
+ * @returns Result with lowercased name on success, error message on failure
+ */
 const parseTagManagementName = (input: unknown): Result<string, string> => {
   const value = typeof input === 'string' ? input.trim() : ''
   const message = firstIssueMessage(TagManagementNameSchema, value)
@@ -424,6 +522,11 @@ const parseTagManagementName = (input: unknown): Result<string, string> => {
   return Result.ok(value.toLowerCase())
 }
 
+/**
+ * Parse and validate tag creation data
+ * @param raw - Raw tag creation input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseTagCreate = (raw: RawTagCreate): Result<ParsedTagCreate, FieldErrors> => {
   const name = parseTagManagementName(raw.name)
   if (name.isErr) {
@@ -432,6 +535,11 @@ export const parseTagCreate = (raw: RawTagCreate): Result<ParsedTagCreate, Field
   return Result.ok({ name: name.value })
 }
 
+/**
+ * Parse and validate tag rename data
+ * @param raw - Raw tag rename input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseTagRename = (raw: RawTagRename): Result<ParsedTagRename, FieldErrors> => {
   const errors: FieldErrors = {}
   const id = parseRequiredId(raw.id, 'Tag is required.')
@@ -451,6 +559,11 @@ export const parseTagRename = (raw: RawTagRename): Result<ParsedTagRename, Field
   return Result.ok({ id: id.value, name: name.value })
 }
 
+/**
+ * Parse and validate tag merge confirmation data
+ * @param raw - Raw tag merge confirmation input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseTagMergeConfirm = (
   raw: RawTagMergeConfirm,
 ): Result<ParsedTagMergeConfirm, FieldErrors> => {
@@ -475,6 +588,11 @@ export const parseTagMergeConfirm = (
   return Result.ok({ sourceId: sourceId.value, targetId: targetId.value })
 }
 
+/**
+ * Parse and validate tag delete data
+ * @param raw - Raw tag delete input
+ * @returns Result with parsed data on success, field errors on failure
+ */
 export const parseTagDelete = (raw: RawTagDelete): Result<ParsedTagDelete, FieldErrors> => {
   const id = parseRequiredId(raw.id, 'Tag is required.')
   if (id.isErr) {
@@ -652,6 +770,9 @@ export const parseTagCsv = (input: string): Result<string[], string> => {
 
 // ---------- Summary query parser (Issue 14) ----------
 
+/**
+ * Raw query-string values for the summary page
+ */
 export type RawSummaryQuery = {
   groupBy?: string
   from?: string
@@ -661,6 +782,9 @@ export type RawSummaryQuery = {
   tagMode?: string
 }
 
+/**
+ * Parsed and validated summary query parameters
+ */
 export type ParsedSummaryQuery = {
   groupBy: 'month' | 'year'
   from: string
@@ -670,6 +794,11 @@ export type ParsedSummaryQuery = {
   tagMode: 'or' | 'and'
 }
 
+/**
+ * Parse and validate summary query parameters
+ * @param raw - Raw query string parameters
+ * @returns Result with parsed query data on success, field errors on failure
+ */
 export const parseSummaryQuery = (
   raw: RawSummaryQuery,
 ): Result<ParsedSummaryQuery, FieldErrors> => {

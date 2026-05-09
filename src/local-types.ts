@@ -6,6 +6,10 @@ import { Maybe } from 'true-myth'
 import { Context } from 'hono'
 import { createDbClient } from './db/client'
 
+/**
+ * Sign-in session data structure
+ * Contains session information for authentication tracking
+ */
 export type SignInSession = {
   id: string
   token: string
@@ -17,6 +21,10 @@ export type SignInSession = {
   expiresAt: number
 }
 
+/**
+ * Cloudflare Worker environment bindings
+ * Contains all environment variables and resources available to the worker
+ */
 export interface Bindings {
   PROJECT_DB: D1Database
   Session: Maybe<SignInSession>

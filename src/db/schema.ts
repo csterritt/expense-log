@@ -75,11 +75,19 @@ export const verification = sqliteTable('verification', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
 })
 
+/**
+ * Single-use code table schema definition
+ * Stores one-time sign-up codes for gated sign-up flow
+ */
 export const singleUseCode = sqliteTable('singleUseCode', {
   code: text('code').primaryKey(),
   email: text('email'),
 })
 
+/**
+ * Interested email table schema definition
+ * Stores email addresses of users interested in the app (for interest sign-up flow)
+ */
 export const interestedEmail = sqliteTable('interestedEmail', {
   email: text('email').primaryKey().unique(),
 })
@@ -187,7 +195,10 @@ export const recurringTag = sqliteTable(
   (table) => [primaryKey({ columns: [table.recurringId, table.tagId] })],
 )
 
-// Define schema object for export
+/**
+ * Complete database schema object
+ * Exports all table definitions for Drizzle ORM
+ */
 export const schema = {
   user,
   session,
@@ -203,6 +214,9 @@ export const schema = {
   recurringTag,
 }
 
+/**
+ * Inferred select types for all tables (read operations)
+ */
 export type User = typeof user.$inferSelect
 export type Session = typeof session.$inferSelect
 export type Account = typeof account.$inferSelect
@@ -216,6 +230,9 @@ export type ExpenseTag = typeof expenseTag.$inferSelect
 export type Recurring = typeof recurring.$inferSelect
 export type RecurringTag = typeof recurringTag.$inferSelect
 
+/**
+ * Inferred insert types for all tables (write operations)
+ */
 export type NewUser = typeof user.$inferInsert
 export type NewSession = typeof session.$inferInsert
 export type NewAccount = typeof account.$inferInsert

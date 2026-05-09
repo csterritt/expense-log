@@ -78,7 +78,9 @@ export const PATHS = {
   RECURRING: '/recurring' as const,
 } as const
 
-// Cookie names
+/**
+ * Cookie names and options used throughout the application
+ */
 export const COOKIES = {
   // Ordinary message cookie
   MESSAGE_FOUND: 'MESSAGE_FOUND',
@@ -104,8 +106,9 @@ export const COOKIES = {
   },
 } as const
 
-/*
- * Sign up modes
+/**
+ * Sign up mode configuration
+ * Determines how new users can sign up for the application
  */
 export const SIGN_UP_MODES = {
   BOTH_SIGN_UP: 'BOTH_SIGN_UP' as const,
@@ -159,6 +162,9 @@ export const MESSAGE_BUILDERS = {
     } before requesting another verification email.`,
 } as const
 
+/**
+ * Time duration constants (in seconds or milliseconds)
+ */
 export const DURATIONS = {
   // EMAIL_RESEND_TIME_IN_MILLISECONDS: 30 * 1000, // PRODUCTION:UNCOMMENT
   EMAIL_RESEND_TIME_IN_MILLISECONDS: 3 * 1000, // PRODUCTION:REMOVE
@@ -177,7 +183,9 @@ export const STANDARD_RETRY_OPTIONS = {
   retries: 5,
 } as const
 
-// API URLs
+/**
+ * External API endpoints used by the application
+ */
 export const API_URLS = {
   PUSHOVER: 'https://api.pushover.net/1/messages.json',
 }
