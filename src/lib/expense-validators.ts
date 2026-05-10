@@ -66,6 +66,8 @@ export type FieldErrors = {
   sourceId?: string
   targetId?: string
   groupBy?: string
+  recurrence?: string
+  anchorDate?: string
 }
 
 /**
@@ -878,5 +880,122 @@ export const parseSummaryQuery = (
     categoryId,
     tagIds,
     tagMode,
+  })
+}
+
+// ---------- Recurring template validators (Issue 13) ----------
+
+/**
+ * Allowed recurrence values for recurring templates.
+ */
+export const VALID_RECURRENCES = ['Monthly', 'Quarterly', 'Yearly'] as const
+export type Recurrence = (typeof VALID_RECURRENCES)[number]
+
+/**
+ * Raw string shape expected from the recurring template form.
+ */
+export type RecurringFormValues = {
+  description: string
+  amount: string
+  category: string
+  tags?: string
+  recurrence: string
+  anchorDate: string
+}
+
+/**
+ * The fully-validated output of `parseRecurringCreate`.
+ */
+export type ParsedRecurringCreate = {
+  description: string
+  amountCents: number
+  category: string
+  recurrence: Recurrence
+  anchorDate: string
+}
+
+/**
+ * Valibot schema for the `recurrence` field. Must be exactly one of the
+ * allowed recurrence values.
+ */
+export const RecurrenceSchema = pipe(
+  string('Recurrence is required.'),
+  custom<string>(
+    (v) => typeof v === 'string' && (VALID_RECURRENCES as readonly string[]).includes(v),
+    'Recurrence must be Monthly, Quarterly, or Yearly.',
+  ),
+)
+
+/**
+ * Valibot schema for the `anchorDate` field. Must be a valid `YYYY-MM-DD`
+ * calendar date (impossible dates like `2025-02-30` are rejected).
+ */
+export const AnchorDateSchema = pipe(
+  string('Anchor date is required.'),
+  minLength(1, 'Anchor date is required.'),
+  custom<string>((v) => typeof v === 'string' && isValidYmd(v), 'Anchor date must be a valid date (YYYY-MM-DD).'),
+)
+
+/**
+ * Validate the raw recurring-template form values. Enforces the same rules
+ * as `parseExpenseCreate` for description, amount, and category, plus
+ * validates `recurrence` and `anchorDate`.
+ *
+ * On success returns `Result.ok(ParsedRecurringCreate)`. On failure returns
+ * `Result.err(FieldErrors)` with one entry per failed field.
+ */
+export const parseRecurringCreate = (
+  values: RecurringFormValues,
+): Result<ParsedRecurringCreate, FieldErrors> => {
+  const errors: FieldErrors = {}
+
+  const description = typeof values.description === 'string' ? values.description.trim() : ''
+  const descError = firstIssueMessage(DescriptionSchema, description)
+  if (descError) {
+    errors.description = descError
+  }
+
+  const category = typeof values.category === 'string' ? values.category.trim() : ''
+  const categoryError = firstIssueMessage(CategorySchema, category)
+  if (categoryError) {
+    errors.category = categoryError
+  }
+
+  const amountRaw = typeof values.amount === 'string' ? values.amount : ''
+  let amountCents = 0
+  const amountPresenceError = firstIssueMessage(AmountSchema, amountRaw)
+  if (amountPresenceError) {
+    errors.amount = amountPresenceError
+  } else {
+    const parsed = parseAmount(amountRaw)
+    if (parsed.isErr) {
+      errors.amount = parsed.error
+    } else {
+      amountCents = parsed.value
+    }
+  }
+
+  const recurrenceRaw = typeof values.recurrence === 'string' ? values.recurrence.trim() : ''
+  const recurrenceError = firstIssueMessage(RecurrenceSchema, recurrenceRaw)
+  if (recurrenceError) {
+    errors.recurrence = recurrenceError
+  }
+
+  const anchorDate = typeof values.anchorDate === 'string' ? values.anchorDate.trim() : ''
+  const anchorDateError = firstIssueMessage(AnchorDateSchema, anchorDate)
+  if (anchorDateError) {
+    errors.anchorDate = anchorDateError
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return Result.err(errors)
+  }
+
+  return Result.ok({
+    description,
+    amountCents,
+    category,
+    recurrence: recurrenceRaw as Recurrence,
+    anchorDate,
   })
 }

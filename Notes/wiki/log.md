@@ -274,3 +274,21 @@ Full audit of all 73 source files against their wiki documentation. Found and fi
 - **`send-email.md`** — SMTP env var names missing `SMTP_SERVER_` prefix; return type described as boolean instead of `Result`. Both fixed.
 - **`version.md`** — claimed version used for stylesheet cache-busting; corrected to footer display only (`Copyright © 2025 V-{version}`).
 - **`source-code.md`** — file count was 71; corrected to 73.
+
+## [2026-05-09] ingest | Issue 13 recurring templates CRUD
+
+Implemented full CRUD for recurring expense templates.
+
+- **`src/lib/expense-validators.ts`**: added `VALID_RECURRENCES`, `Recurrence`, `RecurringFormValues`, `ParsedRecurringCreate`, `RecurrenceSchema`, `AnchorDateSchema`, and `parseRecurringCreate(values) → Result<ParsedRecurringCreate, FieldErrors>`. `FieldErrors` gained `recurrence?` and `anchorDate?` fields. Validator enforces description ≤ 200, amount > 0 with ≤ 2 decimals, category ≤ 20, recurrence in `['Monthly','Quarterly','Yearly']`, anchorDate a valid YYYY-MM-DD rejecting impossible dates.
+- **`src/lib/form-state.ts`**: `ExpenseFormValues` gained optional `recurrence` and `anchorDate` fields.
+- **`src/routes/expenses/expense-form.tsx`**: `ConfirmNewItemsProps` gained optional `entity: 'expense' | 'recurring'`. When `entity='recurring'`: testid prefix changes to `confirm-recurring-{create,edit}-new-*`; preview shows recurrence and anchor-date rows instead of date; hidden inputs carry `recurrence`/`anchorDate` instead of `date`.
+- **`src/routes/build-recurring.tsx`**: replaced placeholder with real list page (`GET /recurring`). Renders DaisyUI zebra table with columns Description, Amount, Category, Tags, Recurrence, Anchor date, Next occurrence (computed via `nextOccurrenceAfter`; Quarterly/Yearly fall back to `—` until Issue 14). Testids: `recurring-page`, `recurring-row`, `recurring-new`, etc.
+- **`src/routes/recurring/recurring-form.tsx`** (new): shared form renderer for create/edit. Exports `renderRecurringForm({ mode, action, state, payloads })`. Fields: description, amount, category (combobox), recurrence (select), anchor date (date input), tags. Submit testid: `recurring-form-create` (create) / `recurring-form-save` (edit).
+- **`src/routes/recurring/build-create-recurring.tsx`** (new): registers `GET /recurring/new`, `POST /recurring`, `POST /recurring/confirm-create-new`. Mirrors expense create flow with `parseRecurringCreate`, `createRecurringWithTags`, `createManyAndRecurring`.
+- **`src/routes/recurring/build-edit-recurring.tsx`** (new): registers `GET /recurring/:id/edit`, `POST /recurring/:id/edit`, `POST /recurring/:id/confirm-edit-new`, `GET /recurring/:id/delete`, `POST /recurring/:id/delete`. Pre-populates fields with `formatCentsPlain`. Delete confirmation uses `confirm-delete-recurring-*` testids. Delete POST calls `deleteRecurring` then redirects to list.
+- **`src/index.ts`**: imports and registers `buildCreateRecurring(app)` and `buildEditRecurring(app)`.
+- **`src/routes/test/database.ts`**: added `POST /test/database/seed-recurring-templates` and `POST /test/database/seed-generated-expense` test-only endpoints.
+- **`e2e-tests/support/db-helpers.ts`**: added `seedRecurringTemplates` and `seedGeneratedExpense` helpers.
+- **E2E specs** (new under `e2e-tests/recurring/`): `01-list-and-create.spec.ts` (3 tests), `02-edit.spec.ts` (3 tests), `03-delete.spec.ts` (2 tests), `04-validation.spec.ts` (6 tests).
+- **Unit tests**: `tests/expense-validators.spec.ts` — 25 new cases for `parseRecurringCreate`. `tests/expense-access.spec.ts` — new cases for all recurring DB helpers. `tests/recurrence.spec.ts` was pre-existing (Issue 13 pre-work).
+- **Wiki updated**: `source-code.md`, `e2e-tests.md`, `unit-tests.md`, `log.md`.

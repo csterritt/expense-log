@@ -19,13 +19,22 @@
 // ====================================
 
 import { describe, it } from 'bun:test'
-import { and, eq, ne, sql } from 'drizzle-orm'
+import { and, asc, eq, ne, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/bun-sqlite'
 import assert from 'node:assert'
 import { Result } from 'true-myth'
 
-import { category, expense, expenseTag, recurring, tag, schema } from '../src/db/schema'
-import { listExpenses } from '../src/lib/db/expense-access'
+import { category, expense, expenseTag, recurring, recurringTag, tag, schema } from '../src/db/schema'
+import {
+  listExpenses,
+  listRecurring,
+  getRecurringById,
+  createRecurringWithTags,
+  createManyAndRecurring,
+  updateRecurringWithTags,
+  updateManyAndRecurring,
+  deleteRecurring,
+} from '../src/lib/db/expense-access'
 import {
   createCategory,
   deleteCategory,
@@ -971,6 +980,530 @@ describe('summarize (Issue 14)', () => {
     if (result.isOk) {
       // e1 has both work and client, so it produces 2 rows (one per tag)
       assert.strictEqual(result.value.length, 2)
+    }
+  })
+})
+
+// ====================================
+// Recurring template DB helper tests (Tasks 4, 6, 8, 10, 12)
+// ====================================
+
+const seedRecurring = async (
+  db: TestDb,
+  id: string,
+  categoryId: string,
+  description = 'Rent',
+  recurrence = 'Monthly',
+  anchorDate = '2024-01-15',
+  amountCents = 100000,
+): Promise<void> => {
+  const now = new Date()
+  await db.insert(recurring).values({
+    id,
+    description,
+    amountCents,
+    categoryId,
+    recurrence,
+    anchorDate,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
+const seedRecurringTag = async (
+  db: TestDb,
+  recurringId: string,
+  tagId: string,
+): Promise<void> => {
+  await db.insert(recurringTag).values({ recurringId, tagId })
+}
+
+const seedGeneratedExpense = async (
+  db: TestDb,
+  id: string,
+  categoryId: string,
+  recurringIdValue: string | null,
+  occurrenceDate: string | null = null,
+): Promise<void> => {
+  const now = new Date()
+  await db.insert(expense).values({
+    id,
+    description: id,
+    amountCents: 100,
+    categoryId,
+    date: '2024-01-15',
+    recurringId: recurringIdValue,
+    occurrenceDate,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
+describe('listRecurring (Task 4)', () => {
+  it('returns empty array when no recurring templates exist', async () => {
+    const db = await createTestDb()
+    const result = await listRecurring(db)
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.deepStrictEqual(result.value, [])
+    }
+  })
+
+  it('returns all recurring templates with category name', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'utilities')
+    await seedRecurring(db, 'rec-1', 'cat-1', 'Electric bill', 'Monthly', '2024-01-15')
+    await seedRecurring(db, 'rec-2', 'cat-1', 'Water bill', 'Monthly', '2024-01-20')
+
+    const result = await listRecurring(db)
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id).sort()
+      assert.deepStrictEqual(ids, ['rec-1', 'rec-2'])
+      assert.strictEqual(result.value[0]?.categoryName, 'utilities')
+    }
+  })
+
+  it('sorts by description case-insensitively ascending', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurring(db, 'rec-z', 'cat-1', 'Zebra bill')
+    await seedRecurring(db, 'rec-a', 'cat-1', 'alpha bill')
+    await seedRecurring(db, 'rec-m', 'cat-1', 'Middle bill')
+
+    const result = await listRecurring(db)
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const ids = result.value.map((r) => r.id)
+      assert.deepStrictEqual(ids, ['rec-a', 'rec-m', 'rec-z'])
+    }
+  })
+
+  it('returns alphabetized tag names per row', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-z', 'zzz')
+    await seedTag(db, 'tag-a', 'aaa')
+    await seedRecurring(db, 'rec-1', 'cat-1')
+    await seedRecurringTag(db, 'rec-1', 'tag-z')
+    await seedRecurringTag(db, 'rec-1', 'tag-a')
+
+    const result = await listRecurring(db)
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.deepStrictEqual(result.value[0]?.tagNames, ['aaa', 'zzz'])
+    }
+  })
+
+  it('returns empty tagNames array when template has no tags', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurring(db, 'rec-1', 'cat-1')
+
+    const result = await listRecurring(db)
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.deepStrictEqual(result.value[0]?.tagNames, [])
+      assert.deepStrictEqual(result.value[0]?.tagIds, [])
+    }
+  })
+})
+
+describe('getRecurringById (Task 6)', () => {
+  it('returns null for unknown id', async () => {
+    const db = await createTestDb()
+    const result = await getRecurringById(db, 'no-such-id')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value, null)
+    }
+  })
+
+  it('returns null for empty string id', async () => {
+    const db = await createTestDb()
+    const result = await getRecurringById(db, '')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value, null)
+    }
+  })
+
+  it('returns the row with correct fields', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'utilities')
+    await seedRecurring(db, 'rec-1', 'cat-1', 'Electric', 'Monthly', '2024-03-15', 9999)
+
+    const result = await getRecurringById(db, 'rec-1')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk && result.value !== null) {
+      assert.strictEqual(result.value.id, 'rec-1')
+      assert.strictEqual(result.value.description, 'Electric')
+      assert.strictEqual(result.value.amountCents, 9999)
+      assert.strictEqual(result.value.categoryId, 'cat-1')
+      assert.strictEqual(result.value.categoryName, 'utilities')
+      assert.strictEqual(result.value.recurrence, 'Monthly')
+      assert.strictEqual(result.value.anchorDate, '2024-03-15')
+    }
+  })
+
+  it('returns alphabetized tag names and ids', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-z', 'zzz')
+    await seedTag(db, 'tag-a', 'aaa')
+    await seedRecurring(db, 'rec-1', 'cat-1')
+    await seedRecurringTag(db, 'rec-1', 'tag-z')
+    await seedRecurringTag(db, 'rec-1', 'tag-a')
+
+    const result = await getRecurringById(db, 'rec-1')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk && result.value !== null) {
+      assert.deepStrictEqual(result.value.tagNames, ['aaa', 'zzz'])
+      assert.deepStrictEqual(result.value.tagIds, ['tag-a', 'tag-z'])
+    }
+  })
+})
+
+describe('createRecurringWithTags (Task 8a)', () => {
+  it('creates a template with no tags', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'utilities')
+
+    const result = await createRecurringWithTags(db, {
+      description: 'Gas',
+      amountCents: 5000,
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-10',
+      tagIds: [],
+    })
+    assert.strictEqual(result.isOk, true)
+
+    const rows = await db.select({ id: recurring.id }).from(recurring)
+    assert.strictEqual(rows.length, 1)
+  })
+
+  it('creates a template with tag links', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'utilities')
+    await seedTag(db, 'tag-1', 'monthly')
+    await seedTag(db, 'tag-2', 'auto')
+
+    const result = await createRecurringWithTags(db, {
+      description: 'Gas',
+      amountCents: 5000,
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-10',
+      tagIds: ['tag-1', 'tag-2'],
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const recTagRows = await db
+        .select({ tagId: recurringTag.tagId })
+        .from(recurringTag)
+        .where(eq(recurringTag.recurringId, result.value.id))
+      const tagIds = recTagRows.map((r) => r.tagId).sort()
+      assert.deepStrictEqual(tagIds, ['tag-1', 'tag-2'])
+    }
+  })
+
+  it('de-duplicates tag ids silently', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-1', 'auto')
+
+    const result = await createRecurringWithTags(db, {
+      description: 'Groceries',
+      amountCents: 1000,
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-01',
+      tagIds: ['tag-1', 'tag-1'],
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const recTagRows = await db
+        .select({ tagId: recurringTag.tagId })
+        .from(recurringTag)
+        .where(eq(recurringTag.recurringId, result.value.id))
+      assert.strictEqual(recTagRows.length, 1)
+    }
+  })
+})
+
+describe('createManyAndRecurring (Task 8b)', () => {
+  it('creates a new category and template atomically', async () => {
+    const db = await createTestDb()
+
+    const result = await createManyAndRecurring(db, {
+      newCategoryName: 'Subscriptions',
+      existingCategoryId: null,
+      newTagNames: [],
+      existingTagIds: [],
+      description: 'Netflix',
+      amountCents: 1599,
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-15',
+    })
+    assert.strictEqual(result.isOk, true)
+
+    const cats = await db.select({ name: category.name }).from(category)
+    assert.strictEqual(cats.length, 1)
+    assert.strictEqual(cats[0]?.name, 'subscriptions')
+
+    const recs = await db.select({ id: recurring.id }).from(recurring)
+    assert.strictEqual(recs.length, 1)
+  })
+
+  it('creates new tags and template atomically', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+
+    const result = await createManyAndRecurring(db, {
+      newCategoryName: null,
+      existingCategoryId: 'cat-1',
+      newTagNames: ['streaming', 'monthly'],
+      existingTagIds: [],
+      description: 'Disney+',
+      amountCents: 799,
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-01',
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.createdTagIds.length, 2)
+    }
+
+    const tags = await db.select({ name: tag.name }).from(tag).orderBy(asc(tag.name))
+    assert.deepStrictEqual(
+      tags.map((t) => t.name),
+      ['monthly', 'streaming'],
+    )
+  })
+
+  it('errors when both newCategoryName and existingCategoryId are supplied', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+
+    const result = await createManyAndRecurring(db, {
+      newCategoryName: 'Utilities',
+      existingCategoryId: 'cat-1',
+      newTagNames: [],
+      existingTagIds: [],
+      description: 'Gas',
+      amountCents: 100,
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-01',
+    })
+    assert.strictEqual(result.isErr, true)
+    if (result.isErr) {
+      assert.match(result.error.message, /exactly one/)
+    }
+  })
+})
+
+describe('updateRecurringWithTags (Task 10a)', () => {
+  it('updates the template fields and replaces tag links', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedCategory(db, 'cat-2', 'utilities')
+    await seedTag(db, 'tag-old', 'old')
+    await seedTag(db, 'tag-new', 'new')
+    await seedRecurring(db, 'rec-1', 'cat-1', 'Old desc', 'Monthly', '2024-01-10', 100)
+    await seedRecurringTag(db, 'rec-1', 'tag-old')
+
+    const result = await updateRecurringWithTags(db, {
+      id: 'rec-1',
+      description: 'Updated desc',
+      amountCents: 9999,
+      categoryId: 'cat-2',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-20',
+      tagIds: ['tag-new'],
+    })
+    assert.strictEqual(result.isOk, true)
+
+    const rows = await db
+      .select()
+      .from(recurring)
+      .where(eq(recurring.id, 'rec-1'))
+      .limit(1)
+    assert.strictEqual(rows[0]?.description, 'Updated desc')
+    assert.strictEqual(rows[0]?.amountCents, 9999)
+    assert.strictEqual(rows[0]?.categoryId, 'cat-2')
+    assert.strictEqual(rows[0]?.anchorDate, '2024-01-20')
+
+    const recTagRows = await db
+      .select({ tagId: recurringTag.tagId })
+      .from(recurringTag)
+      .where(eq(recurringTag.recurringId, 'rec-1'))
+    assert.deepStrictEqual(recTagRows.map((r) => r.tagId), ['tag-new'])
+  })
+
+  it('does NOT modify past generated expense rows', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurring(db, 'rec-1', 'cat-1', 'Old desc', 'Monthly', '2024-01-10', 100)
+    await seedGeneratedExpense(db, 'exp-gen-1', 'cat-1', 'rec-1', '2024-01-10')
+
+    const before = await db
+      .select()
+      .from(expense)
+      .where(eq(expense.id, 'exp-gen-1'))
+      .limit(1)
+
+    await updateRecurringWithTags(db, {
+      id: 'rec-1',
+      description: 'New desc',
+      amountCents: 99999,
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-20',
+      tagIds: [],
+    })
+
+    const after = await db
+      .select()
+      .from(expense)
+      .where(eq(expense.id, 'exp-gen-1'))
+      .limit(1)
+
+    assert.strictEqual(after[0]?.description, before[0]?.description)
+    assert.strictEqual(after[0]?.amountCents, before[0]?.amountCents)
+    assert.strictEqual(after[0]?.categoryId, before[0]?.categoryId)
+  })
+
+  it('returns err for unknown id', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+
+    const result = await updateRecurringWithTags(db, {
+      id: 'no-such',
+      description: 'X',
+      amountCents: 1,
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-01',
+      tagIds: [],
+    })
+    assert.strictEqual(result.isErr, true)
+    if (result.isErr) {
+      assert.match(result.error.message, /not found/i)
+    }
+  })
+})
+
+describe('updateManyAndRecurring (Task 10b)', () => {
+  it('creates a new tag and updates the template atomically', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurring(db, 'rec-1', 'cat-1')
+
+    const result = await updateManyAndRecurring(db, {
+      id: 'rec-1',
+      newCategoryName: null,
+      existingCategoryId: 'cat-1',
+      newTagNames: ['brand-new-tag'],
+      existingTagIds: [],
+      description: 'Updated',
+      amountCents: 5000,
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-10',
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.createdTagIds.length, 1)
+    }
+
+    const tags = await db.select({ name: tag.name }).from(tag)
+    assert.strictEqual(tags.length, 1)
+    assert.strictEqual(tags[0]?.name, 'brand-new-tag')
+  })
+
+  it('does NOT modify past generated expense rows', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurring(db, 'rec-1', 'cat-1', 'Old desc', 'Monthly', '2024-01-01', 100)
+    await seedGeneratedExpense(db, 'exp-gen-1', 'cat-1', 'rec-1', '2024-01-01')
+
+    const before = await db
+      .select()
+      .from(expense)
+      .where(eq(expense.id, 'exp-gen-1'))
+      .limit(1)
+
+    await updateManyAndRecurring(db, {
+      id: 'rec-1',
+      newCategoryName: null,
+      existingCategoryId: 'cat-1',
+      newTagNames: [],
+      existingTagIds: [],
+      description: 'New desc',
+      amountCents: 99999,
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-20',
+    })
+
+    const after = await db
+      .select()
+      .from(expense)
+      .where(eq(expense.id, 'exp-gen-1'))
+      .limit(1)
+
+    assert.strictEqual(after[0]?.description, before[0]?.description)
+    assert.strictEqual(after[0]?.amountCents, before[0]?.amountCents)
+    assert.strictEqual(after[0]?.categoryId, before[0]?.categoryId)
+  })
+})
+
+describe('deleteRecurring (Task 12)', () => {
+  it('deletes the template and its recurringTag links', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-1', 'auto')
+    await seedRecurring(db, 'rec-1', 'cat-1')
+    await seedRecurringTag(db, 'rec-1', 'tag-1')
+
+    const result = await deleteRecurring(db, 'rec-1')
+    assert.strictEqual(result.isOk, true)
+
+    const recs = await db.select({ id: recurring.id }).from(recurring)
+    assert.strictEqual(recs.length, 0)
+
+    const recTagRows = await db.select().from(recurringTag)
+    assert.strictEqual(recTagRows.length, 0)
+  })
+
+  it('sets recurringId = NULL on past generated expenses (not deleted)', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurring(db, 'rec-1', 'cat-1')
+    await seedGeneratedExpense(db, 'exp-gen-1', 'cat-1', 'rec-1', '2024-01-15')
+    await seedGeneratedExpense(db, 'exp-gen-2', 'cat-1', 'rec-1', '2024-02-15')
+
+    const result = await deleteRecurring(db, 'rec-1')
+    assert.strictEqual(result.isOk, true)
+
+    // Expense rows must still exist
+    const expenses = await db.select({ id: expense.id }).from(expense)
+    assert.strictEqual(expenses.length, 2)
+
+    // recurringId must be NULL on both
+    const withRecurring = await db
+      .select({ recurringId: expense.recurringId })
+      .from(expense)
+      .where(eq(expense.id, 'exp-gen-1'))
+      .limit(1)
+    assert.strictEqual(withRecurring[0]?.recurringId, null)
+  })
+
+  it('returns err for unknown id', async () => {
+    const db = await createTestDb()
+    const result = await deleteRecurring(db, 'no-such')
+    assert.strictEqual(result.isErr, true)
+    if (result.isErr) {
+      assert.match(result.error.message, /not found/i)
     }
   })
 })

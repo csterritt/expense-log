@@ -206,6 +206,90 @@ export const seedTags = async (rows: SeedTagRow[]): Promise<void> => {
   }
 }
 
+export interface SeedRecurringRow {
+  description: string
+  amountCents: number
+  categoryName: string
+  tagNames?: string[]
+  recurrence: 'Monthly' | 'Quarterly' | 'Yearly'
+  anchorDate: string
+}
+
+/**
+ * Seed database with recurring templates (plus any needed categories/tags).
+ * Returns the id of each created template in order.
+ */
+export const seedRecurringTemplates = async (rows: SeedRecurringRow[]): Promise<string[]> => {
+  try {
+    const response = await fetch('http://localhost:3000/test/database/seed-recurring-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rows),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      ids?: string[]
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed recurring templates')
+    }
+
+    console.log(`Recurring templates seeded successfully: ${result.ids?.length} created`)
+    return result.ids ?? []
+  } catch (error) {
+    console.error('Failed to seed recurring templates:', error)
+    throw error
+  }
+}
+
+/**
+ * Seed a single generated expense row linked to a recurring template.
+ * Returns the new expense id.
+ */
+export const seedGeneratedExpense = async (input: {
+  recurringId: string
+  date: string
+  occurrenceDate: string
+  description?: string
+  amountCents?: number
+  categoryId?: string
+}): Promise<string> => {
+  try {
+    const response = await fetch('http://localhost:3000/test/database/seed-generated-expense', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      id?: string
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed generated expense')
+    }
+
+    console.log(`Generated expense seeded successfully: ${result.id}`)
+    return result.id ?? ''
+  } catch (error) {
+    console.error('Failed to seed generated expense:', error)
+    throw error
+  }
+}
+
 /**
  * Seed database with test data
  * Calls test-only server endpoint to seed database

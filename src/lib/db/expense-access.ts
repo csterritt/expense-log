@@ -9,7 +9,7 @@
 import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { Result } from 'true-myth'
 
-import { category, expense, expenseTag, tag } from '../../db/schema'
+import { category, expense, expenseTag, recurring, recurringTag, tag } from '../../db/schema'
 import type { DrizzleClient } from '../../local-types'
 import { withRetry } from '../db-helpers'
 
@@ -753,5 +753,550 @@ const createManyAndExpenseActual = async (
       )
     }
     return Result.err(e instanceof Error ? e : new Error(message))
+  }
+}
+
+// ============================================================
+// Recurring template helpers (Tasks 3, 5, 7, 9, 11)
+// ============================================================
+
+/**
+ * Recurring template row as returned by list / get helpers.
+ */
+export interface RecurringRow {
+  id: string
+  description: string
+  amountCents: number
+  categoryId: string
+  categoryName: string
+  recurrence: string
+  anchorDate: string
+  tagIds: string[]
+  tagNames: string[]
+}
+
+/**
+ * List all recurring templates, sorted by description ascending
+ * (case-insensitive). Each row includes the joined category name and an
+ * alphabetized list of associated tag names and ids.
+ */
+export const listRecurring = (db: DrizzleClient): Promise<Result<RecurringRow[], Error>> =>
+  withRetry('listRecurring', () => listRecurringActual(db))
+
+const listRecurringActual = async (db: DrizzleClient): Promise<Result<RecurringRow[], Error>> => {
+  try {
+    const rows = await db
+      .select({
+        id: recurring.id,
+        description: recurring.description,
+        amountCents: recurring.amountCents,
+        categoryId: recurring.categoryId,
+        categoryName: category.name,
+        recurrence: recurring.recurrence,
+        anchorDate: recurring.anchorDate,
+      })
+      .from(recurring)
+      .innerJoin(category, eq(category.id, recurring.categoryId))
+      .orderBy(asc(sql`lower(${recurring.description})`))
+
+    if (rows.length === 0) {
+      return Result.ok([])
+    }
+
+    const recurringIds = rows.map((r) => r.id)
+    const tagRows = await db
+      .select({ recurringId: recurringTag.recurringId, tagId: tag.id, tagName: tag.name })
+      .from(recurringTag)
+      .innerJoin(tag, eq(tag.id, recurringTag.tagId))
+      .where(inArray(recurringTag.recurringId, recurringIds))
+
+    const tagsByRecurringId = new Map<string, { id: string; name: string }[]>()
+    for (const row of tagRows) {
+      const bucket = tagsByRecurringId.get(row.recurringId)
+      if (bucket) {
+        bucket.push({ id: row.tagId, name: row.tagName })
+      } else {
+        tagsByRecurringId.set(row.recurringId, [{ id: row.tagId, name: row.tagName }])
+      }
+    }
+
+    return Result.ok(
+      rows.map((row) => {
+        const tags = (tagsByRecurringId.get(row.id) ?? []).slice()
+        tags.sort((a, b) => a.name.localeCompare(b.name))
+        return {
+          id: row.id,
+          description: row.description,
+          amountCents: row.amountCents,
+          categoryId: row.categoryId,
+          categoryName: row.categoryName,
+          recurrence: row.recurrence,
+          anchorDate: row.anchorDate,
+          tagIds: tags.map((t) => t.id),
+          tagNames: tags.map((t) => t.name),
+        }
+      }),
+    )
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
+ * Look up a single recurring template by id, including its category name / id
+ * and alphabetized tag list. Returns `Result.ok(null)` when no row matches.
+ */
+export const getRecurringById = (
+  db: DrizzleClient,
+  id: string,
+): Promise<Result<RecurringRow | null, Error>> =>
+  withRetry('getRecurringById', () => getRecurringByIdActual(db, id))
+
+const getRecurringByIdActual = async (
+  db: DrizzleClient,
+  id: string,
+): Promise<Result<RecurringRow | null, Error>> => {
+  try {
+    if (typeof id !== 'string' || id.length === 0) {
+      return Result.ok(null)
+    }
+    const rows = await db
+      .select({
+        id: recurring.id,
+        description: recurring.description,
+        amountCents: recurring.amountCents,
+        categoryId: recurring.categoryId,
+        categoryName: category.name,
+        recurrence: recurring.recurrence,
+        anchorDate: recurring.anchorDate,
+      })
+      .from(recurring)
+      .innerJoin(category, eq(category.id, recurring.categoryId))
+      .where(eq(recurring.id, id))
+      .limit(1)
+
+    if (rows.length === 0) {
+      return Result.ok(null)
+    }
+    const row = rows[0]
+    const tagRows = await db
+      .select({ id: tag.id, name: tag.name })
+      .from(recurringTag)
+      .innerJoin(tag, eq(tag.id, recurringTag.tagId))
+      .where(eq(recurringTag.recurringId, id))
+    const sorted = tagRows.slice().sort((a, b) => a.name.localeCompare(b.name))
+    return Result.ok({
+      id: row.id,
+      description: row.description,
+      amountCents: row.amountCents,
+      categoryId: row.categoryId,
+      categoryName: row.categoryName,
+      recurrence: row.recurrence,
+      anchorDate: row.anchorDate,
+      tagIds: sorted.map((r) => r.id),
+      tagNames: sorted.map((r) => r.name),
+    })
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
+ * Input for creating a recurring template with existing tags
+ */
+export interface CreateRecurringWithTagsInput {
+  description: string
+  amountCents: number
+  categoryId: string
+  recurrence: string
+  anchorDate: string
+  tagIds: string[]
+}
+
+/**
+ * Create a recurring template row plus its `recurringTag` links in a single
+ * batch. Duplicate tag ids in `tagIds` are silently de-duplicated.
+ */
+export const createRecurringWithTags = (
+  db: DrizzleClient,
+  input: CreateRecurringWithTagsInput,
+): Promise<Result<{ id: string }, Error>> =>
+  withRetry('createRecurringWithTags', () => createRecurringWithTagsActual(db, input))
+
+const createRecurringWithTagsActual = async (
+  db: DrizzleClient,
+  input: CreateRecurringWithTagsInput,
+): Promise<Result<{ id: string }, Error>> => {
+  try {
+    const id = crypto.randomUUID()
+    const now = new Date()
+    const uniqueTagIds = Array.from(new Set(input.tagIds))
+
+    const insertRecurring = db.insert(recurring).values({
+      id,
+      description: input.description,
+      amountCents: input.amountCents,
+      categoryId: input.categoryId,
+      recurrence: input.recurrence,
+      anchorDate: input.anchorDate,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    if (uniqueTagIds.length === 0) {
+      await insertRecurring
+    } else {
+      const statements: unknown[] = [insertRecurring]
+      for (const tagId of uniqueTagIds) {
+        statements.push(db.insert(recurringTag).values({ recurringId: id, tagId }))
+      }
+      await db.batch(statements as never)
+    }
+    return Result.ok({ id })
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
+ * Input for creating a recurring template with optional new category / tags
+ */
+export interface CreateManyAndRecurringInput {
+  newCategoryName: string | null
+  existingCategoryId: string | null
+  newTagNames: string[]
+  existingTagIds: string[]
+  description: string
+  amountCents: number
+  recurrence: string
+  anchorDate: string
+}
+
+/**
+ * Atomically create zero-or-one new category, zero-or-more new tags, the
+ * recurring template row, and the `recurringTag` links — all in a single D1
+ * batch so any unique-name collision rolls everything back. Names are
+ * lower-cased after trim before insert. Exactly one of `newCategoryName` /
+ * `existingCategoryId` must be supplied.
+ */
+export const createManyAndRecurring = (
+  db: DrizzleClient,
+  input: CreateManyAndRecurringInput,
+): Promise<Result<{ categoryId: string; recurringId: string; createdTagIds: string[] }, Error>> =>
+  withRetry('createManyAndRecurring', () => createManyAndRecurringActual(db, input))
+
+const createManyAndRecurringActual = async (
+  db: DrizzleClient,
+  input: CreateManyAndRecurringInput,
+): Promise<Result<{ categoryId: string; recurringId: string; createdTagIds: string[] }, Error>> => {
+  try {
+    const hasNewCategory =
+      typeof input.newCategoryName === 'string' && input.newCategoryName.trim().length > 0
+    const hasExistingCategory =
+      typeof input.existingCategoryId === 'string' && input.existingCategoryId.length > 0
+    if (hasNewCategory && hasExistingCategory) {
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
+    }
+    if (!hasNewCategory && !hasExistingCategory) {
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
+    }
+
+    const now = new Date()
+    const recurringId = crypto.randomUUID()
+    let categoryId: string
+    const statements: unknown[] = []
+
+    if (hasNewCategory) {
+      categoryId = crypto.randomUUID()
+      const normalizedCat = (input.newCategoryName as string).trim().toLowerCase()
+      statements.push(
+        db.insert(category).values({
+          id: categoryId,
+          name: normalizedCat,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      )
+    } else {
+      categoryId = input.existingCategoryId as string
+    }
+
+    const newTagNameMap = new Map<string, string>()
+    for (const raw of input.newTagNames) {
+      if (typeof raw !== 'string') {
+        continue
+      }
+      const lowered = raw.trim().toLowerCase()
+      if (lowered.length === 0) {
+        continue
+      }
+      if (!newTagNameMap.has(lowered)) {
+        newTagNameMap.set(lowered, crypto.randomUUID())
+      }
+    }
+    const createdTagIds: string[] = []
+    for (const [name, id] of newTagNameMap.entries()) {
+      createdTagIds.push(id)
+      statements.push(db.insert(tag).values({ id, name, createdAt: now, updatedAt: now }))
+    }
+
+    statements.push(
+      db.insert(recurring).values({
+        id: recurringId,
+        description: input.description,
+        amountCents: input.amountCents,
+        categoryId,
+        recurrence: input.recurrence,
+        anchorDate: input.anchorDate,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    )
+
+    const allTagIds = Array.from(new Set([...input.existingTagIds, ...createdTagIds]))
+    for (const tagId of allTagIds) {
+      statements.push(db.insert(recurringTag).values({ recurringId, tagId }))
+    }
+
+    await db.batch(statements as never)
+
+    return Result.ok({ categoryId, recurringId, createdTagIds })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    if (/unique|constraint/i.test(message)) {
+      return Result.err(
+        new Error('One of the new names collides with an existing row. Please try again.'),
+      )
+    }
+    return Result.err(e instanceof Error ? e : new Error(message))
+  }
+}
+
+/**
+ * Input for updating a recurring template with existing tags
+ */
+export interface UpdateRecurringWithTagsInput {
+  id: string
+  description: string
+  amountCents: number
+  categoryId: string
+  recurrence: string
+  anchorDate: string
+  tagIds: string[]
+}
+
+/**
+ * Update an existing recurring template's mutable fields and replace its
+ * `recurringTag` link set with the supplied `tagIds`. Duplicate ids in
+ * `tagIds` are silently de-duplicated. Returns `Result.err` when the row does
+ * not exist.
+ *
+ * This operation intentionally does NOT modify any `expense` rows that were
+ * previously generated from this template (those rows are historical records
+ * and must remain unchanged).
+ */
+export const updateRecurringWithTags = (
+  db: DrizzleClient,
+  input: UpdateRecurringWithTagsInput,
+): Promise<Result<{ id: string }, Error>> =>
+  withRetry('updateRecurringWithTags', () => updateRecurringWithTagsActual(db, input))
+
+const updateRecurringWithTagsActual = async (
+  db: DrizzleClient,
+  input: UpdateRecurringWithTagsInput,
+): Promise<Result<{ id: string }, Error>> => {
+  try {
+    const found = await db
+      .select({ id: recurring.id })
+      .from(recurring)
+      .where(eq(recurring.id, input.id))
+      .limit(1)
+    if (found.length === 0) {
+      return Result.err(new Error('Recurring template not found.'))
+    }
+
+    const now = new Date()
+    const uniqueTagIds = Array.from(new Set(input.tagIds))
+
+    const statements: unknown[] = [
+      db
+        .update(recurring)
+        .set({
+          description: input.description,
+          amountCents: input.amountCents,
+          categoryId: input.categoryId,
+          recurrence: input.recurrence,
+          anchorDate: input.anchorDate,
+          updatedAt: now,
+        })
+        .where(eq(recurring.id, input.id)),
+      db.delete(recurringTag).where(eq(recurringTag.recurringId, input.id)),
+    ]
+    for (const tagId of uniqueTagIds) {
+      statements.push(db.insert(recurringTag).values({ recurringId: input.id, tagId }))
+    }
+    await db.batch(statements as never)
+    return Result.ok({ id: input.id })
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
+ * Input for updating a recurring template with optional new category / tags
+ */
+export interface UpdateManyAndRecurringInput {
+  id: string
+  newCategoryName: string | null
+  existingCategoryId: string | null
+  newTagNames: string[]
+  existingTagIds: string[]
+  description: string
+  amountCents: number
+  recurrence: string
+  anchorDate: string
+}
+
+/**
+ * Atomically create zero-or-one new category, zero-or-more new tags, update
+ * the existing recurring template row, and replace its `recurringTag` link
+ * set — all in a single D1 batch. Names are lower-cased after trim before
+ * insert. Exactly one of `newCategoryName` / `existingCategoryId` must be
+ * supplied. A unique-name collision rolls everything back.
+ *
+ * This operation intentionally does NOT modify any `expense` rows that were
+ * previously generated from this template (those rows are historical records
+ * and must remain unchanged).
+ */
+export const updateManyAndRecurring = (
+  db: DrizzleClient,
+  input: UpdateManyAndRecurringInput,
+): Promise<Result<{ id: string; categoryId: string; createdTagIds: string[] }, Error>> =>
+  withRetry('updateManyAndRecurring', () => updateManyAndRecurringActual(db, input))
+
+const updateManyAndRecurringActual = async (
+  db: DrizzleClient,
+  input: UpdateManyAndRecurringInput,
+): Promise<Result<{ id: string; categoryId: string; createdTagIds: string[] }, Error>> => {
+  try {
+    const hasNewCategory =
+      typeof input.newCategoryName === 'string' && input.newCategoryName.trim().length > 0
+    const hasExistingCategory =
+      typeof input.existingCategoryId === 'string' && input.existingCategoryId.length > 0
+    if (hasNewCategory && hasExistingCategory) {
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
+    }
+    if (!hasNewCategory && !hasExistingCategory) {
+      return Result.err(new Error('Provide exactly one of newCategoryName or existingCategoryId.'))
+    }
+
+    const found = await db
+      .select({ id: recurring.id })
+      .from(recurring)
+      .where(eq(recurring.id, input.id))
+      .limit(1)
+    if (found.length === 0) {
+      return Result.err(new Error('Recurring template not found.'))
+    }
+
+    const now = new Date()
+    let categoryId: string
+    const statements: unknown[] = []
+
+    if (hasNewCategory) {
+      categoryId = crypto.randomUUID()
+      const normalizedCat = (input.newCategoryName as string).trim().toLowerCase()
+      statements.push(
+        db.insert(category).values({
+          id: categoryId,
+          name: normalizedCat,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      )
+    } else {
+      categoryId = input.existingCategoryId as string
+    }
+
+    const newTagIdByName = new Map<string, string>()
+    for (const raw of input.newTagNames) {
+      if (typeof raw !== 'string') {
+        continue
+      }
+      const lowered = raw.trim().toLowerCase()
+      if (lowered.length === 0) {
+        continue
+      }
+      if (!newTagIdByName.has(lowered)) {
+        newTagIdByName.set(lowered, crypto.randomUUID())
+      }
+    }
+    const createdTagIds: string[] = []
+    for (const [name, id] of newTagIdByName.entries()) {
+      createdTagIds.push(id)
+      statements.push(db.insert(tag).values({ id, name, createdAt: now, updatedAt: now }))
+    }
+
+    statements.push(
+      db
+        .update(recurring)
+        .set({
+          description: input.description,
+          amountCents: input.amountCents,
+          categoryId,
+          recurrence: input.recurrence,
+          anchorDate: input.anchorDate,
+          updatedAt: now,
+        })
+        .where(eq(recurring.id, input.id)),
+    )
+    statements.push(db.delete(recurringTag).where(eq(recurringTag.recurringId, input.id)))
+
+    const allTagIds = Array.from(new Set([...input.existingTagIds, ...createdTagIds]))
+    for (const tagId of allTagIds) {
+      statements.push(db.insert(recurringTag).values({ recurringId: input.id, tagId }))
+    }
+
+    await db.batch(statements as never)
+
+    return Result.ok({ id: input.id, categoryId, createdTagIds })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    if (/unique|constraint/i.test(message)) {
+      return Result.err(
+        new Error('One of the new names collides with an existing row. Please try again.'),
+      )
+    }
+    return Result.err(e instanceof Error ? e : new Error(message))
+  }
+}
+
+/**
+ * Delete a recurring template by id. The `ON DELETE CASCADE` on `recurringTag`
+ * cleans up its tag links automatically. The `ON DELETE SET NULL` on
+ * `expense.recurringId` nullifies the provenance link on past generated
+ * expense rows without deleting those rows. Returns `Result.err` when the row
+ * does not exist.
+ */
+export const deleteRecurring = (db: DrizzleClient, id: string): Promise<Result<void, Error>> =>
+  withRetry('deleteRecurring', () => deleteRecurringActual(db, id))
+
+const deleteRecurringActual = async (
+  db: DrizzleClient,
+  id: string,
+): Promise<Result<void, Error>> => {
+  try {
+    const found = await db
+      .select({ id: recurring.id })
+      .from(recurring)
+      .where(eq(recurring.id, id))
+      .limit(1)
+    if (found.length === 0) {
+      return Result.err(new Error('Recurring template not found.'))
+    }
+    await db.delete(recurring).where(eq(recurring.id, id))
+    return Result.ok(undefined as unknown as void)
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
   }
 }

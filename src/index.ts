@@ -19,6 +19,8 @@ import { buildCategories } from './routes/build-categories'
 import { buildTags } from './routes/build-tags'
 import { buildSummary } from './routes/build-summary'
 import { buildRecurring } from './routes/build-recurring'
+import { buildCreateRecurring } from './routes/recurring/build-create-recurring'
+import { buildEditRecurring } from './routes/recurring/build-edit-recurring'
 import { build404 } from './routes/build-404'
 import { buildEmailConfirmation } from './routes/auth/build-email-confirmation'
 import { buildAwaitVerification } from './routes/auth/build-await-verification'
@@ -179,6 +181,8 @@ buildCategories(app)
 buildTags(app)
 buildSummary(app)
 buildRecurring(app)
+buildCreateRecurring(app)
+buildEditRecurring(app)
 buildSignIn(app)
 if (env.SIGN_UP_MODE === SIGN_UP_MODES.OPEN_SIGN_UP) {
   buildSignUp(app)

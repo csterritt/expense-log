@@ -14,6 +14,7 @@ import {
   parseExpenseCreate,
   parseExpenseListFilters,
   parseNewCategoryName,
+  parseRecurringCreate,
   parseSummaryQuery,
   parseTagCsv,
   parseTagCreate,
@@ -710,5 +711,198 @@ describe('parseSummaryQuery (Issue 14)', () => {
     if (r.isErr) {
       assert.ok(r.error.tags)
     }
+  })
+})
+
+// ====================================
+// parseRecurringCreate
+// ====================================
+
+const RECURRING_VALID = {
+  description: 'Monthly rent',
+  amount: '1200.00',
+  category: 'Housing',
+  recurrence: 'Monthly',
+  anchorDate: '2025-01-15',
+}
+
+type RVShape = typeof RECURRING_VALID
+
+const expectRecurringOk = (
+  input: RVShape,
+  expected: { amountCents: number; recurrence: string; anchorDate: string },
+) => {
+  const r = parseRecurringCreate(input)
+  assert.strictEqual(r.isOk, true, `expected ok for ${JSON.stringify(input)}`)
+  if (r.isOk) {
+    assert.strictEqual(r.value.amountCents, expected.amountCents)
+    assert.strictEqual(r.value.description, input.description.trim())
+    assert.strictEqual(r.value.category, input.category.trim())
+    assert.strictEqual(r.value.recurrence, expected.recurrence)
+    assert.strictEqual(r.value.anchorDate, expected.anchorDate)
+  }
+}
+
+const expectRecurringFieldErr = (
+  input: Partial<RVShape>,
+  expectedFields: Array<keyof FieldErrors>,
+) => {
+  const r = parseRecurringCreate({ ...RECURRING_VALID, ...input })
+  assert.strictEqual(r.isErr, true, `expected err for ${JSON.stringify(input)}`)
+  if (r.isErr) {
+    for (const f of expectedFields) {
+      assert.ok(
+        typeof r.error[f] === 'string' && (r.error[f] as string).length > 0,
+        `expected error for field ${f}; got ${JSON.stringify(r.error)}`,
+      )
+    }
+  }
+}
+
+describe('parseRecurringCreate', () => {
+  describe('happy paths', () => {
+    it('accepts Monthly recurrence', () => {
+      expectRecurringOk(
+        { ...RECURRING_VALID, recurrence: 'Monthly' },
+        { amountCents: 120000, recurrence: 'Monthly', anchorDate: '2025-01-15' },
+      )
+    })
+
+    it('accepts Quarterly recurrence', () => {
+      expectRecurringOk(
+        { ...RECURRING_VALID, recurrence: 'Quarterly' },
+        { amountCents: 120000, recurrence: 'Quarterly', anchorDate: '2025-01-15' },
+      )
+    })
+
+    it('accepts Yearly recurrence', () => {
+      expectRecurringOk(
+        { ...RECURRING_VALID, recurrence: 'Yearly' },
+        { amountCents: 120000, recurrence: 'Yearly', anchorDate: '2025-01-15' },
+      )
+    })
+
+    it('accepts anchor date at end of month', () => {
+      expectRecurringOk(
+        { ...RECURRING_VALID, anchorDate: '2025-01-31' },
+        { amountCents: 120000, recurrence: 'Monthly', anchorDate: '2025-01-31' },
+      )
+    })
+
+    it('accepts leap-year Feb 29', () => {
+      expectRecurringOk(
+        { ...RECURRING_VALID, anchorDate: '2024-02-29' },
+        { amountCents: 120000, recurrence: 'Monthly', anchorDate: '2024-02-29' },
+      )
+    })
+  })
+
+  describe('description', () => {
+    it('rejects empty description', () => {
+      expectRecurringFieldErr({ description: '' }, ['description'])
+    })
+
+    it('rejects whitespace-only description', () => {
+      expectRecurringFieldErr({ description: '   ' }, ['description'])
+    })
+
+    it('rejects description over descriptionMax', () => {
+      expectRecurringFieldErr({ description: 'a'.repeat(descriptionMax + 1) }, ['description'])
+    })
+
+    it('accepts exactly descriptionMax characters', () => {
+      expectRecurringOk(
+        { ...RECURRING_VALID, description: 'a'.repeat(descriptionMax) },
+        { amountCents: 120000, recurrence: 'Monthly', anchorDate: '2025-01-15' },
+      )
+    })
+  })
+
+  describe('amount', () => {
+    it('rejects amount of zero', () => {
+      expectRecurringFieldErr({ amount: '0' }, ['amount'])
+    })
+
+    it('rejects empty amount', () => {
+      expectRecurringFieldErr({ amount: '' }, ['amount'])
+    })
+
+    it('rejects amount with three decimal places', () => {
+      expectRecurringFieldErr({ amount: '1.234' }, ['amount'])
+    })
+
+    it('rejects negative amount', () => {
+      expectRecurringFieldErr({ amount: '-5.00' }, ['amount'])
+    })
+  })
+
+  describe('category', () => {
+    it('rejects empty category', () => {
+      expectRecurringFieldErr({ category: '' }, ['category'])
+    })
+
+    it('rejects whitespace-only category', () => {
+      expectRecurringFieldErr({ category: '   ' }, ['category'])
+    })
+  })
+
+  describe('recurrence', () => {
+    it('rejects empty recurrence', () => {
+      expectRecurringFieldErr({ recurrence: '' }, ['recurrence'])
+    })
+
+    it('rejects unknown recurrence value', () => {
+      expectRecurringFieldErr({ recurrence: 'Weekly' }, ['recurrence'])
+    })
+
+    it('rejects lowercase monthly', () => {
+      expectRecurringFieldErr({ recurrence: 'monthly' }, ['recurrence'])
+    })
+
+    it('rejects mixed-case value', () => {
+      expectRecurringFieldErr({ recurrence: 'MONTHLY' }, ['recurrence'])
+    })
+  })
+
+  describe('anchorDate', () => {
+    it('rejects empty anchor date', () => {
+      expectRecurringFieldErr({ anchorDate: '' }, ['anchorDate'])
+    })
+
+    it('rejects malformed date string', () => {
+      expectRecurringFieldErr({ anchorDate: '15-01-2025' }, ['anchorDate'])
+    })
+
+    it('rejects impossible date Feb 30', () => {
+      expectRecurringFieldErr({ anchorDate: '2025-02-30' }, ['anchorDate'])
+    })
+
+    it('rejects impossible date Feb 29 in non-leap year', () => {
+      expectRecurringFieldErr({ anchorDate: '2025-02-29' }, ['anchorDate'])
+    })
+
+    it('rejects month 13', () => {
+      expectRecurringFieldErr({ anchorDate: '2025-13-01' }, ['anchorDate'])
+    })
+  })
+
+  describe('multiple errors', () => {
+    it('returns errors for all invalid fields simultaneously', () => {
+      const r = parseRecurringCreate({
+        description: '',
+        amount: '0',
+        category: '',
+        recurrence: 'Weekly',
+        anchorDate: '2025-02-30',
+      })
+      assert.strictEqual(r.isErr, true)
+      if (r.isErr) {
+        assert.ok(r.error.description)
+        assert.ok(r.error.amount)
+        assert.ok(r.error.category)
+        assert.ok(r.error.recurrence)
+        assert.ok(r.error.anchorDate)
+      }
+    })
   })
 })

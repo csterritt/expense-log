@@ -5,7 +5,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (62 spec files + 1
 ## Support utilities (`e2e-tests/support/`)
 
 - [e2e-tests/support/auth-helpers.ts](./e2e-tests/support/auth-helpers.md) — Sign-in/sign-out helpers for test scenarios.
-- [e2e-tests/support/db-helpers.ts](./e2e-tests/support/db-helpers.md) — Database clearing, seeding, and session cleanup via test endpoints.
+- [e2e-tests/support/db-helpers.ts](./e2e-tests/support/db-helpers.md) — Database clearing, seeding, and session cleanup via test endpoints. Issue 13 adds `seedRecurringTemplates` and `seedGeneratedExpense` helpers.
 - [e2e-tests/support/finders.ts](./e2e-tests/support/finders.md) — Page element locators and finder functions.
 - [e2e-tests/support/form-helpers.ts](./e2e-tests/support/form-helpers.md) — Form filling and submission utilities.
 - [e2e-tests/support/mode-helpers.ts](./e2e-tests/support/mode-helpers.md) — Helpers to inspect and assert current SIGN_UP_MODE.
@@ -107,6 +107,13 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (62 spec files + 1
 - [e2e-tests/sign-up/09-unverified-sign-in-redirects-to-await-verification.spec.ts](./e2e-tests/sign-up/09-unverified-sign-in-redirects-to-await-verification.spec.md) — Unverified users signing in are redirected to verification prompt.
 - [e2e-tests/sign-up/10-duplicate-unverified-signup-redirects.spec.ts](./e2e-tests/sign-up/10-duplicate-unverified-signup-redirects.spec.md) — Duplicate unverified sign-up redirects appropriately.
 - [e2e-tests/sign-up/11-name-validation.spec.ts](./e2e-tests/sign-up/11-name-validation.spec.md) — Name field validation on sign-up form.
+
+## Recurring templates (`e2e-tests/recurring/`)
+
+- [e2e-tests/recurring/01-list-and-create.spec.ts](./e2e-tests/recurring/01-list-and-create.spec.md) — Issue 13. Empty-state rendering; create with new category+tag routes through `confirm-recurring-create-new-page` then appears in the list with correct next-occurrence; create with existing category+tag skips confirmation and sorts alphabetically.
+- [e2e-tests/recurring/02-edit.spec.ts](./e2e-tests/recurring/02-edit.spec.md) — Issue 13. Edit page pre-populates all fields; simple save (no new items) redirects to list with updated row; adding a new tag routes through `confirm-recurring-edit-new-page`; cancel on confirmation returns to edit page with typed values preserved.
+- [e2e-tests/recurring/03-delete.spec.ts](./e2e-tests/recurring/03-delete.spec.md) — Issue 13. Cancel on delete page returns to edit and template is still listed; confirm delete removes template but preserves past generated expense (seeded via `/test/seed-generated-expense`) with `recurringId` nulled.
+- [e2e-tests/recurring/04-validation.spec.ts](./e2e-tests/recurring/04-validation.spec.md) — Issue 13. Per-field validation on create and edit forms: description over limit, amount zero, amount with three decimals, impossible anchor date `2025-02-30`; typed values preserved on redirect back.
 
 ## Notes
 

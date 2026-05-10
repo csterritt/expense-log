@@ -184,6 +184,9 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
 
 export type ConfirmNewItemsProps = {
   mode: ExpenseFormMode
+  // 'expense' (default) uses existing testid prefixes; 'recurring' uses
+  // entity-specific prefixes and carries recurrence + anchorDate hidden inputs.
+  entity?: 'expense' | 'recurring'
   // POST target for the confirm/cancel form.
   action: string
   // Normalized (lowercased, trimmed) new category name, or null when the
@@ -205,9 +208,24 @@ export type ConfirmNewItemsProps = {
 const formatAmountDisplay = (value: string | undefined): string => (value ?? '').trim()
 
 export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
-  const { mode, action, newCategoryName, finalCategoryName, newTagNames, finalTagNames, values } =
-    props
-  const prefix = mode === 'edit' ? 'confirm-edit-new' : 'confirm-create-new'
+  const {
+    mode,
+    entity = 'expense',
+    action,
+    newCategoryName,
+    finalCategoryName,
+    newTagNames,
+    finalTagNames,
+    values,
+  } = props
+  const isRecurring = entity === 'recurring'
+  const prefix = isRecurring
+    ? mode === 'edit'
+      ? 'confirm-recurring-edit-new'
+      : 'confirm-recurring-create-new'
+    : mode === 'edit'
+      ? 'confirm-edit-new'
+      : 'confirm-create-new'
   return (
     <div className='max-w-xl mx-auto' data-testid={`${prefix}-page`}>
       <h1 className='text-2xl font-bold mb-4'>Confirm new items</h1>
@@ -228,8 +246,20 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
         <dd data-testid={`${prefix}-description`}>{values.description ?? ''}</dd>
         <dt className='font-semibold'>Amount</dt>
         <dd data-testid={`${prefix}-amount`}>{formatAmountDisplay(values.amount)}</dd>
-        <dt className='font-semibold'>Date</dt>
-        <dd data-testid={`${prefix}-date`}>{values.date ?? ''}</dd>
+        {!isRecurring && (
+          <>
+            <dt className='font-semibold'>Date</dt>
+            <dd data-testid={`${prefix}-date`}>{values.date ?? ''}</dd>
+          </>
+        )}
+        {isRecurring && (
+          <>
+            <dt className='font-semibold'>Recurrence</dt>
+            <dd data-testid={`${prefix}-recurrence`}>{values.recurrence ?? ''}</dd>
+            <dt className='font-semibold'>Anchor date</dt>
+            <dd data-testid={`${prefix}-anchor-date`}>{values.anchorDate ?? ''}</dd>
+          </>
+        )}
         <dt className='font-semibold'>Category</dt>
         <dd data-testid={`${prefix}-category`}>{finalCategoryName}</dd>
         <dt className='font-semibold'>Tags</dt>
@@ -244,7 +274,13 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
       >
         <input type='hidden' name='description' value={values.description ?? ''} />
         <input type='hidden' name='amount' value={values.amount ?? ''} />
-        <input type='hidden' name='date' value={values.date ?? ''} />
+        {!isRecurring && <input type='hidden' name='date' value={values.date ?? ''} />}
+        {isRecurring && (
+          <>
+            <input type='hidden' name='recurrence' value={values.recurrence ?? ''} />
+            <input type='hidden' name='anchorDate' value={values.anchorDate ?? ''} />
+          </>
+        )}
         <input type='hidden' name='category' value={values.category ?? ''} />
         <input type='hidden' name='tags' value={values.tags ?? ''} />
         <button
