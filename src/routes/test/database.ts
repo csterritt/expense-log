@@ -57,6 +57,8 @@ testDatabaseRouter.delete('/clear', secureHeaders(STANDARD_SECURE_HEADERS), asyn
     // Delete in order to avoid foreign key constraints
     await runDb(() => db.delete(expenseTag))
     await runDb(() => db.delete(expense))
+    await runDb(() => db.delete(recurringTag))
+    await runDb(() => db.delete(recurring))
     await runDb(() => db.delete(tag))
     await runDb(() => db.delete(category))
     await runDb(() => db.delete(session))

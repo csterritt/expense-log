@@ -47,7 +47,7 @@ const renderRecurringList = (rows: RecurringListRow[], today: string) => {
   return (
     <div data-testid='recurring-page'>
       <div className='flex items-center justify-between mb-6'>
-        <h1 className='text-2xl font-bold'>Recurring templates</h1>
+        <h1 className='text-2xl font-bold'>Recurring</h1>
         <a href='/recurring/new' className='btn btn-primary' data-testid='recurring-new'>
           New recurring
         </a>
