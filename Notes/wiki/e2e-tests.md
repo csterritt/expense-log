@@ -5,7 +5,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (62 spec files + 1
 ## Support utilities (`e2e-tests/support/`)
 
 - [e2e-tests/support/auth-helpers.ts](./e2e-tests/support/auth-helpers.md) — Sign-in/sign-out helpers for test scenarios.
-- [e2e-tests/support/db-helpers.ts](./e2e-tests/support/db-helpers.md) — Database clearing, seeding, and session cleanup via test endpoints. Issue 13 adds `seedRecurringTemplates` and `seedGeneratedExpense` helpers.
+- [e2e-tests/support/db-helpers.ts](./e2e-tests/support/db-helpers.md) — Database clearing, seeding, and session cleanup via test endpoints. Issue 13 adds `seedRecurringTemplates` and `seedGeneratedExpense` helpers. Issue 14: `SeedRecurringRow` gains optional `createdAtIso` field to override the creation timestamp for clock-controlled tests.
 - [e2e-tests/support/finders.ts](./e2e-tests/support/finders.md) — Page element locators and finder functions.
 - [e2e-tests/support/form-helpers.ts](./e2e-tests/support/form-helpers.md) — Form filling and submission utilities.
 - [e2e-tests/support/mode-helpers.ts](./e2e-tests/support/mode-helpers.md) — Helpers to inspect and assert current SIGN_UP_MODE.
@@ -114,6 +114,10 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/` (62 spec files + 1
 - [e2e-tests/recurring/02-edit.spec.ts](./e2e-tests/recurring/02-edit.spec.md) — Issue 13. Edit page pre-populates all fields; simple save (no new items) redirects to list with updated row; adding a new tag routes through `confirm-recurring-edit-new-page`; cancel on confirmation returns to edit page with typed values preserved.
 - [e2e-tests/recurring/03-delete.spec.ts](./e2e-tests/recurring/03-delete.spec.md) — Issue 13. Cancel on delete page returns to edit and template is still listed; confirm delete removes template but preserves past generated expense (seeded via `/test/seed-generated-expense`) with `recurringId` nulled.
 - [e2e-tests/recurring/04-validation.spec.ts](./e2e-tests/recurring/04-validation.spec.md) — Issue 13. Per-field validation on create and edit forms: description over limit, amount zero, amount with three decimals, impossible anchor date `2025-02-30`; typed values preserved on redirect back.
+- [e2e-tests/recurring/05-cron-28th-shift.spec.ts](./e2e-tests/recurring/05-cron-28th-shift.spec.md) — Issue 14. Monthly template anchored on day 31; four clock advances (mid-Feb → Mar 1 → Apr 1 → May 1) with `POST /test/run-cron`; asserts Feb 28 / Mar 31 / Apr 30 generated rows with `expense-row-recurring-badge` and `span.underline`.
+- [e2e-tests/recurring/06-cron-idempotency.spec.ts](./e2e-tests/recurring/06-cron-idempotency.spec.md) — Issue 14. Three sub-tests: first-occurrence rule (generated=0), catch-up generation (generated=4), idempotency (second run generated=0, row count unchanged).
+- [e2e-tests/recurring/07-generated-row-rendering.spec.ts](./e2e-tests/recurring/07-generated-row-rendering.spec.md) — Issue 14. Badge + underline on generated rows; manual rows lack badge; editing a generated row preserves `recurringId`; re-run cron on same clock = idempotent.
+- [e2e-tests/recurring/08-generated-in-queries.spec.ts](./e2e-tests/recurring/08-generated-in-queries.spec.md) — Issue 14. Generated rows participate in description search, category filter, tag filter, and summary grand total identically to manual rows.
 
 ## Notes
 

@@ -181,7 +181,7 @@ Run `uvx showboat --help` first to confirm current flags, then generate into the
 **Output**: A walkthrough under `Notes/walkthroughs/14-recurrence-materialization/ui-walkthrough/` showing: a manual `/auth/set-clock` advance + `POST /test/run-cron` cycle; `/expenses` rendering generated rows with the underline + ↻ badge alongside manual rows; the 28th-shift result on a February-spanning advance; an edit of a generated row preserving the badge; and a `/summary` view that includes the generated rows' cents.
 **Depends on**: 16
 
-Run `uvx showboat --help` and `uvx rodney --help` first to confirm current flags, then generate into the new directory.
+Run `uvx showboat --help` first to confirm current flags, then generate into the new directory.
 
 ---
 

@@ -869,3 +869,73 @@ All tasks are complete. Here's a summary of everything implemented this session:
 - **T30–31** — Code and UI walkthroughs under `Notes/walkthroughs/13-recurring-crud/`
 
 **Verification:** 197 unit tests pass across the three relevant spec files; no new TypeScript errors.
+
+*Viewed [13-recurring-crud.md](file:///home/chris/expense-log/Notes/tasks/13-recurring-crud.md) *
+
+### User Input
+
+some of the tests are failing when run in no sign-up mode, please see if you can fix them
+
+*Grep searched codebase*
+
+*Grep searched codebase*
+
+*Viewed [mode-helpers.ts](file:///home/chris/expense-log/e2e-tests/support/mode-helpers.ts) *
+
+### Planner Response
+
+Now let me look at a no-sign-up failing test — check what the no-sign-up specs test and what existing expense specs do about no-sign-up mode:
+
+*Viewed [01-sign-up-routes-return-404.spec.ts](file:///home/chris/expense-log/e2e-tests/no-sign-up/01-sign-up-routes-return-404.spec.ts) *
+
+*Grep searched codebase*
+
+*Viewed [form-helpers.ts](file:///home/chris/expense-log/e2e-tests/support/form-helpers.ts) *
+
+*Viewed [02-entry-form.spec.ts](file:///home/chris/expense-log/e2e-tests/expenses/02-entry-form.spec.ts) *
+
+*Viewed [db-helpers.ts](file:///home/chris/expense-log/e2e-tests/support/db-helpers.ts) *
+
+### Planner Response
+
+Let me look at the actual seed endpoint to understand what it creates and check what the [clearDatabase](file:///home/chris/expense-log/e2e-tests/support/db-helpers.ts:0:0-28:1) does in no-sign-up mode:
+
+*Viewed [database.ts](file:///home/chris/expense-log/src/routes/test/database.ts) *
+
+### Planner Response
+
+The `clear` endpoint doesn't delete `recurring` and `recurringTag`. Let me check all the no-sign-up specs to understand what's actually failing:
+
+*Viewed [02-sign-up-post-requests-fail.spec.ts](file:///home/chris/expense-log/e2e-tests/no-sign-up/02-sign-up-post-requests-fail.spec.ts) *
+
+*Viewed [06-expense-routes-require-auth.spec.ts](file:///home/chris/expense-log/e2e-tests/general/06-expense-routes-require-auth.spec.ts) *
+
+*Viewed [07-expense-routes-signed-in.spec.ts](file:///home/chris/expense-log/e2e-tests/general/07-expense-routes-signed-in.spec.ts) *
+
+### Planner Response
+
+Let me look at the current recurring list page and clear endpoint to identify the actual failure:
+
+*Viewed [build-recurring.tsx](file:///home/chris/expense-log/src/routes/build-recurring.tsx) *
+
+### Planner Response
+
+Found two issues:
+
+1. **[build-recurring.tsx](file:///home/chris/expense-log/src/routes/build-recurring.tsx:0:0-0:0)** has `<h1>Recurring templates</h1>` but [07-expense-routes-signed-in.spec.ts](file:///home/chris/expense-log/e2e-tests/general/07-expense-routes-signed-in.spec.ts:0:0-0:0) expects the h1 to be exactly `'Recurring'`
+2. **`/test/database/clear`** doesn't delete `recurring` and `recurringTag` rows — leftover data bleeds between tests
+
+*Edited relevant file*
+
+### Planner Response
+
+Now fix the clear endpoint:
+
+*Edited relevant file*
+
+### Planner Response
+
+Two fixes applied:
+
+1. **[src/routes/build-recurring.tsx](file:///home/chris/expense-log/src/routes/build-recurring.tsx:0:0-0:0)** — h1 text changed from `"Recurring templates"` back to `"Recurring"` to match [07-expense-routes-signed-in.spec.ts](file:///home/chris/expense-log/e2e-tests/general/07-expense-routes-signed-in.spec.ts:0:0-0:0)'s expectation
+2. **[src/routes/test/database.ts](file:///home/chris/expense-log/src/routes/test/database.ts:0:0-0:0)** — `DELETE /test/database/clear` now deletes `recurringTag` and `recurring` rows (before deleting `tag`/`category`) so recurring template data doesn't persist between test runs

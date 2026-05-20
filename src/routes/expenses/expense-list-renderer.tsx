@@ -215,7 +215,23 @@ export const renderExpenseTable = (rows: ExpenseRow[]) => {
           {rows.map((row) => (
             <tr data-testid='expense-row' data-expense-id={row.id}>
               <td data-testid='expense-row-date'>{row.date}</td>
-              <td data-testid='expense-row-description'>{row.description}</td>
+              <td data-testid='expense-row-description'>
+                {row.recurringId ? (
+                  <span>
+                    <span className='underline'>{row.description}</span>
+                    <span
+                      className='ml-1 badge badge-sm badge-outline'
+                      aria-label='Recurring'
+                      title='Recurring'
+                      data-testid='expense-row-recurring-badge'
+                    >
+                      ↻
+                    </span>
+                  </span>
+                ) : (
+                  row.description
+                )}
+              </td>
               <td data-testid='expense-row-category'>{row.categoryName}</td>
               <td data-testid='expense-row-tags'>{row.tagNames.join(', ')}</td>
               <td className='text-right' data-testid='expense-row-amount'>

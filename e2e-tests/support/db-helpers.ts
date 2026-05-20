@@ -213,6 +213,7 @@ export interface SeedRecurringRow {
   tagNames?: string[]
   recurrence: 'Monthly' | 'Quarterly' | 'Yearly'
   anchorDate: string
+  createdAtIso?: string
 }
 
 /**

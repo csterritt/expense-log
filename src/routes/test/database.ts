@@ -532,6 +532,7 @@ testDatabaseRouter.post('/seed-recurring-templates', secureHeaders(STANDARD_SECU
       tagNames?: string[]
       recurrence: 'Monthly' | 'Quarterly' | 'Yearly'
       anchorDate: string
+      createdAtIso?: string
     }>
     const db = createDbClient(c.env.PROJECT_DB)
     const now = new Date()
@@ -582,6 +583,7 @@ testDatabaseRouter.post('/seed-recurring-templates', secureHeaders(STANDARD_SECU
 
       // Insert recurring template
       const id = crypto.randomUUID()
+      const createdAt = row.createdAtIso ? new Date(row.createdAtIso) : now
       await runDb(() =>
         db.insert(recurring).values({
           id,
@@ -590,7 +592,7 @@ testDatabaseRouter.post('/seed-recurring-templates', secureHeaders(STANDARD_SECU
           categoryId,
           recurrence: row.recurrence,
           anchorDate: row.anchorDate,
-          createdAt: now,
+          createdAt,
           updatedAt: now,
         }),
       )

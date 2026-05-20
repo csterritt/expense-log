@@ -34,6 +34,7 @@ import {
   updateRecurringWithTags,
   updateManyAndRecurring,
   deleteRecurring,
+  materializeRecurring,
 } from '../src/lib/db/expense-access'
 import {
   createCategory,
@@ -76,6 +77,9 @@ const createTestDb = async (): Promise<TestDb> => {
   )
   sqlite.run(
     'CREATE TABLE expense (id TEXT PRIMARY KEY, description TEXT NOT NULL, amountCents INTEGER NOT NULL, categoryId TEXT NOT NULL REFERENCES category(id) ON DELETE RESTRICT, date TEXT NOT NULL, recurringId TEXT REFERENCES recurring(id) ON DELETE SET NULL, occurrenceDate TEXT, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
+  )
+  sqlite.run(
+    'CREATE UNIQUE INDEX expense_recurring_occurrence_unique ON expense (recurringId, occurrenceDate) WHERE recurringId IS NOT NULL',
   )
   sqlite.run(
     'CREATE TABLE tag (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
@@ -1504,6 +1508,305 @@ describe('deleteRecurring (Task 12)', () => {
     assert.strictEqual(result.isErr, true)
     if (result.isErr) {
       assert.match(result.error.message, /not found/i)
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Helpers for materialization tests
+// ---------------------------------------------------------------------------
+
+const seedRecurringForMat = async (
+  db: TestDb,
+  opts: {
+    id: string
+    categoryId: string
+    description?: string
+    amountCents?: number
+    recurrence?: 'Monthly' | 'Quarterly' | 'Yearly'
+    anchorDate?: string
+    createdAt?: Date
+  },
+): Promise<void> => {
+  const now = opts.createdAt ?? new Date()
+  await db.insert(recurring).values({
+    id: opts.id,
+    description: opts.description ?? opts.id,
+    amountCents: opts.amountCents ?? 1000,
+    categoryId: opts.categoryId,
+    recurrence: opts.recurrence ?? 'Monthly',
+    anchorDate: opts.anchorDate ?? '2024-01-15',
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
+const seedRecurringTagLink = async (
+  db: TestDb,
+  recurringId: string,
+  tagId: string,
+): Promise<void> => {
+  await db.insert(recurringTag).values({ recurringId, tagId })
+}
+
+// ---------------------------------------------------------------------------
+// materializeRecurring tests (Issue 14)
+// ---------------------------------------------------------------------------
+
+describe('materializeRecurring (Issue 14)', () => {
+  it('returns ok with zeros when there are no templates', async () => {
+    const db = await createTestDb()
+    const result = await materializeRecurring(db, '2024-06-01')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.generated, 0)
+      assert.strictEqual(result.value.skipped, 0)
+      assert.deepStrictEqual(result.value.failed, [])
+    }
+  })
+
+  it('generates one expense row for one past occurrence (Monthly)', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    // Created 2024-01-01, anchor 15th Monthly → first occurrence is Jan 15
+    await seedRecurringForMat(db, {
+      id: 'rec-1',
+      categoryId: 'cat-1',
+      description: 'Rent',
+      amountCents: 120000,
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-15',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+    })
+
+    const result = await materializeRecurring(db, '2024-01-15')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.generated, 1)
+      assert.strictEqual(result.value.skipped, 0)
+      assert.deepStrictEqual(result.value.failed, [])
+    }
+
+    const rows = await db
+      .select({
+        description: expense.description,
+        amountCents: expense.amountCents,
+        date: expense.date,
+        occurrenceDate: expense.occurrenceDate,
+        recurringId: expense.recurringId,
+      })
+      .from(expense)
+    assert.strictEqual(rows.length, 1)
+    assert.strictEqual(rows[0]?.recurringId, 'rec-1')
+    assert.strictEqual(rows[0]?.occurrenceDate, '2024-01-15')
+    assert.strictEqual(rows[0]?.date, '2024-01-15')
+    assert.strictEqual(rows[0]?.description, 'Rent')
+    assert.strictEqual(rows[0]?.amountCents, 120000)
+  })
+
+  it('copies tags from the template to generated expense rows', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-sub', 'subscriptions')
+    await seedTag(db, 'tag-auto', 'auto')
+    await seedRecurringForMat(db, {
+      id: 'rec-tags',
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-10',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+    })
+    await seedRecurringTagLink(db, 'rec-tags', 'tag-sub')
+    await seedRecurringTagLink(db, 'rec-tags', 'tag-auto')
+
+    const result = await materializeRecurring(db, '2024-01-10')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.generated, 1)
+    }
+
+    const expenseRows = await db.select({ id: expense.id }).from(expense)
+    const expenseId = expenseRows[0]?.id
+    assert.ok(expenseId)
+
+    const tagLinks = await db
+      .select({ tagId: expenseTag.tagId })
+      .from(expenseTag)
+      .where(eq(expenseTag.expenseId, expenseId))
+    const tagIds = tagLinks.map((r) => r.tagId).sort()
+    assert.deepStrictEqual(tagIds, ['tag-auto', 'tag-sub'])
+  })
+
+  it('idempotent: second call generates 0 and skips N', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurringForMat(db, {
+      id: 'rec-idem',
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-10',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+    })
+
+    const first = await materializeRecurring(db, '2024-03-10')
+    assert.strictEqual(first.isOk, true)
+    if (first.isOk) {
+      assert.strictEqual(first.value.generated, 3) // Jan 10, Feb 10, Mar 10
+    }
+
+    // Second run: max(occurrenceDate) = '2024-03-10' = today, so
+    // occurrencesToGenerate returns [] — no inserts attempted.
+    const second = await materializeRecurring(db, '2024-03-10')
+    assert.strictEqual(second.isOk, true)
+    if (second.isOk) {
+      assert.strictEqual(second.value.generated, 0)
+      assert.strictEqual(second.value.skipped, 0)
+      assert.deepStrictEqual(second.value.failed, [])
+    }
+
+    // Row count is unchanged
+    const rows = await db.select({ id: expense.id }).from(expense)
+    assert.strictEqual(rows.length, 3)
+  })
+
+  it('catch-up generates all missed occurrences up to today', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurringForMat(db, {
+      id: 'rec-catchup',
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-05',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+    })
+
+    const result = await materializeRecurring(db, '2024-04-05')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.generated, 4)
+    }
+
+    const rows = await db
+      .select({ occurrenceDate: expense.occurrenceDate })
+      .from(expense)
+      .orderBy(asc(expense.occurrenceDate))
+    assert.deepStrictEqual(
+      rows.map((r) => r.occurrenceDate),
+      ['2024-01-05', '2024-02-05', '2024-03-05', '2024-04-05'],
+    )
+  })
+
+  it('first-occurrence rule: does not generate on or before template createdAt date', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    // Anchor is the 15th, createdAt IS the 15th — first valid occurrence is next month
+    await seedRecurringForMat(db, {
+      id: 'rec-first',
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-15',
+      createdAt: new Date('2024-01-15T20:00:00Z'), // ET is UTC-5, so this is Jan 15 ET
+    })
+
+    const result = await materializeRecurring(db, '2024-01-15')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.generated, 0)
+    }
+  })
+
+  it('error in one template is isolated: other templates still generate', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+
+    // Valid template
+    await seedRecurringForMat(db, {
+      id: 'rec-good',
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-10',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+    })
+    // Template with an invalid recurrence value to force an error
+    await db.insert(recurring).values({
+      id: 'rec-bad',
+      description: 'bad template',
+      amountCents: 100,
+      categoryId: 'cat-1',
+      recurrence: 'InvalidRecurrence',
+      anchorDate: '2024-01-10',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+      updatedAt: new Date(),
+    })
+
+    const result = await materializeRecurring(db, '2024-01-10')
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.generated, 1)
+      assert.strictEqual(result.value.failed.length, 1)
+      assert.strictEqual(result.value.failed[0]?.recurringId, 'rec-bad')
+    }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// listExpenses recurringId tests (Issue 14, Task 10)
+// ---------------------------------------------------------------------------
+
+describe('listExpenses recurringId (Issue 14)', () => {
+  it('returns null recurringId for manually entered expenses', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e-manual', 'cat-1', '2024-03-01', 'Coffee')
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value[0]?.recurringId, null)
+    }
+  })
+
+  it('returns non-null recurringId for generated expenses', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedRecurringForMat(db, {
+      id: 'rec-1',
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-15',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+    })
+
+    await materializeRecurring(db, '2024-01-15')
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.length, 1)
+      assert.strictEqual(result.value[0]?.recurringId, 'rec-1')
+    }
+  })
+
+  it('returns mixed null and non-null recurringIds in the same result set', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedExpenseFull(db, 'e-manual', 'cat-1', '2024-01-10', 'Manual')
+    await seedRecurringForMat(db, {
+      id: 'rec-1',
+      categoryId: 'cat-1',
+      recurrence: 'Monthly',
+      anchorDate: '2024-01-15',
+      createdAt: new Date('2024-01-01T12:00:00Z'),
+    })
+    await materializeRecurring(db, '2024-01-15')
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.length, 2)
+      const recurringIds = result.value.map((r) => r.recurringId)
+      assert.ok(recurringIds.includes(null))
+      assert.ok(recurringIds.includes('rec-1'))
     }
   })
 })

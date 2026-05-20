@@ -11,7 +11,9 @@ import { Result } from 'true-myth'
 
 import { category, expense, expenseTag, recurring, recurringTag, tag } from '../../db/schema'
 import type { DrizzleClient } from '../../local-types'
-import { withRetry } from '../db-helpers'
+import { withRetry, toResult } from '../db-helpers'
+import { todayEt } from '../et-date'
+import { occurrencesToGenerate } from '../recurrence'
 
 /**
  * Input for creating a new category and expense together
@@ -33,6 +35,7 @@ export interface ExpenseRow {
   categoryName: string
   amountCents: number
   tagNames: string[]
+  recurringId: string | null
 }
 
 /**
@@ -184,6 +187,7 @@ const listExpensesActual = async (
         description: expense.description,
         amountCents: expense.amountCents,
         categoryName: category.name,
+        recurringId: expense.recurringId,
       })
       .from(expense)
       .innerJoin(category, eq(category.id, expense.categoryId))
@@ -222,6 +226,7 @@ const listExpensesActual = async (
           categoryName: row.categoryName,
           amountCents: row.amountCents,
           tagNames: tags,
+          recurringId: row.recurringId ?? null,
         }
       }),
     )
@@ -1299,4 +1304,215 @@ const deleteRecurringActual = async (
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
   }
+}
+
+// ---------------------------------------------------------------------------
+// Materialization helpers (Issue 14)
+// ---------------------------------------------------------------------------
+
+/**
+ * Internal recurring template row type that includes the raw `createdAt`
+ * timestamp. Used exclusively by the materialization helpers.
+ */
+interface RecurringForMaterialize extends RecurringRow {
+  createdAt: Date
+}
+
+const listTemplatesForMaterializeActual = async (
+  db: DrizzleClient,
+): Promise<Result<RecurringForMaterialize[], Error>> => {
+  return toResult(async () => {
+    const rows = await db
+      .select({
+        id: recurring.id,
+        description: recurring.description,
+        amountCents: recurring.amountCents,
+        categoryId: recurring.categoryId,
+        categoryName: category.name,
+        recurrence: recurring.recurrence,
+        anchorDate: recurring.anchorDate,
+        createdAt: recurring.createdAt,
+      })
+      .from(recurring)
+      .innerJoin(category, eq(category.id, recurring.categoryId))
+      .orderBy(asc(sql`lower(${recurring.description})`))
+
+    if (rows.length === 0) {
+      return []
+    }
+
+    const recurringIds = rows.map((r) => r.id)
+    const tagRows = await db
+      .select({ recurringId: recurringTag.recurringId, tagId: tag.id, tagName: tag.name })
+      .from(recurringTag)
+      .innerJoin(tag, eq(tag.id, recurringTag.tagId))
+      .where(inArray(recurringTag.recurringId, recurringIds))
+
+    const tagsByRecurringId = new Map<string, { id: string; name: string }[]>()
+    for (const row of tagRows) {
+      const bucket = tagsByRecurringId.get(row.recurringId)
+      if (bucket) {
+        bucket.push({ id: row.tagId, name: row.tagName })
+      } else {
+        tagsByRecurringId.set(row.recurringId, [{ id: row.tagId, name: row.tagName }])
+      }
+    }
+
+    return rows.map((row) => {
+      const tags = (tagsByRecurringId.get(row.id) ?? []).slice()
+      tags.sort((a, b) => a.name.localeCompare(b.name))
+      return {
+        id: row.id,
+        description: row.description,
+        amountCents: row.amountCents,
+        categoryId: row.categoryId,
+        categoryName: row.categoryName,
+        recurrence: row.recurrence,
+        anchorDate: row.anchorDate,
+        createdAt: row.createdAt,
+        tagIds: tags.map((t) => t.id),
+        tagNames: tags.map((t) => t.name),
+      }
+    })
+  })
+}
+
+/**
+ * Insert all pending occurrence rows for a single recurring template.
+ *
+ * For each date in `occurrencesToGenerate`, inserts one `expense` row
+ * (with `recurringId` and `occurrenceDate` set) plus the corresponding
+ * `expenseTag` links. A unique-index violation on `(recurringId, occurrenceDate)`
+ * is treated as a no-op and counted as `skipped`; all other errors are
+ * re-thrown.
+ *
+ * @param db - Database instance
+ * @param template - Resolved recurring template with tagIds and createdAt
+ * @param today - YYYY-MM-DD current date (ET-anchored, inclusive upper bound)
+ * @returns Counts of newly generated and skipped (already-existing) occurrences
+ */
+const materializeOneRecurring = async (
+  db: DrizzleClient,
+  template: RecurringForMaterialize,
+  today: string,
+): Promise<{ generated: number; skipped: number }> => {
+  const createdAtYmd = todayEt(template.createdAt)
+
+  const lastOccurrenceRows = await db
+    .select({ maxDate: sql<string | null>`max(${expense.occurrenceDate})` })
+    .from(expense)
+    .where(eq(expense.recurringId, template.id))
+
+  const lastOccurrence = lastOccurrenceRows[0]?.maxDate ?? undefined
+
+  const dates = occurrencesToGenerate({
+    recurrence: template.recurrence as 'Monthly' | 'Quarterly' | 'Yearly',
+    anchorDate: template.anchorDate,
+    createdAt: createdAtYmd,
+    lastOccurrence,
+    today,
+  })
+
+  let generated = 0
+  let skipped = 0
+  const now = new Date()
+
+  for (const occurrenceDate of dates) {
+    const expenseId = crypto.randomUUID()
+
+    try {
+      const insertExpense = db.insert(expense).values({
+        id: expenseId,
+        description: template.description,
+        amountCents: template.amountCents,
+        categoryId: template.categoryId,
+        date: occurrenceDate,
+        recurringId: template.id,
+        occurrenceDate,
+        createdAt: now,
+        updatedAt: now,
+      })
+
+      if (template.tagIds.length === 0) {
+        await insertExpense
+      } else {
+        const statements: unknown[] = [insertExpense]
+        for (const tagId of template.tagIds) {
+          statements.push(db.insert(expenseTag).values({ expenseId, tagId }))
+        }
+        await db.batch(statements as never)
+      }
+
+      generated += 1
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      if (/unique|constraint/i.test(message)) {
+        skipped += 1
+        continue
+      }
+      throw e
+    }
+  }
+
+  return { generated, skipped }
+}
+
+/**
+ * Result shape for a single materialization run.
+ */
+export interface MaterializeRecurringResult {
+  generated: number
+  skipped: number
+  failed: Array<{ recurringId: string; error: string }>
+}
+
+/**
+ * Materialize all pending recurring expense rows across every active template.
+ *
+ * Algorithm:
+ * 1. Load all recurring templates (with tag lists) using `withRetry`. If this
+ *    step fails the entire call returns `Result.err`.
+ * 2. For each template, call `materializeOneRecurring`. Per-template errors
+ *    are collected into `failed` rather than propagated; remaining templates
+ *    always continue.
+ *
+ * `withRetry` is applied **only** to the initial template-load step, not to
+ * the individual inserts. Duplicate-key violations inside each insert are
+ * already handled as no-ops.
+ *
+ * @param db - Database instance
+ * @param today - YYYY-MM-DD current date (ET-anchored), used as inclusive upper
+ *   bound for all occurrence calculations
+ * @returns Aggregated counts and per-template error list
+ */
+export const materializeRecurring = async (
+  db: DrizzleClient,
+  today: string,
+): Promise<Result<MaterializeRecurringResult, Error>> => {
+  const templatesResult = await withRetry('materializeRecurring:loadTemplates', () =>
+    listTemplatesForMaterializeActual(db),
+  )
+  if (templatesResult.isErr) {
+    return templatesResult as Result<never, Error>
+  }
+
+  const templates = templatesResult.value
+  let generated = 0
+  let skipped = 0
+  const failed: Array<{ recurringId: string; error: string }> = []
+
+  for (const template of templates) {
+    try {
+      const result = await materializeOneRecurring(db, template, today)
+      generated += result.generated
+      skipped += result.skipped
+    } catch (e) {
+      failed.push({
+        recurringId: template.id,
+        error: e instanceof Error ? e.message : String(e),
+      })
+    }
+  }
+
+  return Result.ok({ generated, skipped, failed })
 }

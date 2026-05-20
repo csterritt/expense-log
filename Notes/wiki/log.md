@@ -2,6 +2,21 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-05-09] ingest | Issue 14: recurrence engine + materialization + dev cron
+
+Ingested all Issue 14 deliverables: recurrence algorithm extension, materialization helpers, dev cron route, UI badge rendering, and four Playwright e2e specs.
+
+- **`src/lib/recurrence.ts`** (new+extended) — `nextOccurrenceAfter` extended to Quarterly and Yearly (3-month / 1-year advance) with 28th-shift clamping; throws on unknown recurrence values. New `occurrencesToGenerate(params)` function computes undone occurrences between `max(createdAt, lastOccurrence)` and `today`; first-occurrence rule (strictly-after `createdAt`) prevents duplicating the anchor occurrence.
+- **`src/lib/db/expense-access.ts`** — `ExpenseRow` gains `recurringId: string | null`; `listExpensesActual` selects and returns it. New `materializeOneRecurring(db, template, today)` inserts generated occurrences idempotently via `ON CONFLICT DO NOTHING` (unique partial index `expense_recurring_occurrence_unique` on `(recurringId, occurrenceDate)`). New public `materializeRecurring(db, today)` iterates all templates, copies tags, error-isolates per-template failures, and returns `{ generated, skipped, failed }`.
+- **`src/routes/test/run-cron.ts`** (new) — Dev-only `POST /test/run-cron` guarded by `signedInAccess` + `isTestRouteEnabled`; computes `todayEt(getCurrentTime(c))` (honours clock-delta cookie) and calls `materializeRecurring`; returns JSON summary. Registered in `src/index.ts`.
+- **`src/routes/expenses/expense-list-renderer.tsx`** — Expense description cell updated: when `recurringId` is non-null, wraps description in `<span class="underline">` and appends a `↻` badge (`data-testid="expense-row-recurring-badge"`).
+- **`src/routes/test/database.ts`** — `POST /test/database/seed-recurring-templates` body rows now accept optional `createdAtIso` to override `new Date()` for the template's `createdAt`.
+- **Unit tests** — `tests/recurrence.spec.ts`: Quarterly/Yearly coverage + `occurrencesToGenerate` suite. `tests/expense-access.spec.ts`: `materializeRecurring` block (tag-copy, idempotency, catch-up, first-occurrence rule, error isolation, `listExpenses.recurringId` surfacing).
+- **E2E specs** (4 new under `e2e-tests/recurring/`): `05-cron-28th-shift.spec.ts`, `06-cron-idempotency.spec.ts`, `07-generated-row-rendering.spec.ts`, `08-generated-in-queries.spec.ts`.
+- **Wiki pages created**: `src/lib/recurrence.md`, `src/routes/test/run-cron.md`, `e2e-tests/recurring/05–08 spec pages`.
+- **Catalogs updated**: `source-code.md` (count 78→80, added recurrence.ts + run-cron.ts entries, updated expense-access.ts + expense-list-renderer.tsx + database.ts entries), `e2e-tests.md` (4 new recurring entries + db-helpers update), `unit-tests.md` (recurrence.spec.ts + expense-access.spec.ts entries updated).
+- **Cross-links**: Issue 13 (recurring CRUD); Issue 15 (scheduled cron + Pushover).
+
 ## [2026-05-08] refactor | Issue 14B: Refactor build-expenses.tsx into multiple files
 
 Refactored the monolithic `build-expenses.tsx` (597 lines) into a thin orchestrator plus five separate modules to improve code organization and separation of concerns.

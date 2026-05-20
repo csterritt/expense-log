@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (78 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (80 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
@@ -29,8 +29,9 @@ Catalog of all source files under `src/` (78 files total), organized by category
 - [src/lib/auth.ts](./src/lib/auth.md) — Better Auth instance configuration: Drizzle adapter, email/password setup, email verification callbacks, session config, trusted origins, and secret binding.
 - [src/lib/cookie-support.ts](./src/lib/cookie-support.md) — Cookie parsing, serialization, and deletion utilities.
 - [src/lib/db-helpers.ts](./src/lib/db-helpers.md) — Shared `withRetry` and `toResult` wrappers used by `db/auth-access.ts` and `db/expense-access.ts`.
+- [src/lib/recurrence.ts](./src/lib/recurrence.md) — Issue 14: Pure calendar arithmetic for recurring expenses. `nextOccurrenceAfter(after, recurrence, anchorDate)` computes the next YYYY-MM-DD strictly after a given date with 28th-shift clamping for Monthly/Quarterly/Yearly. `occurrencesToGenerate(params)` enumerates all undone occurrences between `createdAt`/`lastOccurrence` and `today` using the first-occurrence rule.
 - [src/lib/db/auth-access.ts](./src/lib/db/auth-access.md) — Auth DB access helpers (retry + Result): `getUserWithAccountByEmail`, `claimSingleUseCode`, `addInterestedEmail`, `deleteUserAccount`.
-- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense/category/tag DB access helpers (retry + Result): list/read/create/update/delete expense flows plus Issue 09 category management helpers. Issue 11: `ListExpenseFilters` now accepts optional `from`, `to`, `description`, `categoryId`, `tagIds`, and `tagMode` ('or'|'and') — all fields optional; no filters returns all rows; default 2-month window is applied at the route layer.
+- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense/category/tag DB access helpers (retry + Result): list/read/create/update/delete expense flows plus Issue 09 category management helpers. Issue 11: `ListExpenseFilters` now accepts optional `from`, `to`, `description`, `categoryId`, `tagIds`, and `tagMode` ('or'|'and') — all fields optional; no filters returns all rows; default 2-month window is applied at the route layer. Issue 14: `ExpenseRow` gains `recurringId: string | null`; `listExpensesActual` selects and returns `recurringId`; adds `materializeOneRecurring(db, template, today)` (idempotent single-template insert using `ON CONFLICT DO NOTHING` via a unique partial index on `(recurringId, occurrenceDate)`) and `materializeRecurring(db, today)` (public aggregator returning `{ generated, skipped, failed }`; error-isolates per-template failures).
 - [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
 - [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`.
 - [src/lib/expense-validators.ts](./src/lib/expense-validators.md) — Per-field validators for expense entry/edit plus category and tag management. Issue 11 adds `parseExpenseListFilters(raw)`. Issue 13 adds `parseRecurringCreate(values: RecurringFormValues)` → `Result<ParsedRecurringCreate, FieldErrors>`, along with `RecurrenceSchema`, `AnchorDateSchema`, `VALID_RECURRENCES`, `Recurrence`, `RecurringFormValues`, and `ParsedRecurringCreate`. `FieldErrors` gains optional `recurrence` and `anchorDate` keys.
@@ -65,7 +66,7 @@ Catalog of all source files under `src/` (78 files total), organized by category
 All routes are signed-in-only via the `signedInAccess` middleware. `/summary` remains a placeholder. `/recurring` and its sub-routes were implemented in Issue 13.
 
 - [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Route builder for the expenses list page. Refactored in Issue 14B to be a thin orchestrator that delegates to separate handler modules. Registers GET `/expenses` (via `handleExpensesGet`), POST `/expenses` (via `handleExpensesPost`), and POST `/expenses/confirm-create-new` (via `handleExpensesConfirmPost`). All routes use `secureHeaders` and `signedInAccess` middleware.
-- [src/routes/expenses/expense-list-renderer.tsx](./src/routes/expenses/expense-list-renderer.tsx.md) — Render functions for the expenses list page. Exports `renderFilterBar`, `renderExpenseTable`, and `renderExpenses` for the filter bar, expense table, and complete page layout respectively. Extracted from `build-expenses.tsx` in Issue 14B.
+- [src/routes/expenses/expense-list-renderer.tsx](./src/routes/expenses/expense-list-renderer.tsx.md) — Render functions for the expenses list page. Exports `renderFilterBar`, `renderExpenseTable`, and `renderExpenses` for the filter bar, expense table, and complete page layout respectively. Extracted from `build-expenses.tsx` in Issue 14B. Issue 14: expense description cell renders an underlined `<span>` and a `↻` badge (`data-testid="expense-row-recurring-badge"`) when `recurringId` is non-null.
 - [src/routes/expenses/expense-form-helpers.ts](./src/routes/expenses/expense-form-helpers.ts.md) — Helper functions for expense form handling. Exports `emptyState` (creates default form state) and `readRawBody` (parses request body). Extracted from `build-expenses.tsx` in Issue 14B.
 - [src/routes/expenses/expense-get-handler.ts](./src/routes/expenses/expense-get-handler.ts.md) — GET handler for `/expenses`. Parses query-string filters, loads expenses/categories/tags, applies default 2-month window on first load, and renders the page. Extracted from `build-expenses.tsx` in Issue 14B.
 - [src/routes/expenses/expense-post-handler.ts](./src/routes/expenses/expense-post-handler.ts.md) — POST handler for `/expenses`. Validates expense data, parses tags, looks up existing categories/tags, detects new items, and either creates the expense directly or renders a confirmation page. Extracted from `build-expenses.tsx` in Issue 14B.
@@ -118,7 +119,8 @@ All routes are signed-in-only via the `signedInAccess` middleware. `/summary` re
 
 ### Dev-only test routes (`src/routes/test/`)
 
-- [src/routes/test/database.ts](./src/routes/test/database.md) — Test database manipulation endpoints (PRODUCTION:REMOVE).
+- [src/routes/test/database.ts](./src/routes/test/database.md) — Test database manipulation endpoints (PRODUCTION:REMOVE). Issue 14: `POST /test/database/seed-recurring-templates` accepts optional `createdAtIso` per-row to override the default `new Date()` creation timestamp, enabling clock-controlled e2e tests.
+- [src/routes/test/run-cron.ts](./src/routes/test/run-cron.md) — Issue 14: Dev-only `POST /test/run-cron` that invokes `materializeRecurring` with `todayEt(getCurrentTime(c))` and returns a JSON summary. Guarded by `signedInAccess` and `isTestRouteEnabled` (PRODUCTION:REMOVE).
 - [src/routes/test/sign-up-mode.ts](./src/routes/test/sign-up-mode.md) — Test sign-up mode inspection/override (PRODUCTION:REMOVE).
 - [src/routes/test/smtp-config.ts](./src/routes/test/smtp-config.md) — Test SMTP configuration endpoint (PRODUCTION:REMOVE).
 
