@@ -2,6 +2,30 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-05-21] lint | Wiki audit: missing pages, stale claims, broken links
+
+Health-checked the wiki against current `src/`, `tests/`, and `e2e-tests/` source trees. Created missing individual wiki pages, updated stale category-page claims, and removed an orphaned duplicate.
+
+- **Created missing source-code pages** (3):
+  - `src/routes/recurring/build-create-recurring.md`
+  - `src/routes/recurring/build-edit-recurring.md`
+  - `src/routes/recurring/recurring-form.md`
+- **Created missing e2e-test pages** (6):
+  - `e2e-tests/expenses/16-summary-default-and-grouping.spec.md`
+  - `e2e-tests/expenses/17-summary-date-range-and-empty.spec.md`
+  - `e2e-tests/recurring/01-list-and-create.spec.md`
+  - `e2e-tests/recurring/02-edit.spec.md`
+  - `e2e-tests/recurring/03-delete.spec.md`
+  - `e2e-tests/recurring/04-validation.spec.md`
+- **Removed stale duplicate**:
+  - `src/routes/expenses/build-expenses.tsx.md` (orphaned; canonical page is `build-expenses.md`)
+- **Updated stale individual pages** (2):
+  - `src/routes/build-recurring.md` — replaced placeholder description with real list-page implementation (Issue 13).
+  - `src/routes/expenses/build-expenses.md` — replaced pre-Issue-14B monolithic description with thin-orchestrator description.
+- **Updated catalog pages**:
+  - `source-code.md` — removed stale file count; added missing `lib/db/category-access.ts`, `tag-access.ts`, `summary-access.ts` entries; updated `/summary` claim from "placeholder" to "implemented in Issue 12".
+  - `e2e-tests.md` — removed stale file count; added missing `expenses/06-category-combobox-js`, `07-tag-chip-picker-js`, `08-no-js-fallback` entries.
+
 ## [2026-05-09] ingest | Issue 14: recurrence engine + materialization + dev cron
 
 Ingested all Issue 14 deliverables: recurrence algorithm extension, materialization helpers, dev cron route, UI badge rendering, and four Playwright e2e specs.

@@ -1,6 +1,6 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (81 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/`, organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
@@ -33,6 +33,9 @@ Catalog of all source files under `src/` (81 files total), organized by category
 - [src/lib/recurrence.ts](./src/lib/recurrence.md) — Issue 14: Pure calendar arithmetic for recurring expenses. `nextOccurrenceAfter(after, recurrence, anchorDate)` computes the next YYYY-MM-DD strictly after a given date with 28th-shift clamping for Monthly/Quarterly/Yearly. `occurrencesToGenerate(params)` enumerates all undone occurrences between `createdAt`/`lastOccurrence` and `today` using the first-occurrence rule.
 - [src/lib/db/auth-access.ts](./src/lib/db/auth-access.md) — Auth DB access helpers (retry + Result): `getUserWithAccountByEmail`, `claimSingleUseCode`, `addInterestedEmail`, `deleteUserAccount`.
 - [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense/category/tag DB access helpers (retry + Result): list/read/create/update/delete expense flows plus Issue 09 category management helpers. Issue 11: `ListExpenseFilters` now accepts optional `from`, `to`, `description`, `categoryId`, `tagIds`, and `tagMode` ('or'|'and') — all fields optional; no filters returns all rows; default 2-month window is applied at the route layer. Issue 14: `ExpenseRow` gains `recurringId: string | null`; `listExpensesActual` selects and returns `recurringId`; adds `materializeOneRecurring(db, template, today)` (idempotent single-template insert using `ON CONFLICT DO NOTHING` via a unique partial index on `(recurringId, occurrenceDate)`) and `materializeRecurring(db, today)` (public aggregator returning `{ generated, skipped, failed }`; error-isolates per-template failures).
+- [src/lib/db/category-access.ts](./src/lib/db/category-access.md) — Category DB access helpers (retry + Result): `listCategories`, `findCategoryByName`, `createCategory`, `renameCategory`, `mergeCategory`, `deleteCategory`, `countCategoryExpenses`. Case-insensitive lookups and duplicate protection.
+- [src/lib/db/tag-access.ts](./src/lib/db/tag-access.md) — Tag DB access helpers (retry + Result): `listTags`, `findTagsByNames`, `createTag`, `renameTag`, `mergeTag`, `deleteTag`, `countTagExpenses`. Case-insensitive lookups and collision-aware merge logic for both `expenseTag` and `recurringTag` tables.
+- [src/lib/db/summary-access.ts](./src/lib/db/summary-access.md) — Summary DB access helpers (retry + Result): `summarize(db, filters)` groups expenses by month or year, supports category and tag filtering (OR/AND), and returns aggregated totals and counts per group.
 - [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
 - [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`.
 - [src/lib/expense-validators.ts](./src/lib/expense-validators.md) — Per-field validators for expense entry/edit plus category and tag management. Issue 11 adds `parseExpenseListFilters(raw)`. Issue 13 adds `parseRecurringCreate(values: RecurringFormValues)` → `Result<ParsedRecurringCreate, FieldErrors>`, along with `RecurrenceSchema`, `AnchorDateSchema`, `VALID_RECURRENCES`, `Recurrence`, `RecurringFormValues`, and `ParsedRecurringCreate`. `FieldErrors` gains optional `recurrence` and `anchorDate` keys. Issue 16: `parseExpenseListFilters` gains a `from <= to` ordering check — when both dates are present and valid, `from > to` sets `fieldErrors.date`, mirroring `parseSummaryQuery`.
@@ -64,7 +67,7 @@ Catalog of all source files under `src/` (81 files total), organized by category
 
 ### Expense feature pages
 
-All routes are signed-in-only via the `signedInAccess` middleware. `/summary` remains a placeholder. `/recurring` and its sub-routes were implemented in Issue 13.
+All routes are signed-in-only via the `signedInAccess` middleware. `/summary` was implemented in Issue 12 with month/year grouping, category/tag filtering, and grand totals. `/recurring` and its sub-routes were implemented in Issue 13.
 
 - [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Route builder for the expenses list page. Refactored in Issue 14B to be a thin orchestrator that delegates to separate handler modules. Registers GET `/expenses` (via `handleExpensesGet`), POST `/expenses` (via `handleExpensesPost`), and POST `/expenses/confirm-create-new` (via `handleExpensesConfirmPost`). All routes use `secureHeaders` and `signedInAccess` middleware.
 - [src/routes/expenses/expense-list-renderer.tsx](./src/routes/expenses/expense-list-renderer.tsx.md) — Render functions for the expenses list page. Exports `renderFilterBar`, `renderExpenseTable`, and `renderExpenses` for the filter bar, expense table, and complete page layout respectively. Extracted from `build-expenses.tsx` in Issue 14B. Issue 14: expense description cell renders an underlined `<span>` and a `↻` badge (`data-testid="expense-row-recurring-badge"`) when `recurringId` is non-null.
