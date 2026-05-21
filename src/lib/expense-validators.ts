@@ -717,6 +717,10 @@ export const parseExpenseListFilters = (raw: RawExpenseListFilters): ExpenseList
     }
   }
 
+  if (from !== undefined && to !== undefined && from > to) {
+    fieldErrors.date = fieldErrors.date ? fieldErrors.date : 'From date must be on or before To date.'
+  }
+
   let tagMode: 'or' | 'and' = 'or'
   if (raw.tagMode === 'and') {
     tagMode = 'and'

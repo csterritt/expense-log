@@ -608,6 +608,34 @@ describe('parseExpenseListFilters (Issue 11)', () => {
     const r = parseExpenseListFilters({ categoryId: '  ' })
     assert.strictEqual(r.filters.categoryId, undefined)
   })
+
+  it('rejects from after to with a date field error', () => {
+    const r = parseExpenseListFilters({ from: '2024-12-31', to: '2024-01-01' })
+    assert.ok(r.fieldErrors.date)
+  })
+
+  it('accepts from equal to to (same day)', () => {
+    const r = parseExpenseListFilters({ from: '2024-06-15', to: '2024-06-15' })
+    assert.strictEqual(r.filters.from, '2024-06-15')
+    assert.strictEqual(r.filters.to, '2024-06-15')
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('does not set a date error when only from is present', () => {
+    const r = parseExpenseListFilters({ from: '2024-12-31' })
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('does not set a date error when only to is present', () => {
+    const r = parseExpenseListFilters({ to: '2024-01-01' })
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('keeps the earlier bad-format error when from is invalid and from > to would also apply', () => {
+    const r = parseExpenseListFilters({ from: 'bad', to: '2024-01-01' })
+    assert.ok(r.fieldErrors.date)
+    assert.strictEqual(r.filters.from, undefined)
+  })
 })
 
 describe('parseSummaryQuery (Issue 14)', () => {

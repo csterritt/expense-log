@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, and extended in Issue 10 with tag-management validators. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery`, and Issue 16 with reversed-date-range cases for `parseExpenseListFilters`. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (59 total)
+## Test cases (122 total)
 
 ### `description`
 
@@ -54,6 +54,14 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 
 - `reports errors for every invalid field at once` — submits `{ description: '', amount: '0', date: '2025-13-40', category: '' }` and asserts errors exist for `description`, `amount`, `date`, `category` simultaneously.
 - `preserves valid fields passing while invalid ones fail` — only `description` and `amount` invalid; asserts `errors.date` and `errors.category` are `undefined`.
+
+### `parseExpenseListFilters` — reversed date range (Issue 16, 5 new cases)
+
+- `rejects from after to with a date field error` — `{ from: '2024-12-31', to: '2024-01-01' }` → `fieldErrors.date` set.
+- `accepts from equal to to (same day)` — `{ from: '2024-06-15', to: '2024-06-15' }` → `fieldErrors` empty, both dates preserved.
+- `does not set a date error when only from is present` — single `from` without `to` → `fieldErrors` empty.
+- `does not set a date error when only to is present` — single `to` without `from` → `fieldErrors` empty.
+- `keeps the earlier bad-format error when from is invalid and from > to would also apply` — invalid `from` format → `fieldErrors.date` set (format error wins); `filters.from` is `undefined`.
 
 ### Category management validators (Issue 09, 10 cases)
 

@@ -321,3 +321,13 @@ Implemented production cron wiring and Pushover failure reporting.
 - **Wiki pages**: added `Notes/wiki/src/scheduled.md`; updated `src/lib/po-notify.md`; added `tests/po-notify.spec.md`, `tests/scheduled.spec.md`; updated `source-code.md` (file count 81, new entries), `unit-tests.md` (file count 12, new entries), `index.md`.
 
 Verification: `cd tests && bun test` — 336 tests pass, 0 fail.
+
+## [2026-05-21] ingest | Issue 16: Fix filter date ordering
+
+Added `from <= to` validation to `parseExpenseListFilters`, closing the inconsistency with `parseSummaryQuery`.
+
+- **`src/lib/expense-validators.ts`**: after both `from` and `to` are individually validated, a new guard checks `from > to` and sets `fieldErrors.date = 'From date must be on or before To date.'` (preserving any earlier format error). Change is 3 lines, mirroring the identical block in `parseSummaryQuery` (line 839–843).
+- **`tests/expense-validators.spec.ts`**: 5 new cases in `parseExpenseListFilters (Issue 11)` describe block — `rejects from after to with a date field error`; `accepts from equal to to (same day)`; `does not set a date error when only from is present`; `does not set a date error when only to is present`; `keeps the earlier bad-format error when from is invalid and from > to would also apply`.
+- **Wiki pages updated**: `src/lib/expense-validators.md` (Purpose, Types, new `parseExpenseListFilters` and `parseSummaryQuery` subsections); `tests/expense-validators.spec.md` (Purpose updated, test count 59→122, new Issue 16 section); `unit-tests.md` (expense-validators entry); `source-code.md` (expense-validators entry).
+
+Verification: `bun test tests/expense-validators.spec.ts` — 122 tests pass, 0 fail.
