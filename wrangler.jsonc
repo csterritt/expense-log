@@ -31,6 +31,9 @@
       "database_id": "f312e719-e4b8-403b-afd1-9443ad28591f",
     },
   ],
+  "triggers": {
+    "crons": ["0 5 * * *"],
+  },
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

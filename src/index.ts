@@ -59,6 +59,7 @@ import { testSignUpModeRouter } from './routes/test/sign-up-mode' // PRODUCTION:
 import { testSmtpRouter } from './routes/test/smtp-config' // PRODUCTION:REMOVE
 import { testRunCronRouter } from './routes/test/run-cron' // PRODUCTION:REMOVE
 import { isTestRouteEnabled } from './lib/test-routes'
+import { scheduled } from './scheduled'
 
 /**
  * Validates that all required environment variables are set
@@ -235,4 +236,4 @@ if (isTestRouteEnabledFlag) {
 build404(app)
 showRoutes(app) // PRODUCTION:REMOVE
 
-export default app
+export default { fetch: app.fetch, scheduled }

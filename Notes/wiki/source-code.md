@@ -1,10 +1,11 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/` (80 files total), organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/` (81 files total), organized by category. Each file links to its individual wiki page.
 
 ## Core application
 
-- [src/index.ts](./src/index.md) — Hono app setup, middleware chain, route registration, environment variable validation, and sign-up mode conditional routing.
+- [src/index.ts](./src/index.md) — Hono app setup, middleware chain, route registration, environment variable validation, and sign-up mode conditional routing. Issue 15: default export changed from `app` to `{ fetch: app.fetch, scheduled }` to carry both the fetch and cron handlers.
+- [src/scheduled.ts](./src/scheduled.md) — Issue 15: Cloudflare Workers scheduled handler. Builds DB client, calls `materializeRecurring(todayEt())`, logs the outcome, and sends a Pushover notification via `pushoverNotifyEnv` on failure. Exports `scheduled` (production entry point) and `createScheduled(deps)` (factory for unit testing via dep injection).
 - [src/local-types.ts](./src/local-types.md) — TypeScript type definitions for Hono Bindings and context variables.
 - [src/renderer.tsx](./src/renderer.md) — JSX renderer middleware for Hono; sets up HTML document shell with Tailwind/DaisyUI styling.
 - [src/style.css](./src/style.md) — Tailwind CSS entrypoint and custom styles.
@@ -38,7 +39,7 @@ Catalog of all source files under `src/` (80 files total), organized by category
 - [src/lib/form-state.ts](./src/lib/form-state.md) — Single-use flash payload (`{fieldErrors, values}`) for re-rendering expense/category forms on the next GET after a validation-failure redirect. Issue 13: `ExpenseFormValues` gains optional `recurrence` and `anchorDate` fields to round-trip recurring-template form values through the flash cookie.
 - [src/lib/generate-code.ts](./src/lib/generate-code.md) — Single-use sign-up code generation utility.
 - [src/lib/money.ts](./src/lib/money.md) — Money formatting helpers: `formatCents` (comma-formatted), `formatCentsPlain` (plain decimal, used to pre-populate edit form fields), and `parseAmount`.
-- [src/lib/po-notify.ts](./src/lib/po-notify.md) — Pushover notification integration (optional).
+- [src/lib/po-notify.ts](./src/lib/po-notify.md) — Pushover notification integration (optional). Issue 15: added `pushoverNotifyEnv(env: Bindings, message)` (context-free, callable from scheduled handler); `pushoverNotify(c, message)` now delegates to it — no behaviour change for existing callers.
 - [src/lib/redirects.tsx](./src/lib/redirects.md) — JSX-based redirect response builders.
 - [src/lib/send-email.ts](./src/lib/send-email.md) — Low-level email sending via Nodemailer or fetch-based transport.
 - [src/lib/setup-no-cache-headers.ts](./src/lib/setup-no-cache-headers.md) — Middleware/util to set cache-busting headers.

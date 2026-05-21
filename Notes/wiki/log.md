@@ -307,3 +307,17 @@ Implemented full CRUD for recurring expense templates.
 - **E2E specs** (new under `e2e-tests/recurring/`): `01-list-and-create.spec.ts` (3 tests), `02-edit.spec.ts` (3 tests), `03-delete.spec.ts` (2 tests), `04-validation.spec.ts` (6 tests).
 - **Unit tests**: `tests/expense-validators.spec.ts` — 25 new cases for `parseRecurringCreate`. `tests/expense-access.spec.ts` — new cases for all recurring DB helpers. `tests/recurrence.spec.ts` was pre-existing (Issue 13 pre-work).
 - **Wiki updated**: `source-code.md`, `e2e-tests.md`, `unit-tests.md`, `log.md`.
+
+## [2026-05-21] ingest | Issue 15: scheduled cron + Pushover failure reporting
+
+Implemented production cron wiring and Pushover failure reporting.
+
+- **`src/lib/po-notify.ts`**: refactored to expose `pushoverNotifyEnv(env: Bindings, message)` — context-free, callable from scheduled handler with no Hono types. `pushoverNotify(c, message)` now delegates to it. No behaviour change for existing callers. Both functions short-circuit on missing/blank `PO_APP_ID`/`PO_USER_ID`, suppress non-production sends, and swallow fetch errors.
+- **`src/scheduled.ts`** (new): exports `scheduled` (production entry point) and `createScheduled(deps)` (factory for dep-injected unit testing). Handler builds DB client, calls `materializeRecurring(todayEt())`, logs `scheduled: generated=N skipped=N failed=N`, logs one `console.error` per failed template, calls `pushoverNotifyEnv` when failures exist or on hard error, and wraps everything in `try/catch` to swallow unexpected throws.
+- **`src/index.ts`**: added `import { scheduled } from './scheduled'`; changed `export default app` to `export default { fetch: app.fetch, scheduled }` — module-worker contract for Cloudflare Workers.
+- **`wrangler.jsonc`**: added `"triggers": { "crons": ["0 5 * * *"] }` (05:00 UTC year-round).
+- **`tests/po-notify.spec.ts`** (new): 7 tests covering all `pushoverNotifyEnv` cases with `spyOn(globalThis, 'fetch')`.
+- **`tests/scheduled.spec.ts`** (new): 6 tests using `createScheduled` with injected mocks; no `mock.module` used (avoids cross-file registry pollution).
+- **Wiki pages**: added `Notes/wiki/src/scheduled.md`; updated `src/lib/po-notify.md`; added `tests/po-notify.spec.md`, `tests/scheduled.spec.md`; updated `source-code.md` (file count 81, new entries), `unit-tests.md` (file count 12, new entries), `index.md`.
+
+Verification: `cd tests && bun test` — 336 tests pass, 0 fail.
