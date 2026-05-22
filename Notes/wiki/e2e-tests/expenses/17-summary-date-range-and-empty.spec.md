@@ -4,18 +4,13 @@
 
 ## Purpose
 
-Issue 12 spec covering the summary page date-range filter, empty state, category filter, and tag filter.
+2026-05-22 placeholder test. The original Issue 12 spec (date-range filtering, empty state, category/tag filters) was removed when the full summary implementation was deleted. This file now asserts the placeholder page renders correctly.
 
 ## Test cases
 
-1. **Date range filter narrows results to matching period** — seeds three expenses across Jan/Mar/Jun, sets `summary-from` to `2024-02-01` and `summary-to` to `2024-05-31`, applies filters, and asserts only the March row remains.
-2. **Empty state shown when no expenses match filters** — seeds one expense, sets a future date range, applies filters, and asserts `summary-empty` is visible while `summary-table` is absent.
-3. **Empty state shown when no expenses exist at all** — navigates to `/summary` with an empty database and asserts `summary-empty` is visible.
-4. **Category filter narrows results to matching category** — seeds expenses in two categories, selects one category from `summary-category`, applies filters, and asserts only one row remains with the correct `summary-row-category`.
-5. **Tag filter narrows results to matching tag** — seeds expenses with different tags, clicks the target tag checkbox, applies filters, and asserts only one row remains with the correct `summary-row-tag`.
+1. **Shows coming soon message** — signs in, navigates to `/summary`, asserts `summary-page` is visible and `Summary coming soon` text is present.
 
 ## Cross-references
 
-- [../../src/routes/build-summary.md](../../src/routes/build-summary.md) — route under test.
-- [../support/db-helpers.md](../support/db-helpers.md) — `seedExpenses`.
+- [../../src/routes/build-summary.md](../../src/routes/build-summary.md) — route under test (now a placeholder).
 

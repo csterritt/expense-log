@@ -4,18 +4,13 @@
 
 ## Purpose
 
-Issue 12 spec covering the summary page default load, month/year grouping, and grand total.
+2026-05-22 placeholder test. The original Issue 12 spec (month/year grouping, grand total, filter bar) was removed when the full summary implementation was deleted. This file now asserts the placeholder page renders correctly.
 
 ## Test cases
 
-1. **First load shows the summary page with filter bar and table** — seeds two expenses, signs in, navigates to `/summary`, and asserts `summary-page`, `summary-filter-bar`, and `summary-table` are all visible.
-2. **Default grouping is by month with correct rows** — seeds three expenses across two months, asserts two `summary-row` entries with correct `summary-row-date`, `summary-row-total`, and `summary-row-count` values.
-3. **Switching to year grouping shows yearly aggregates** — seeds expenses across two years, selects `year` from `summary-group-by`, applies filters, and asserts two rows with correct yearly totals and counts.
-4. **Grand total row shows correct aggregates** — seeds two expenses, asserts `summary-grand-total` and `summary-grand-count` match the combined values.
-5. **Filter bar shows category dropdown with seeded categories** — seeds expenses with different categories, asserts `summary-category` dropdown contains both category names.
+1. **Shows coming soon message** — signs in, navigates to `/summary`, asserts `summary-page` is visible and `Summary coming soon` text is present.
 
 ## Cross-references
 
-- [../../src/routes/build-summary.md](../../src/routes/build-summary.md) — route under test.
-- [../support/db-helpers.md](../support/db-helpers.md) — `seedExpenses`.
+- [../../src/routes/build-summary.md](../../src/routes/build-summary.md) — route under test (now a placeholder).
 

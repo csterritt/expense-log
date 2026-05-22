@@ -27,3 +27,5 @@ Unit tests for [src/lib/et-date.md](../src/lib/et-date.md). All tests inject fix
 - `2024-13-01` false, `2024-04-31` false.
 - Empty string, missing dashes, trailing garbage, short year, single-digit month all false.
 - Ordinary dates (`2024-01-01`, `1999-12-31`) true.
+
+(Tests for `monthKeyEt` and `yearKeyEt` were removed 2026-05-22 when those helpers were deleted.)

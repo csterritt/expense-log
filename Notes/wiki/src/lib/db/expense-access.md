@@ -6,7 +6,7 @@
 
 Read/write helpers for the `expense` table and its joins to `category`, `tag`, and `expenseTag`. Uses the same `withRetry` + `Result` pattern as `auth-access.ts`.
 
-**Note:** Category operations have been moved to [category-access.ts](./category-access.md), tag operations to [tag-access.ts](./tag-access.md), and summary operations to [summary-access.ts](./summary-access.md).
+**Note:** Category operations have been moved to [category-access.ts](./category-access.md) and tag operations to [tag-access.ts](./tag-access.md). Summary operations were moved to [summary-access.ts](./summary-access.md) (deleted 2026-05-22).
 
 ## Types
 
@@ -200,12 +200,12 @@ interface CreateManyAndExpenseInput {
 - [db/schema.md](../../db/schema.md) — `expense`, `category`, `tag`, `expenseTag` tables.
 - [category-access.md](./category-access.md) — category operations (moved from this file)
 - [tag-access.md](./tag-access.md) — tag operations (moved from this file)
-- [summary-access.md](./summary-access.md) — summary operations (moved from this file)
+- [summary-access.md](./summary-access.md) — summary operations (moved from this file, then deleted 2026-05-22)
 - [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — primary caller for the list + create flow.
 - [routes/expenses/build-edit-expense.md](../routes/expenses/build-edit-expense.md) — edit + delete flow caller (Issue 08): `getExpenseById`, `updateExpenseWithTags`, `updateManyAndExpense`, `deleteExpense`.
 - [routes/build-categories.md](../../routes/build-categories.md) — category management caller (Issue 09).
 - [routes/build-tags.md](../../routes/build-tags.md) — tag management caller (Issue 10).
-- [routes/build-summary.md](../routes/build-summary.md) — summary page caller (Issue 12).
+- [routes/build-summary.md](../routes/build-summary.md) — summary page placeholder (full implementation removed 2026-05-22).
 - [routes/test/database.md](../routes/test/database.md) — `POST /test/database/seed-expenses` and `POST /test/database/seed-categories` populate rows for tests.
 
 ---

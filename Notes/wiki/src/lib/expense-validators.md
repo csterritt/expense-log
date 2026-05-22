@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Validation for expense forms, category-management forms, and tag-management forms. Introduced in Issue 04 for expense creation, then extended for inline category/tag creation, edit flows, Issue 09 category management, Issue 10 tag management, Issue 11 expense-list filters, Issue 13 recurring templates, and Issue 14 summary query. Issue 16: `parseExpenseListFilters` gains a `from <= to` ordering check, mirroring `parseSummaryQuery`. The module runs fields through dedicated validators, folds messages into a `FieldErrors` record, and returns parsed values on success.
+Validation for expense forms, category-management forms, and tag-management forms. Introduced in Issue 04 for expense creation, then extended for inline category/tag creation, edit flows, Issue 09 category management, Issue 10 tag management, Issue 11 expense-list filters, Issue 13 recurring templates, and Issue 14 summary query (removed 2026-05-22). Issue 16: `parseExpenseListFilters` gains a `from <= to` ordering check. The module runs fields through dedicated validators, folds messages into a `FieldErrors` record, and returns parsed values on success.
 
 Database-level concerns (e.g. whether the referenced `categoryId` exists) are still enforced by `createExpense`, not here.
 
@@ -27,7 +27,7 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 
 ## Types
 
-- `FieldErrors` — `{ description?, amount?, date?, category?, tags?, name?, id?, sourceId?, targetId?, groupBy?, recurrence?, anchorDate? }`. A missing key means that field passed validation. Issue 09 added the category-management slots; Issue 13 added `recurrence` and `anchorDate`.
+- `FieldErrors` — `{ description?, amount?, date?, category?, tags?, name?, id?, sourceId?, targetId?, recurrence?, anchorDate? }`. A missing key means that field passed validation. Issue 09 added the category-management slots; Issue 13 added `recurrence` and `anchorDate`.
 - `RawExpenseCreate` — the four raw string fields read from the form body (`description`, `amount`, `date`, `category`).
 - `ParsedExpenseCreate` — `{ description, amountCents, date, category }` (note the `amountCents`, not `amount`; and `category` is the trimmed typed name, not an id).
 - `ExpenseCreateInput` — `InferOutput<typeof ExpenseCreateSchema>`, exported for completeness.
@@ -78,14 +78,8 @@ Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the 
 
 - Accepts optional `description`, `from`, `to`, `categoryId`, `tagId`, `tagMode` query-string fields.
 - `hasFilterParams` is `true` when at least one key is present, so the route layer can distinguish a fresh first load from an explicit filter submission.
-- `from`/`to`: each independently optional; validated as `YYYY-MM-DD` via `isValidYmd`. Issue 16 adds: when **both** are present and valid, `from > to` sets `fieldErrors.date = 'From date must be on or before To date.'` (only if no earlier date-format error is already present), mirroring the identical check in `parseSummaryQuery`.
+- `from`/`to`: each independently optional; validated as `YYYY-MM-DD` via `isValidYmd`. Issue 16 adds: when **both** are present and valid, `from > to` sets `fieldErrors.date = 'From date must be on or before To date.'` (only if no earlier date-format error is already present).
 - Returns `{ hasFilterParams, filters: ParsedExpenseListFilters, fieldErrors: FieldErrors }`; does not short-circuit on errors (route decides how to handle them).
-
-### `parseSummaryQuery(raw: RawSummaryQuery): Result<ParsedSummaryQuery, FieldErrors>` (Issue 14)
-
-- Requires `groupBy` (`'month'`|`'year'`), optional `from`/`to` with defaults from `defaultRangeEt()`, optional `categoryId`, `tagId`/`tagMode`.
-- Applies the same `from > to` guard as `parseExpenseListFilters`.
-- Returns `Result.err(fieldErrors)` on any validation failure.
 
 ## Cross-references
 
@@ -95,7 +89,7 @@ Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the 
 - [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — entry-form POST handler that consumes `parseExpenseCreate`.
 - [../routes/build-categories.md](../routes/build-categories.md) — category-management POST handlers consuming Issue 09 validators.
 - [../routes/build-tags.md](../routes/build-tags.md) — tag-management POST handlers consuming Issue 10 validators.
-- [../routes/build-summary.md](../routes/build-summary.md) — summary page GET handler consuming `parseSummaryQuery` (Issue 12).
+- [../routes/build-summary.md](../routes/build-summary.md) — summary page placeholder (full implementation removed 2026-05-22).
 - [../../tests/expense-validators.spec.md](../../tests/expense-validators.spec.md) — unit coverage.
 
 ---

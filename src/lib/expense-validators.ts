@@ -30,7 +30,7 @@ import {
   type InferOutput,
 } from 'valibot'
 
-import { isValidYmd, defaultRangeEt } from './et-date'
+import { isValidYmd } from './et-date'
 import { parseAmount } from './money'
 
 // Maximum description length. Matches the PRODUCTION:UNCOMMENT convention used
@@ -772,119 +772,6 @@ export const parseTagCsv = (input: string): Result<string[], string> => {
     result.push(lowered)
   }
   return Result.ok(result)
-}
-
-// ---------- Summary query parser (Issue 14) ----------
-
-/**
- * Raw query-string values for the summary page
- */
-export type RawSummaryQuery = {
-  groupBy?: string
-  from?: string
-  to?: string
-  categoryId?: string
-  tagId?: string | string[]
-  tagMode?: string
-}
-
-/**
- * Parsed and validated summary query parameters
- */
-export type ParsedSummaryQuery = {
-  groupBy: 'month' | 'year'
-  from: string
-  to: string
-  categoryId?: string
-  tagIds: string[]
-  tagMode: 'or' | 'and'
-}
-
-/**
- * Parse and validate summary query parameters
- * @param raw - Raw query string parameters
- * @returns Result with parsed query data on success, field errors on failure
- */
-export const parseSummaryQuery = (
-  raw: RawSummaryQuery,
-): Result<ParsedSummaryQuery, FieldErrors> => {
-  const defaults = defaultRangeEt()
-  const fieldErrors: FieldErrors = {}
-
-  let groupBy: 'month' | 'year' = 'month'
-  if (raw.groupBy === 'year') {
-    groupBy = 'year'
-  } else if (raw.groupBy !== undefined && raw.groupBy !== 'month' && raw.groupBy !== '') {
-    fieldErrors.groupBy = 'Group by must be "month" or "year".'
-  }
-
-  let from = defaults.from
-  if (typeof raw.from === 'string' && raw.from.trim().length > 0) {
-    const trimmed = raw.from.trim()
-    if (isValidYmd(trimmed)) {
-      from = trimmed
-    } else {
-      fieldErrors.date = 'From date must be a valid date (YYYY-MM-DD).'
-    }
-  }
-
-  let to = defaults.to
-  if (typeof raw.to === 'string' && raw.to.trim().length > 0) {
-    const trimmed = raw.to.trim()
-    if (isValidYmd(trimmed)) {
-      to = trimmed
-    } else {
-      fieldErrors.date = fieldErrors.date
-        ? fieldErrors.date
-        : 'To date must be a valid date (YYYY-MM-DD).'
-    }
-  }
-
-  if (from > to) {
-    fieldErrors.date = fieldErrors.date
-      ? fieldErrors.date
-      : 'From date must be on or before To date.'
-  }
-
-  let categoryId: string | undefined
-  if (typeof raw.categoryId === 'string' && raw.categoryId.trim().length > 0) {
-    categoryId = raw.categoryId.trim()
-  }
-
-  const tagIdRaw = raw.tagId
-  const rawTagIds: string[] = Array.isArray(tagIdRaw)
-    ? tagIdRaw
-    : typeof tagIdRaw === 'string'
-      ? [tagIdRaw]
-      : []
-  const seenTagIds = new Set<string>()
-  const tagIds: string[] = []
-  for (const t of rawTagIds) {
-    if (typeof t === 'string' && t.trim().length > 0 && !seenTagIds.has(t.trim())) {
-      seenTagIds.add(t.trim())
-      tagIds.push(t.trim())
-    }
-  }
-
-  let tagMode: 'or' | 'and' = 'or'
-  if (raw.tagMode === 'and') {
-    tagMode = 'and'
-  } else if (raw.tagMode !== undefined && raw.tagMode !== 'or' && raw.tagMode !== '') {
-    fieldErrors.tags = 'Tag mode must be "or" or "and".'
-  }
-
-  if (Object.keys(fieldErrors).length > 0) {
-    return Result.err(fieldErrors)
-  }
-
-  return Result.ok({
-    groupBy,
-    from,
-    to,
-    categoryId,
-    tagIds,
-    tagMode,
-  })
 }
 
 // ---------- Recurring template validators (Issue 13) ----------

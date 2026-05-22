@@ -23,19 +23,10 @@ Returns the default date range for the expenses list:
 
 Returns `true` iff `s` is a real calendar date formatted as `YYYY-MM-DD`. Rejects month/day overflow, invalid leap days, and malformed shapes.
 
-### `monthKeyEt(ymd: string): string`
-
-Added in Issue 12. Extracts the `YYYY-MM` prefix from a valid `YYYY-MM-DD` ET-anchored date string. Designed for stable lexicographic sorting in the `summarize` Date grouping. Throws if `ymd` is not a valid `YYYY-MM-DD` string. Uses pure string slicing (`ymd.slice(0, 7)`) and reuses `isValidYmd` for input validation.
-
-### `yearKeyEt(ymd: string): string`
-
-Added in Issue 12. Extracts the `YYYY` prefix from a valid `YYYY-MM-DD` ET-anchored date string. Designed for stable lexicographic sorting in the `summarize` Date grouping. Throws if `ymd` is not a valid `YYYY-MM-DD` string. Uses pure string slicing (`ymd.slice(0, 4)`) and reuses `isValidYmd` for input validation.
-
 ## Cross-references
 
 - [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — calls `defaultRangeEt()` to build the listing window.
-- [db/expense-access.md](./db/expense-access.md) — uses `monthKeyEt` and `yearKeyEt` in the `summarize` helper (Issue 12).
-- [tests/et-date.spec.md](../../tests/et-date.spec.md) — unit coverage including DST boundaries, leap-day edges, and the new key helpers (Issue 12).
+- [tests/et-date.spec.md](../../tests/et-date.spec.md) — unit coverage including DST boundaries and leap-day edges.
 
 ---
 

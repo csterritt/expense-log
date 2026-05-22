@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery`, and Issue 16 with reversed-date-range cases for `parseExpenseListFilters`. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery` (removed 2026-05-22), and Issue 16 with reversed-date-range cases for `parseExpenseListFilters`. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (122 total)
+## Test cases (110 total; was 122 before 2026-05-22 removal of `parseSummaryQuery` tests)
 
 ### `description`
 

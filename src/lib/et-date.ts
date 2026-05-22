@@ -51,34 +51,6 @@ export const defaultRangeEt = (reference?: Date): { from: string; to: string } =
 }
 
 /**
- * Extract the `YYYY-MM` prefix from a valid `YYYY-MM-DD` ET-anchored date
- * string. Designed for stable lexicographic sorting in `summarize` Date
- * grouping.
- *
- * Throws if `ymd` is not a valid `YYYY-MM-DD` string.
- */
-export const monthKeyEt = (ymd: string): string => {
-  if (!isValidYmd(ymd)) {
-    throw new Error(`monthKeyEt: invalid date "${ymd}"`)
-  }
-  return ymd.slice(0, 7)
-}
-
-/**
- * Extract the `YYYY` prefix from a valid `YYYY-MM-DD` ET-anchored date
- * string. Designed for stable lexicographic sorting in `summarize` Date
- * grouping.
- *
- * Throws if `ymd` is not a valid `YYYY-MM-DD` string.
- */
-export const yearKeyEt = (ymd: string): string => {
-  if (!isValidYmd(ymd)) {
-    throw new Error(`yearKeyEt: invalid date "${ymd}"`)
-  }
-  return ymd.slice(0, 4)
-}
-
-/**
  * Return true iff `s` is a valid calendar date formatted as `YYYY-MM-DD`.
  */
 export const isValidYmd = (s: string): boolean => {

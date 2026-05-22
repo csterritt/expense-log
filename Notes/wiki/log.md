@@ -355,3 +355,21 @@ Added `from <= to` validation to `parseExpenseListFilters`, closing the inconsis
 - **Wiki pages updated**: `src/lib/expense-validators.md` (Purpose, Types, new `parseExpenseListFilters` and `parseSummaryQuery` subsections); `tests/expense-validators.spec.md` (Purpose updated, test count 59→122, new Issue 16 section); `unit-tests.md` (expense-validators entry); `source-code.md` (expense-validators entry).
 
 Verification: `bun test tests/expense-validators.spec.ts` — 122 tests pass, 0 fail.
+
+## [2026-05-22] ingest | Summary page removed
+
+Replaced the full `/summary` implementation (Issue 12) with a minimal placeholder and removed all summary-specific logic from `src/` and tests.
+
+- **`src/routes/build-summary.tsx`**: stripped down from full page (FilterBar, SummaryTable, DB queries, `parseSummaryQuery`, `summarize`) to a minimal route that renders "Summary coming soon" inside the shared layout.
+- **`src/lib/db/summary-access.ts`** (deleted): contained `summarize`, `SummaryRow`, `SummarizeFilters`, and the grouping/sorting logic for month/year aggregates with category/tag filtering.
+- **`src/lib/expense-validators.ts`**: removed `parseSummaryQuery`, `RawSummaryQuery`, `ParsedSummaryQuery`, and the unused `defaultRangeEt` import.
+- **`src/lib/et-date.ts`**: removed `monthKeyEt` and `yearKeyEt` (used only by the deleted `summarize` helper).
+- **`tests/expense-validators.spec.ts`**: removed `parseSummaryQuery` import and the entire 12-test `parseSummaryQuery (Issue 14)` block. Test count: 122 → 110.
+- **`tests/expense-access.spec.ts`**: removed `summarize` import, the unused `Result` import, and the entire `summarize (Issue 14)` block (9 tests). Also removed `SummaryRow` type usage.
+- **`tests/et-date.spec.ts`**: removed `monthKeyEt` and `yearKeyEt` imports and their test blocks (9 tests).
+- **`e2e-tests/expenses/16-summary-default-and-grouping.spec.ts`**: replaced Issue 12 grouping/grand-total tests with a single placeholder test asserting "Summary coming soon".
+- **`e2e-tests/expenses/17-summary-date-range-and-empty.spec.ts`**: replaced Issue 12 date-range/category/tag filter tests with a single placeholder test asserting "Summary coming soon".
+
+**Wiki pages updated**: `src/routes/build-summary.md`, `src/lib/db/summary-access.md`, `src/lib/expense-validators.md`, `src/lib/et-date.md`, `tests/expense-validators.spec.md`, `tests/expense-access.spec.md`, `tests/et-date.spec.md`, `e2e-tests/expenses/16-summary-default-and-grouping.spec.md`, `e2e-tests/expenses/17-summary-date-range-and-empty.spec.md`, `source-code.md`, `unit-tests.md`, `e2e-tests.md`.
+
+Verification: `cd tests && bun test` — 311 tests pass, 0 fail.

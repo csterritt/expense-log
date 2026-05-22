@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit-level coverage for selected helpers in [`src/lib/db/expense-access.ts`](../src/lib/db/expense-access.md). Issue 09 adds a lightweight Bun SQLite harness for category repository helpers; Issue 10 extends that harness with tag-specific tables and tests for `createTag`, `renameTag`, `mergeTag`, and `deleteTag`.
+Unit-level coverage for selected helpers in [`src/lib/db/expense-access.ts`](../src/lib/db/expense-access.md). Issue 09 adds a lightweight Bun SQLite harness for category repository helpers; Issue 10 extends that harness with tag-specific tables and tests for `createTag`, `renameTag`, `mergeTag`, and `deleteTag`. (Issue 12 `summarize` tests, formerly in this file, were removed 2026-05-22 when `summary-access.ts` was deleted.)
 
 ## Setup
 
