@@ -67,14 +67,6 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 
 ### Summaries
 
-34. As a signed-in user, I want a dedicated Summary page with a single grouping selector (Category / Tag / Date), so that I can switch views in place.
-35. As a signed-in user, I want the summary table to show group name, count of expenses, total amount, and percent of overall total, so that I can compare groups.
-36. As a signed-in user, I want the table sorted by total amount descending by default, so that the biggest groups are at the top.
-37. As a signed-in user, I want a date-range filter on the summary page with the same default and open-ended behavior as the list filter, so that filtering behaves consistently.
-38. As a signed-in user, when grouping "By Date", I want a granularity selector (Month / Year), so that I can zoom in or out.
-39. As a signed-in user, I want the default grouping on first visit to be "Category", so that I see the most common view by default.
-40. As a signed-in user, when an expense has multiple tags and the grouping is "By Tag", I want its amount counted in full under each of its tags, so that each tag's total reflects everything tagged with it. (Percent-of-total on this view is relative to the sum of tagged-row totals, which can exceed 100%.)
-41. As a signed-in user, if the filtered result set is empty, I want an empty-state message instead of a table.
 
 ### Management: categories
 

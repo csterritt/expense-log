@@ -11,7 +11,6 @@ The main ideas here are:
 - We want to be able to filter expenses by date range.
 - When filtering by one or more tags, we want a switch between "All tags must appear" (AND) and "Any tag, but at least one" (OR).
 - We want to see the most recent expenses for the last three calendar months.
-- We want to be able to see summaries of our expenses by category, tag, or date, optionally filtered by date range.
 - We want to be able to enter expenses manually:
   - Description - required
   - Amount - required
@@ -37,3 +36,17 @@ The main ideas here are:
 - Recurring expenses will be auto-inserted into the database on their recurrence date, so that (for example) a recurring expense incurred on the 5th of the month will be added automatically to the expenses database table, but only once for the month, on or after that date.
 - There should be a 'cron' type process to run nightly.
 - For days past the 28th, recurring expenses should be accounted for on the 28th, so that they occur in every month.
+- We want to be able to see summaries of our expenses by category, tag, or date, optionally filtered by date range.
+  - A summary is the sum of all expenses that match the filter criteria, grouped by a time period (month, quarter, year).
+  - By default, the summary is grouped by month.
+  - By default, the summary is done by category.
+  - The user can summarize by all categories.
+  - By default, no tags are selected.
+  - The user can select one or more tags to include in the summary.
+    - If no tags are selected, all tags are included in the summary.
+    - If multiple tags are selected, the summary is AND logic (all tags must be present).
+  - The user can select the grouping period (month, quarter, year).
+  - The summary should be displayed in a table with the following columns:
+    - Category name
+    - Count of expenses
+    - Total amount
