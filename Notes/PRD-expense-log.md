@@ -12,7 +12,7 @@ When the feature is complete, any signed-in user can:
 - Pick a category from a searchable dropdown (or create one inline) and attach zero or more tags via a chip picker (creating new tags inline).
 - See the most recent expenses — everything in the current calendar month and the two preceding months — in a single scrollable list, newest first.
 - Search that list by description and filter it by an arbitrary date range, by category, and by one or more tags (with an AND/OR toggle for tags).
-- View summaries grouped by category, tag, or date (month or year granularity) on a dedicated page, with an optional date-range filter.
+- View summaries on a dedicated page: pick a group-by dimension (`Time only`, `Category`, `Tag`, or `Category + Tag`), a time-period granularity (`Month`, `Quarter`, or `Year`), an optional tag filter (AND when more than one), and an optional date range.
 - Edit or delete any expense, category, or tag — subject to referential-integrity guards.
 - Define **recurring expenses** (monthly, quarterly, yearly) that auto-materialize into the expense list on their schedule via a nightly cron, without the user having to re-enter them.
 
@@ -67,6 +67,14 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 
 ### Summaries
 
+34. As a signed-in user, I want a Summary page (linked from the header) whose default view groups by Category with Month granularity, no tag filter, and a date range matching the default list window, so that I see a useful summary without configuring anything.
+35. As a signed-in user, I want a "group-by dimension" selector with four mutually-exclusive options — `Time only`, `Category`, `Tag`, `Category + Tag` — so that I can shape the summary to what I want to see.
+36. As a signed-in user, I want a "time-period granularity" selector with `Month` (default), `Quarter`, and `Year`, so that I can summarize at the resolution I care about.
+37. As a signed-in user, I want a tag filter that accepts zero or more tags with AND semantics when more than one is selected (empty = include all expenses), so that I can narrow the summary to a specific tag combination before grouping.
+38. As a signed-in user, I want a date-range filter with optional `from` / `to` fields whose first-load default matches the list default (first-of-month three months ago through today, ET), and a one-click control to clear all filters back to defaults, so that I can scope the summary to any window.
+39. As a signed-in user, I want the result table's columns to be derived from the group-by dimension — a `category` column iff the dimension includes Category, a `tag` column iff the dimension includes Tag, a time-period column always, plus `count` and `total` — with no grand-total row and no percent-of-total column, so that every row stands alone and I am not misled by sums of double-counted tag rows.
+40. As a signed-in user, I want the time-period column rendered as `Mmm` (capitalized calendar month name abbreviation, e.g. 'Jan', ET) for Month, capitalized `Mmm-Mmm` for calendar Quarter (`Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`), and `YYYY` for Year, so that the label format is unambiguous.
+41. As a signed-in user, I want every column header to be clickable to toggle ascending / descending sort by that column (default = group columns ascending, then time-period ascending), an empty-state message rendered when no rows match, and recurring-generated expenses counted exactly like manual ones but only after the cron has materialized them (a future-dated occurrence is never anticipated by the summary), so that the table is sortable, never blank-looking, and consistent with the list.
 
 ### Management: categories
 
@@ -160,12 +168,23 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
 
 ### Summaries
 
-- Grouping selector: Category / Tag / Date.
-- Date grouping has a granularity selector (Month / Year).
-- Optional date-range filter with the same default as the list.
-- Columns: group name, count, total amount, percent of overall total.
-- Default grouping: Category. Default sort: total amount descending.
-- By-Tag double-counts multi-tagged expenses per tag (documented in-UI via a short note).
+- **Group-by dimension** selector with four mutually-exclusive options:
+  - `Time only` — columns `time-period | count | total`.
+  - `Category` — columns `category | time-period | count | total`.
+  - `Tag` — columns `tag | time-period | count | total`. Expenses with N tags contribute one row per tag (intentional double-count).
+  - `Category + Tag` — columns `category | tag | time-period | count | total`. Same tag double-counting rule.
+- **Time-period granularity** selector: `Month` (default) | `Quarter` | `Year`. The time-period column is always present (one of three formats below).
+- **Time-period column formats** (all anchored to `America/New_York`):
+  - Month: `Mmm` (capitalized calendar month name abbreviation, e.g. 'Jan').
+  - Quarter: capitalized `Mmm-Mmm` for calendar Quarter (`Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`).
+  - Year: `YYYY`.
+- **Tag filter**: zero or more tag ids. Empty = include all expenses. Two or more selected = AND (expense must carry every selected tag). The filter narrows the expense set before grouping; it does not change which columns appear (column visibility is governed solely by the group-by dimension).
+- **Date-range filter**: optional `from` / `to` (`YYYY-MM-DD`), inclusive. First-load default matches the list default (first of month three months ago through today, ET). Open-ended ranges allowed. A single "Clear" control resets all filters and the dimension/granularity selectors to defaults.
+- **Defaults**: group-by `Category`, granularity `Month`, no tag filter, date range = list default.
+- **Row semantics**: every row stands alone. `count` is the number of (expense, group-key) participations contributing to the row; `total` is the sum of `amountCents` for those participations. **There is no grand-total row and no percent-of-total column.** When the dimension includes `Tag`, an expense with N tags contributes once per tag (so summing `count` or `total` across rows can exceed the underlying expense count/total — intentional, surfaced with a short inline note on the page).
+- **Sort**: every column header is clickable to toggle ascending / descending sort by that column. Default sort = group columns ascending (case-insensitive alphabetical for category/tag), then time-period ascending.
+- **Empty results**: render an empty-state message under the controls.
+- **Recurring/generated expenses**: counted exactly like manual expenses, but only `expense` rows already materialized at query time are included. A future-dated recurring occurrence is never anticipated — it participates in summaries only after the cron (or the dev-only manual trigger) has inserted the row.
 
 ### Forms and validation
 
@@ -230,7 +249,7 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
   - **Interface**:
     - `todayEt(): string` — `YYYY-MM-DD`.
     - `defaultRangeEt(): { from: string; to: string }` — first of (today − 2 months) through today.
-    - `monthKeyEt(ymd: string): string`, `yearKeyEt(ymd: string): string` — for date-grouped summaries.
+    - `monthKeyEt(ymd: string): string`, `quarterKeyEt(ymd: string): string`, `yearKeyEt(ymd: string): string` — for date-grouped summaries (formats `MM`, `mmm-mmm`, `YYYY` respectively).
     - `isValidYmd(s: string): boolean`.
   - **Tested**: yes
 
@@ -261,7 +280,7 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
     - `listTags() / createTag / renameTag / mergeTag / deleteTag`
     - `listRecurring() / getRecurring / createRecurring / updateRecurring / deleteRecurring`
     - `materializeRecurring(today): Promise<{ generated: number; failed: { recurringId: string; error: string }[] }>` — iterates all templates, calls the `recurrence` module for dates, inserts `expense` rows with `recurringId` + `occurrenceDate`, swallows unique-constraint violations as no-ops.
-    - `summarize(grouping, granularity, filters): Promise<SummaryRow[]>`
+    - `summarize(input: { dimension: 'time' | 'category' | 'tag' | 'category-tag'; granularity: 'month' | 'quarter' | 'year'; filters: { from?: string; to?: string; tagIds?: string[] }; sort?: { column: string; direction: 'asc' | 'desc' }[] }): Promise<SummaryRow[]>` — returns rows whose shape matches the requested dimension (group columns + time-period + count + total). No grand total. Tag dimensions intentionally double-count multi-tagged expenses.
   - Failure modes: `NotFound`, `Conflict` (unique), `Referenced` (delete blocked), `ValidationError`.
   - **Tested**: yes (integration tests against local D1 / in-memory SQLite)
 
@@ -287,10 +306,10 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
 - **Playwright e2e**: full coverage of entry, list, filter, summary, CRUD for categories and tags, progressive-enhancement paths (JS on and off for at least one smoke test per enhanced input), and all major failure modes (validation errors, delete-blocked, merge-on-rename).
 - **Unit tests**:
   - `money`: parsing and formatting table tests (including malformed inputs).
-  - `et-date`: boundary tests around DST transitions and month boundaries.
+  - `et-date`: boundary tests around DST transitions, month boundaries, and the month/quarter/year key formatters (including quarter-label casing).
   - `recurrence`: occurrence-date tables covering Monthly/Quarterly/Yearly with anchors on days 1, 15, 28, 29, 30, 31; Feb 29 yearly anchors in leap and non-leap years; catch-up across multiple missed periods; first-occurrence rule for newly created templates.
   - `expense-validators`: schema pass/fail tables, including the recurring-template schema.
-  - `expense-repo`: CRUD, referential integrity, merge-on-rename, AND/OR tag filtering, summary aggregation math (especially by-tag double-counting and percent-of-total), `materializeRecurring` idempotency and catch-up, `ON DELETE SET NULL` behavior when a template is deleted.
+  - `expense-repo`: CRUD, referential integrity, merge-on-rename, AND/OR tag filtering, summary aggregation math across all four dimensions and all three granularities (covering by-tag double-counting, AND tag-filter narrowing, sort toggling, empty-result handling, and that only materialized recurring rows participate), `materializeRecurring` idempotency and catch-up, `ON DELETE SET NULL` behavior when a template is deleted.
 - **Prior art**: existing Playwright tests under `e2e-tests/` and helpers in `e2e-tests/support/` are the reference for navigation, form submission, and validation assertions. Reuse helpers where available; add new helpers for expense/category/tag forms in the same style.
 
 ## Out of Scope

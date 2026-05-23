@@ -36,11 +36,11 @@ The main ideas here are:
 - Recurring expenses will be auto-inserted into the database on their recurrence date, so that (for example) a recurring expense incurred on the 5th of the month will be added automatically to the expenses database table, but only once for the month, on or after that date.
 - There should be a 'cron' type process to run nightly.
 - For days past the 28th, recurring expenses should be accounted for on the 28th, so that they occur in every month.
-- We want to be able to see summaries of our expenses by category, tag, or date, optionally filtered by date range.
+- We want to be able to see summaries of our expenses by category, tag, or date, filtered by date range.
   - A summary is the sum of all expenses that match the filter criteria, grouped by a time period (month, quarter, year).
+  - You can either summarize by time period, category, tag, or category plus one or more tags.
   - By default, the summary is grouped by month.
   - By default, the summary is done by category.
-  - The user can summarize by all categories.
   - By default, no tags are selected.
   - The user can select one or more tags to include in the summary.
     - If no tags are selected, all tags are included in the summary.
@@ -48,5 +48,70 @@ The main ideas here are:
   - The user can select the grouping period (month, quarter, year).
   - The summary should be displayed in a table with the following columns:
     - Category name
+    - Grouping period (month, quarter, year)
     - Count of expenses
     - Total amount
+
+Example data:
+
+| description     | date       | amount | category | tags             |
+| --------------- | ---------- | ------ | -------- | ---------------- |
+| Breakfast       | 03/21/2026 | 20.00  | food     | diane,restaurant |
+| brunch          | 04/21/2026 | 40.00  | food     | diane,fast-food  |
+| Gift for Kaylee | 05/21/2026 | 400.00 | gift     | lego,diane       |
+| Gift for Joshua | 04/21/2026 | 300.00 | gift     | chris,game       |
+| dinner          | 05/21/2026 | 50.00  | food     | chris,restaurant |
+| Gift for Jenna  | 03/21/2026 | 200.00 | gift     | diane,game       |
+| snack           | 03/21/2026 | 10.00  | food     | chris,fast-food  |
+| lunch           | 04/21/2026 | 30.00  | food     | chris,restaurant |
+| Gift for Tim    | 05/21/2026 | 100.00 | gift     | chris,lego       |
+
+For example, if we summarize by category and month, we would get a table like this:
+
+| category | month | count | total  |
+| -------- | ----- | ----- | ------ |
+| food     | 03    | 2     | 30.00  |
+| food     | 04    | 2     | 70.00  |
+| food     | 05    | 1     | 50.00  |
+| gift     | 03    | 1     | 200.00 |
+| gift     | 04    | 1     | 300.00 |
+| gift     | 05    | 3     | 500.00 |
+
+If we asked to summarize by category and year, we would get a table like this:
+
+| category | year | count | total   |
+| -------- | ---- | ----- | ------- |
+| food     | 2026 | 5     | 150.00  |
+| gift     | 2026 | 4     | 1000.00 |
+
+If we asked to summarize by month, we would get a table like this:
+
+| month | count | total  |
+| ----- | ----- | ------ |
+| 03    | 3     | 230.00 |
+| 04    | 3     | 370.00 |
+| 05    | 3     | 550.00 |
+
+If we asked to summarize by tag and quarter, we would get a table like this:
+
+| tag        | quarter | count | total  |
+| ---------- | ------- | ----- | ------ |
+| diane      | jan-mar | 2     | 220.00 |
+| diane      | apr-jun | 1     | 40.00  |
+| chris      | jan-mar | 1     | 10.00  |
+| chris      | apr-jun | 2     | 480.00 |
+| restaurant | jan-mar | 1     | 20.00  |
+| restaurant | apr-jun | 2     | 80.00  |
+| fast-food  | jan-mar | 1     | 10.00  |
+| fast-food  | apr-jun | 1     | 40.00  |
+| game       | jan-mar | 1     | 200.00 |
+| game       | apr-jun | 1     | 300.00 |
+| lego       | apr-jun | 2     | 500.00 |
+
+If we asked to summarize by category, month, and restaurant tag, we would get a table like this:
+
+| category | tag        | month | count | total |
+| -------- | ---------- | ----- | ----- | ----- |
+| food     | restaurant | 03    | 1     | 20.00 |
+| food     | restaurant | 04    | 1     | 40.00 |
+| food     | restaurant | 05    | 1     | 50.00 |
