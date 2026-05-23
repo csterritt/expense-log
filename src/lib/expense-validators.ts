@@ -603,6 +603,65 @@ export const parseTagDelete = (raw: RawTagDelete): Result<ParsedTagDelete, Field
   return Result.ok({ id: id.value })
 }
 
+// ---------- Shared query-string helpers ----------
+
+/**
+ * Collapse a repeated query param (single string or array) into a deduplicated
+ * array of trimmed, non-empty strings preserving first-appearance order.
+ */
+const parseRepeatedTagIds = (raw: string | string[] | undefined): string[] => {
+  const rawIds: string[] = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : []
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const t of rawIds) {
+    const trimmed = typeof t === 'string' ? t.trim() : ''
+    if (trimmed.length > 0 && !seen.has(trimmed)) {
+      seen.add(trimmed)
+      result.push(trimmed)
+    }
+  }
+  return result
+}
+
+/**
+ * Parse an optional `from`/`to` date-range pair from raw string inputs.
+ * Returns validated values (or `undefined` when absent/invalid) and any
+ * `fieldErrors.date` message. Does **not** mutate the caller's errors object
+ * — the caller merges the returned error string as needed.
+ */
+const parseDateRange = (
+  rawFrom: string | undefined,
+  rawTo: string | undefined,
+): { from: string | undefined; to: string | undefined; dateError: string | undefined } => {
+  let from: string | undefined
+  let dateError: string | undefined
+
+  if (typeof rawFrom === 'string' && rawFrom.trim().length > 0) {
+    const trimmed = rawFrom.trim()
+    if (isValidYmd(trimmed)) {
+      from = trimmed
+    } else {
+      dateError = 'From date must be a valid date (YYYY-MM-DD).'
+    }
+  }
+
+  let to: string | undefined
+  if (typeof rawTo === 'string' && rawTo.trim().length > 0) {
+    const trimmed = rawTo.trim()
+    if (isValidYmd(trimmed)) {
+      to = trimmed
+    } else {
+      dateError = dateError ?? 'To date must be a valid date (YYYY-MM-DD).'
+    }
+  }
+
+  if (from !== undefined && to !== undefined && from > to) {
+    dateError = dateError ?? 'From date must be on or before To date.'
+  }
+
+  return { from, to, dateError }
+}
+
 // ---------- Expense list filter parser (Issue 11) ----------
 
 /**
@@ -675,26 +734,9 @@ export const parseExpenseListFilters = (raw: RawExpenseListFilters): ExpenseList
       ? descriptionTrimmed
       : undefined
 
-  let from: string | undefined
-  if (typeof raw.from === 'string' && raw.from.trim().length > 0) {
-    const trimmed = raw.from.trim()
-    if (isValidYmd(trimmed)) {
-      from = trimmed
-    } else {
-      fieldErrors.date = 'From date must be a valid date (YYYY-MM-DD).'
-    }
-  }
-
-  let to: string | undefined
-  if (typeof raw.to === 'string' && raw.to.trim().length > 0) {
-    const trimmed = raw.to.trim()
-    if (isValidYmd(trimmed)) {
-      to = trimmed
-    } else {
-      fieldErrors.date = fieldErrors.date
-        ? fieldErrors.date
-        : 'To date must be a valid date (YYYY-MM-DD).'
-    }
+  const { from, to, dateError } = parseDateRange(raw.from, raw.to)
+  if (dateError) {
+    fieldErrors.date = dateError
   }
 
   let categoryId: string | undefined
@@ -702,24 +744,7 @@ export const parseExpenseListFilters = (raw: RawExpenseListFilters): ExpenseList
     categoryId = raw.categoryId.trim()
   }
 
-  const tagIdRaw = raw.tagId
-  const rawTagIds: string[] = Array.isArray(tagIdRaw)
-    ? tagIdRaw
-    : typeof tagIdRaw === 'string'
-      ? [tagIdRaw]
-      : []
-  const seenTagIds = new Set<string>()
-  const tagIds: string[] = []
-  for (const t of rawTagIds) {
-    if (typeof t === 'string' && t.trim().length > 0 && !seenTagIds.has(t.trim())) {
-      seenTagIds.add(t.trim())
-      tagIds.push(t.trim())
-    }
-  }
-
-  if (from !== undefined && to !== undefined && from > to) {
-    fieldErrors.date = fieldErrors.date ? fieldErrors.date : 'From date must be on or before To date.'
-  }
+  const tagIds = parseRepeatedTagIds(raw.tagId)
 
   let tagMode: 'or' | 'and' = 'or'
   if (raw.tagMode === 'and') {
@@ -889,4 +914,134 @@ export const parseRecurringCreate = (
     recurrence: recurrenceRaw as Recurrence,
     anchorDate,
   })
+}
+
+// ---------- Summary query parser (Issue 17) ----------
+
+const VALID_DIMENSIONS = ['time', 'category', 'tag', 'category-tag'] as const
+export type SummaryDimension = (typeof VALID_DIMENSIONS)[number]
+
+const VALID_GRANULARITIES = ['month', 'quarter', 'year'] as const
+export type SummaryGranularity = (typeof VALID_GRANULARITIES)[number]
+
+const VALID_SORT_COLUMNS = ['timePeriod', 'categoryName', 'tagName', 'count', 'totalCents'] as const
+
+/**
+ * Raw query-string values from the summary page filter bar.
+ */
+export type RawSummaryQuery = {
+  dimension?: string
+  granularity?: string
+  from?: string
+  to?: string
+  tagId?: string | string[]
+  sort?: string | string[]
+}
+
+/**
+ * Parsed sort entry produced by `parseSummaryQuery`.
+ */
+export type SummarySortEntry = {
+  column: string
+  direction: 'asc' | 'desc'
+}
+
+/**
+ * Result of parsing the summary page query string.
+ */
+export type SummaryQueryResult = {
+  hasFilterParams: boolean
+  dimension: SummaryDimension
+  granularity: SummaryGranularity
+  from?: string
+  to?: string
+  tagIds: string[]
+  sort: SummarySortEntry[]
+  fieldErrors: FieldErrors
+}
+
+/**
+ * Parse and normalise the summary page query string.
+ *
+ * - `dimension`: defaults to `'category'`; unknown values produce a `groupBy` field error
+ * - `granularity`: defaults to `'month'`; unknown values produce a `groupBy` field error
+ * - `from`/`to`: independently optional; validated as `YYYY-MM-DD`; `from > to` is an error
+ * - `tagId`: repeated params collapsed into a deduplicated array
+ * - `sort`: repeated `column:direction` params parsed in order; unknown column or direction
+ *   produces a `groupBy` field error
+ * - `hasFilterParams`: `true` when any recognized key was present in `raw`
+ */
+export const parseSummaryQuery = (raw: RawSummaryQuery): SummaryQueryResult => {
+  const FILTER_KEYS: Array<keyof RawSummaryQuery> = [
+    'dimension',
+    'granularity',
+    'from',
+    'to',
+    'tagId',
+    'sort',
+  ]
+  const hasFilterParams = FILTER_KEYS.some((k) => raw[k] !== undefined)
+
+  const fieldErrors: FieldErrors = {}
+
+  let dimension: SummaryDimension = 'category'
+  if (typeof raw.dimension === 'string' && raw.dimension.trim().length > 0) {
+    const v = raw.dimension.trim()
+    if ((VALID_DIMENSIONS as readonly string[]).includes(v)) {
+      dimension = v as SummaryDimension
+    } else {
+      fieldErrors.groupBy = `Dimension must be one of: ${VALID_DIMENSIONS.join(', ')}.`
+    }
+  }
+
+  let granularity: SummaryGranularity = 'month'
+  if (typeof raw.granularity === 'string' && raw.granularity.trim().length > 0) {
+    const v = raw.granularity.trim()
+    if ((VALID_GRANULARITIES as readonly string[]).includes(v)) {
+      granularity = v as SummaryGranularity
+    } else {
+      fieldErrors.groupBy = fieldErrors.groupBy
+        ? fieldErrors.groupBy
+        : `Granularity must be one of: ${VALID_GRANULARITIES.join(', ')}.`
+    }
+  }
+
+  const { from, to, dateError } = parseDateRange(raw.from, raw.to)
+  if (dateError) {
+    fieldErrors.date = dateError
+  }
+
+  const tagIds = parseRepeatedTagIds(raw.tagId)
+
+  const sortRaw = raw.sort
+  const rawSortParams: string[] = Array.isArray(sortRaw)
+    ? sortRaw
+    : typeof sortRaw === 'string'
+      ? [sortRaw]
+      : []
+  const sort: SummarySortEntry[] = []
+  for (const param of rawSortParams) {
+    const colonIdx = param.lastIndexOf(':')
+    if (colonIdx < 1) {
+      fieldErrors.groupBy = fieldErrors.groupBy ? fieldErrors.groupBy : 'Invalid sort parameter.'
+      continue
+    }
+    const column = param.slice(0, colonIdx).trim()
+    const direction = param.slice(colonIdx + 1).trim()
+    if (!(VALID_SORT_COLUMNS as readonly string[]).includes(column)) {
+      fieldErrors.groupBy = fieldErrors.groupBy
+        ? fieldErrors.groupBy
+        : `Unknown sort column: ${column}.`
+      continue
+    }
+    if (direction !== 'asc' && direction !== 'desc') {
+      fieldErrors.groupBy = fieldErrors.groupBy
+        ? fieldErrors.groupBy
+        : `Sort direction must be asc or desc.`
+      continue
+    }
+    sort.push({ column, direction })
+  }
+
+  return { hasFilterParams, dimension, granularity, from, to, tagIds, sort, fieldErrors }
 }

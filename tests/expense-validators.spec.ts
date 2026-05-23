@@ -15,6 +15,7 @@ import {
   parseExpenseListFilters,
   parseNewCategoryName,
   parseRecurringCreate,
+  parseSummaryQuery,
   parseTagCsv,
   parseTagCreate,
   parseTagDelete,
@@ -826,6 +827,221 @@ describe('parseRecurringCreate', () => {
         assert.ok(r.error.recurrence)
         assert.ok(r.error.anchorDate)
       }
+    })
+  })
+})
+
+// ====================================
+// parseSummaryQuery (Issue 17)
+// ====================================
+
+describe('parseSummaryQuery', () => {
+  describe('defaults on empty input', () => {
+    it('hasFilterParams is false when no params are present', () => {
+      const r = parseSummaryQuery({})
+      assert.strictEqual(r.hasFilterParams, false)
+    })
+
+    it('dimension defaults to category', () => {
+      const r = parseSummaryQuery({})
+      assert.strictEqual(r.dimension, 'category')
+    })
+
+    it('granularity defaults to month', () => {
+      const r = parseSummaryQuery({})
+      assert.strictEqual(r.granularity, 'month')
+    })
+
+    it('tagIds defaults to empty array', () => {
+      const r = parseSummaryQuery({})
+      assert.deepStrictEqual(r.tagIds, [])
+    })
+
+    it('sort defaults to empty array', () => {
+      const r = parseSummaryQuery({})
+      assert.deepStrictEqual(r.sort, [])
+    })
+
+    it('fieldErrors defaults to empty object', () => {
+      const r = parseSummaryQuery({})
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+  })
+
+  describe('dimension', () => {
+    it('accepts time', () => {
+      const r = parseSummaryQuery({ dimension: 'time' })
+      assert.strictEqual(r.dimension, 'time')
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('accepts category', () => {
+      const r = parseSummaryQuery({ dimension: 'category' })
+      assert.strictEqual(r.dimension, 'category')
+    })
+
+    it('accepts tag', () => {
+      const r = parseSummaryQuery({ dimension: 'tag' })
+      assert.strictEqual(r.dimension, 'tag')
+    })
+
+    it('accepts category-tag', () => {
+      const r = parseSummaryQuery({ dimension: 'category-tag' })
+      assert.strictEqual(r.dimension, 'category-tag')
+    })
+
+    it('rejects an unknown dimension with a field error', () => {
+      const r = parseSummaryQuery({ dimension: 'foobar' })
+      assert.ok(r.fieldErrors.groupBy, `expected groupBy error; got ${JSON.stringify(r.fieldErrors)}`)
+      assert.strictEqual(r.dimension, 'category')
+    })
+
+    it('presence of dimension key flips hasFilterParams to true', () => {
+      const r = parseSummaryQuery({ dimension: 'time' })
+      assert.strictEqual(r.hasFilterParams, true)
+    })
+  })
+
+  describe('granularity', () => {
+    it('accepts month', () => {
+      const r = parseSummaryQuery({ granularity: 'month' })
+      assert.strictEqual(r.granularity, 'month')
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('accepts quarter', () => {
+      const r = parseSummaryQuery({ granularity: 'quarter' })
+      assert.strictEqual(r.granularity, 'quarter')
+    })
+
+    it('accepts year', () => {
+      const r = parseSummaryQuery({ granularity: 'year' })
+      assert.strictEqual(r.granularity, 'year')
+    })
+
+    it('rejects an unknown granularity with a field error', () => {
+      const r = parseSummaryQuery({ granularity: 'week' })
+      assert.ok(r.fieldErrors.groupBy, `expected groupBy error; got ${JSON.stringify(r.fieldErrors)}`)
+      assert.strictEqual(r.granularity, 'month')
+    })
+
+    it('presence of granularity key flips hasFilterParams to true', () => {
+      const r = parseSummaryQuery({ granularity: 'year' })
+      assert.strictEqual(r.hasFilterParams, true)
+    })
+  })
+
+  describe('date range', () => {
+    it('open-from: only from set, to absent', () => {
+      const r = parseSummaryQuery({ from: '2024-01-01' })
+      assert.strictEqual(r.from, '2024-01-01')
+      assert.strictEqual(r.to, undefined)
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('open-to: only to set, from absent', () => {
+      const r = parseSummaryQuery({ to: '2024-12-31' })
+      assert.strictEqual(r.to, '2024-12-31')
+      assert.strictEqual(r.from, undefined)
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('both-set: from and to both valid', () => {
+      const r = parseSummaryQuery({ from: '2024-01-01', to: '2024-12-31' })
+      assert.strictEqual(r.from, '2024-01-01')
+      assert.strictEqual(r.to, '2024-12-31')
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('both-absent: from and to both undefined', () => {
+      const r = parseSummaryQuery({})
+      assert.strictEqual(r.from, undefined)
+      assert.strictEqual(r.to, undefined)
+    })
+
+    it('rejects an invalid from date with a date field error', () => {
+      const r = parseSummaryQuery({ from: '2024-13-99' })
+      assert.ok(r.fieldErrors.date)
+      assert.strictEqual(r.from, undefined)
+    })
+
+    it('rejects an invalid to date with a date field error', () => {
+      const r = parseSummaryQuery({ to: 'not-a-date' })
+      assert.ok(r.fieldErrors.date)
+      assert.strictEqual(r.to, undefined)
+    })
+
+    it('rejects from > to with the same date field error key as parseExpenseListFilters', () => {
+      const r = parseSummaryQuery({ from: '2024-12-31', to: '2024-01-01' })
+      assert.ok(r.fieldErrors.date)
+    })
+
+    it('accepts from equal to to (same day)', () => {
+      const r = parseSummaryQuery({ from: '2024-06-15', to: '2024-06-15' })
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('presence of from flips hasFilterParams to true', () => {
+      const r = parseSummaryQuery({ from: '2024-01-01' })
+      assert.strictEqual(r.hasFilterParams, true)
+    })
+
+    it('presence of to flips hasFilterParams to true', () => {
+      const r = parseSummaryQuery({ to: '2024-12-31' })
+      assert.strictEqual(r.hasFilterParams, true)
+    })
+  })
+
+  describe('tagIds', () => {
+    it('collects a single tagId value', () => {
+      const r = parseSummaryQuery({ tagId: 'id-1' })
+      assert.deepStrictEqual(r.tagIds, ['id-1'])
+    })
+
+    it('accumulates multiple tagId values into the array', () => {
+      const r = parseSummaryQuery({ tagId: ['id-1', 'id-2', 'id-3'] })
+      assert.deepStrictEqual(r.tagIds, ['id-1', 'id-2', 'id-3'])
+    })
+
+    it('deduplicates repeated tagId values', () => {
+      const r = parseSummaryQuery({ tagId: ['id-1', 'id-2', 'id-1'] })
+      assert.deepStrictEqual(r.tagIds, ['id-1', 'id-2'])
+    })
+
+    it('presence of tagId flips hasFilterParams to true', () => {
+      const r = parseSummaryQuery({ tagId: 'id-1' })
+      assert.strictEqual(r.hasFilterParams, true)
+    })
+  })
+
+  describe('sort', () => {
+    it('parses a single valid sort param column:direction', () => {
+      const r = parseSummaryQuery({ sort: 'totalCents:desc' })
+      assert.deepStrictEqual(r.sort, [{ column: 'totalCents', direction: 'desc' }])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('accumulates multiple sort params in order', () => {
+      const r = parseSummaryQuery({ sort: ['categoryName:asc', 'totalCents:desc'] })
+      assert.deepStrictEqual(r.sort, [
+        { column: 'categoryName', direction: 'asc' },
+        { column: 'totalCents', direction: 'desc' },
+      ])
+    })
+
+    it('rejects an unknown sort column with a field error', () => {
+      const r = parseSummaryQuery({ sort: 'bogus:asc' })
+      assert.ok(r.fieldErrors.groupBy, `expected groupBy error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+
+    it('rejects an unknown sort direction with a field error', () => {
+      const r = parseSummaryQuery({ sort: 'totalCents:sideways' })
+      assert.ok(r.fieldErrors.groupBy, `expected groupBy error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+
+    it('presence of sort flips hasFilterParams to true', () => {
+      const r = parseSummaryQuery({ sort: 'totalCents:asc' })
+      assert.strictEqual(r.hasFilterParams, true)
     })
   })
 })
