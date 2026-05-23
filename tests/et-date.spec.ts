@@ -6,7 +6,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
 
-import { todayEt, defaultRangeEt, isValidYmd } from '../src/lib/et-date'
+import { todayEt, defaultRangeEt, isValidYmd, monthKeyEt, quarterKeyEt, yearKeyEt } from '../src/lib/et-date'
 
 describe('todayEt', () => {
   it('returns ET date just before EST->EDT spring-forward boundary', () => {
@@ -101,3 +101,87 @@ describe('isValidYmd', () => {
   })
 })
 
+describe('monthKeyEt', () => {
+  const cases: [string, string][] = [
+    ['2024-01-15', 'Jan'],
+    ['2024-02-29', 'Feb'],
+    ['2024-03-31', 'Mar'],
+    ['2024-04-01', 'Apr'],
+    ['2024-05-10', 'May'],
+    ['2024-06-30', 'Jun'],
+    ['2024-07-01', 'Jul'],
+    ['2024-08-20', 'Aug'],
+    ['2024-09-30', 'Sep'],
+    ['2024-10-01', 'Oct'],
+    ['2024-11-05', 'Nov'],
+    ['2024-12-31', 'Dec'],
+  ]
+  for (const [input, expected] of cases) {
+    it(`maps ${input} to ${expected}`, () => {
+      assert.strictEqual(monthKeyEt(input), expected)
+    })
+  }
+
+  it('rejects an invalid date', () => {
+    assert.throws(() => monthKeyEt('2024-13-01'))
+  })
+
+  it('rejects empty string', () => {
+    assert.throws(() => monthKeyEt(''))
+  })
+
+  it('rejects a non-leap-year Feb 29', () => {
+    assert.throws(() => monthKeyEt('2023-02-29'))
+  })
+})
+
+describe('quarterKeyEt', () => {
+  const cases: [string, string][] = [
+    ['2024-01-01', 'Jan-Mar'],
+    ['2024-02-29', 'Jan-Mar'],
+    ['2024-03-31', 'Jan-Mar'],
+    ['2024-04-01', 'Apr-Jun'],
+    ['2024-06-30', 'Apr-Jun'],
+    ['2024-07-01', 'Jul-Sep'],
+    ['2024-09-30', 'Jul-Sep'],
+    ['2024-10-01', 'Oct-Dec'],
+    ['2024-12-31', 'Oct-Dec'],
+    ['2025-01-01', 'Jan-Mar'],
+  ]
+  for (const [input, expected] of cases) {
+    it(`maps ${input} to ${expected}`, () => {
+      assert.strictEqual(quarterKeyEt(input), expected)
+    })
+  }
+
+  it('rejects an invalid date', () => {
+    assert.throws(() => quarterKeyEt('2024-04-31'))
+  })
+
+  it('rejects missing dashes', () => {
+    assert.throws(() => quarterKeyEt('20240101'))
+  })
+})
+
+describe('yearKeyEt', () => {
+  const cases: [string, string][] = [
+    ['2024-01-01', '2024'],
+    ['2024-02-29', '2024'],
+    ['2024-12-31', '2024'],
+    ['2025-06-15', '2025'],
+    ['1999-12-31', '1999'],
+  ]
+  for (const [input, expected] of cases) {
+    it(`maps ${input} to ${expected}`, () => {
+      assert.strictEqual(yearKeyEt(input), expected)
+    })
+  }
+
+  it('rejects an invalid date', () => {
+    assert.throws(() => yearKeyEt('2024-00-01'))
+  })
+
+  it('rejects trailing garbage', () => {
+    assert.throws(() => yearKeyEt('2024-01-01X'))
+  })
+})

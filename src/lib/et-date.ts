@@ -70,3 +70,42 @@ export const isValidYmd = (s: string): boolean => {
   const d = new Date(Date.UTC(year, month - 1, day))
   return d.getUTCFullYear() === year && d.getUTCMonth() === month - 1 && d.getUTCDate() === day
 }
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const
+
+const QUARTER_LABELS = ['Jan-Mar', 'Apr-Jun', 'Jul-Sep', 'Oct-Dec'] as const
+
+/** Validate `ymd` and throw if invalid, otherwise return the 1-based month integer. */
+const parsedMonth = (ymd: string): number => {
+  if (!isValidYmd(ymd)) {
+    throw new Error(`Invalid YYYY-MM-DD date: ${ymd}`)
+  }
+  return parseInt(ymd.slice(5, 7), 10)
+}
+
+/**
+ * Returns the capitalized three-letter month abbreviation for a `YYYY-MM-DD`
+ * ET-anchored date string (e.g. `'Jan'`).
+ */
+export const monthKeyEt = (ymd: string): string => {
+  const month = parsedMonth(ymd)
+  return MONTH_NAMES[month - 1]
+}
+
+/**
+ * Returns the calendar-quarter label `Mmm-Mmm` for a `YYYY-MM-DD` ET-anchored
+ * date string (one of `'Jan-Mar'`, `'Apr-Jun'`, `'Jul-Sep'`, `'Oct-Dec'`).
+ */
+export const quarterKeyEt = (ymd: string): string => {
+  const month = parsedMonth(ymd)
+  return QUARTER_LABELS[Math.ceil(month / 3) - 1]
+}
+
+/**
+ * Returns the four-digit year string for a `YYYY-MM-DD` ET-anchored date
+ * string (e.g. `'2026'`).
+ */
+export const yearKeyEt = (ymd: string): string => {
+  parsedMonth(ymd)
+  return ymd.slice(0, 4)
+}
