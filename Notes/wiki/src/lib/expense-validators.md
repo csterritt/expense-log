@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Validation for expense forms, category-management forms, and tag-management forms. Introduced in Issue 04 for expense creation, then extended for inline category/tag creation, edit flows, Issue 09 category management, Issue 10 tag management, Issue 11 expense-list filters, Issue 13 recurring templates, and Issue 14 summary query (removed 2026-05-22). Issue 16: `parseExpenseListFilters` gains a `from <= to` ordering check. The module runs fields through dedicated validators, folds messages into a `FieldErrors` record, and returns parsed values on success.
+Validation for expense forms, category-management forms, tag-management forms, and summary query parameters. Introduced in Issue 04 for expense creation, then extended for inline category/tag creation, edit flows, Issue 09 category management, Issue 10 tag management, Issue 11 expense-list filters, Issue 13 recurring templates, Issue 14 summary query (removed 2026-05-22), and Issue 17 updated summary query (re-introduced). Issue 16: `parseExpenseListFilters` gains a `from <= to` ordering check. The module runs fields through dedicated validators, folds messages into a `FieldErrors` record, and returns parsed values on success.
 
 Database-level concerns (e.g. whether the referenced `categoryId` exists) are still enforced by `createExpense`, not here.
 
@@ -81,6 +81,18 @@ Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the 
 - `from`/`to`: each independently optional; validated as `YYYY-MM-DD` via `isValidYmd`. Issue 16 adds: when **both** are present and valid, `from > to` sets `fieldErrors.date = 'From date must be on or before To date.'` (only if no earlier date-format error is already present).
 - Returns `{ hasFilterParams, filters: ParsedExpenseListFilters, fieldErrors: FieldErrors }`; does not short-circuit on errors (route decides how to handle them).
 
+### `parseSummaryQuery(raw: RawSummaryQuery): SummaryQueryResult` (Issue 17)
+
+Re-introduced in Issue 17 with a new signature reflecting the updated summary design.
+
+- **Dimensions:** `time`, `category`, `tag`, `category-tag`. Defaults to `category`. Unknown values report a `groupBy` field error and fall back to `category`.
+- **Granularities:** `month`, `quarter`, `year`. Defaults to `month`. Always present in the UI selector; unknown values report a `groupBy` field error and fall back to `month`.
+- **Date range:** `from` and `to` are independently optional. Both are validated with `isValidYmd` and checked for ordering (`from <= to`). `from > to` sets `fieldErrors.date`.
+- **Tag filter:** `tagId` can be a single string or array; deduplicated preserving first-appearance order. Tag filtering is **AND-semantic**: only expenses carrying **all** listed tags are included.
+- **Sort:** `sort` can be a single string or array of `column:direction` strings. Valid columns vary by dimension; unknown columns or directions report a `groupBy` field error.
+- `hasFilterParams` is `true` when any key is present, distinguishing first load from explicit filter submission.
+- Returns `{ hasFilterParams, dimension, granularity, from?, to?, tagIds: string[], sort: SummarySortEntry[], fieldErrors }`.
+
 ## Cross-references
 
 - [money.md](money.md) — `parseAmount` is the underlying numeric validator.
@@ -89,7 +101,7 @@ Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the 
 - [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — entry-form POST handler that consumes `parseExpenseCreate`.
 - [../routes/build-categories.md](../routes/build-categories.md) — category-management POST handlers consuming Issue 09 validators.
 - [../routes/build-tags.md](../routes/build-tags.md) — tag-management POST handlers consuming Issue 10 validators.
-- [../routes/build-summary.md](../routes/build-summary.md) — summary page placeholder (full implementation removed 2026-05-22).
+- [../routes/build-summary.md](../routes/build-summary.md) — summary page route that consumes `parseSummaryQuery`.
 - [../../tests/expense-validators.spec.md](../../tests/expense-validators.spec.md) — unit coverage.
 
 ---

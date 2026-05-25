@@ -28,4 +28,21 @@ Unit tests for [src/lib/et-date.md](../src/lib/et-date.md). All tests inject fix
 - Empty string, missing dashes, trailing garbage, short year, single-digit month all false.
 - Ordinary dates (`2024-01-01`, `1999-12-31`) true.
 
-(Tests for `monthKeyEt` and `yearKeyEt` were removed 2026-05-22 when those helpers were deleted.)
+### `monthKeyEt` (Issue 17, re-introduced, 15 cases)
+
+- Maps each month of a non-leap year to its `Mmm` abbreviation (`Jan` through `Dec`).
+- Rejects invalid dates (`2024-13-01`), empty string, and non-leap-year Feb 29.
+
+### `quarterKeyEt` (Issue 17, 11 cases)
+
+- Maps each quarter: `Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`.
+- Rejects invalid dates (`2024-04-31`) and missing dashes (`20240101`).
+
+### `yearKeyEt` (Issue 17, re-introduced, 7 cases)
+
+- Extracts the four-digit year (`2024`, `2025`, `1999`).
+- Rejects invalid dates (`2024-00-01`) and trailing garbage (`2024-01-01X`).
+
+---
+
+See [unit-tests.md](../unit-tests.md) for the full catalog.

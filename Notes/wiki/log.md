@@ -373,3 +373,35 @@ Replaced the full `/summary` implementation (Issue 12) with a minimal placeholde
 **Wiki pages updated**: `src/routes/build-summary.md`, `src/lib/db/summary-access.md`, `src/lib/expense-validators.md`, `src/lib/et-date.md`, `tests/expense-validators.spec.md`, `tests/expense-access.spec.md`, `tests/et-date.spec.md`, `e2e-tests/expenses/16-summary-default-and-grouping.spec.md`, `e2e-tests/expenses/17-summary-date-range-and-empty.spec.md`, `source-code.md`, `unit-tests.md`, `e2e-tests.md`.
 
 Verification: `cd tests && bun test` — 311 tests pass, 0 fail.
+
+## [2026-05-23] ingest | Issue 17: Updated Summary page
+
+Re-implemented the `/summary` route with a redesigned aggregation UI supporting four dimensions, three granularities, tag-AND filtering, sortable columns, and clear-reset. Removed the "Summary coming soon" placeholder.
+
+- **`src/routes/build-summary.tsx`** (rewritten): full Issue 17 implementation replacing the placeholder. GET handler parses query string via `parseSummaryQuery`, calls `summarize(db, parsed)` and `listTags(db)` in parallel, and renders `ControlsForm` (dimension selector, always-present granularity selector, date range, tag checkboxes with AND-semantic note, Apply button, Clear link) plus `ResultsTable` (dimension-driven columns, sortable headers, `Mmm`/`Mmm-Mmm`/`YYYY` time labels, empty state). No grand total or percentage-of-total rows.
+- **`src/lib/db/summary-access.ts`** (re-introduced): new `summarize(db, opts)` with `SummaryDimension` (`time`, `category`, `tag`, `category-tag`), `SummaryGranularity` (`month`, `quarter`, `year`), tag-AND filtering (`tagIds` array), explicit `sort` override, and default sort (group columns asc case-insensitive, then `timePeriod` asc). Uses `withRetry` + `Result`. Recurring templates participate only as materialized `expense` rows; zero-tag expenses included in `time`/`category` but excluded from `tag`/`category-tag`; multi-tagged expenses double-counted in `tag`/`category-tag`.
+- **`src/lib/expense-validators.ts`** (extended): re-introduced `parseSummaryQuery(raw)` with `RawSummaryQuery`, `SummaryQueryResult`, `SummarySortEntry`, and `VALID_DIMENSIONS`/`VALID_GRANULARITIES`/`VALID_SORT_COLUMNS` constants. Validates dimension, granularity, date range (`from <= to`), tagId deduplication, and sort column/direction. Shares `parseDateRange` and `parseRepeatedTagIds` helpers with `parseExpenseListFilters`.
+- **`src/lib/et-date.ts`** (extended): re-introduced `monthKeyEt(ymd)` returning `Mmm`; added new `quarterKeyEt(ymd)` returning `Mmm-Mmm`; re-introduced `yearKeyEt(ymd)` returning `YYYY`. All three reject invalid dates via `isValidYmd`.
+- **`tests/summary-access.spec.ts`** (new): 18 cases covering all four dimensions, three granularities, tag-AND filtering (1/2/3 tags), empty result set, materialized recurring rows, default sort, and explicit `totalCents` desc sort. In-memory SQLite harness with shared seed dataset.
+- **`tests/et-date.spec.ts`**: added 33 cases for `monthKeyEt` (15), `quarterKeyEt` (11), and `yearKeyEt` (7).
+- **`tests/expense-validators.spec.ts`**: added 46 cases for `parseSummaryQuery` (defaults, dimension/granularity validation, date range, tagIds, sort). Test count: 110 → 156.
+- **`e2e-tests/summary/01-summary-defaults-and-controls.spec.ts`** (new): 10 Playwright tests covering default state, dimension switching, granularity switching, sorting, tag note, clear link, and empty state.
+- **`e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.ts`** (new): 5 Playwright tests covering single-tag filter, multi-tag AND filter, three-tag empty result, recurring template exclusion, and materialized recurring row counting.
+
+**Wiki pages updated/created**:
+- `src/routes/build-summary.md` — full rewrite from placeholder to Issue 17 implementation.
+- `src/lib/db/summary-access.md` — rewritten from "deleted" historical record to active documentation.
+- `src/lib/expense-validators.md` — added `parseSummaryQuery` section and updated cross-references.
+- `src/lib/et-date.md` — added `monthKeyEt`, `quarterKeyEt`, `yearKeyEt` sections and cross-references.
+- `tests/summary-access.spec.md` — created.
+- `tests/et-date.spec.md` — added helper test sections, removed stale removal note.
+- `tests/expense-validators.spec.md` — added `parseSummaryQuery` section and updated test count.
+- `e2e-tests/summary/01-summary-defaults-and-controls.spec.md` — created.
+- `e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.md` — created.
+- `e2e-tests/expenses/16-summary-default-and-grouping.spec.md` — updated to cross-reference new summary specs.
+- `e2e-tests/expenses/17-summary-date-range-and-empty.spec.md` — updated to cross-reference new summary specs.
+- `source-code.md` — added `summary-access.ts` entry, updated `et-date.ts`, `expense-validators.ts`, and `build-summary.tsx` entries; updated expense-feature intro text.
+- `unit-tests.md` — added `summary-access.spec.ts` entry, updated `et-date.spec.ts` and `expense-validators.spec.ts` entries, updated spec file count 12 → 13.
+- `e2e-tests.md` — added `summary/` section with two new spec entries, updated `recurring/08` summary reference, updated placeholder spec descriptions.
+
+Verification: `cd tests && bun test` — all tests pass.

@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery` (removed 2026-05-22), and Issue 16 with reversed-date-range cases for `parseExpenseListFilters`. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery` (removed 2026-05-22), and Issue 16 with reversed-date-range cases for `parseExpenseListFilters`. Issue 17 re-introduced `parseSummaryQuery` with new dimension, granularity, sort, and tag-AND filter tests. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (110 total; was 122 before 2026-05-22 removal of `parseSummaryQuery` tests)
+## Test cases (156 total; was 110 before Issue 17 re-introduction of `parseSummaryQuery` tests)
 
 ### `description`
 
@@ -89,6 +89,15 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - `parseTagDelete`:
   - `returns trimmed id` — `'  tag-1  '` → `{ id: 'tag-1' }`.
   - `rejects missing id` — empty id → `{ id: message }`.
+
+### `parseSummaryQuery` (Issue 17, 46 cases)
+
+- **Defaults:** dimension `category`, granularity `month`, `tagIds` empty array, `sort` empty array, `fieldErrors` empty object.
+- **Dimension validation:** accepts `time`, `category`, `tag`, `category-tag`; rejects unknown values with `groupBy` field error and falls back to `category`; presence flips `hasFilterParams`.
+- **Granularity validation:** accepts `month`, `quarter`, `year`; rejects unknown values with `groupBy` field error and falls back to `month`; presence flips `hasFilterParams`.
+- **Date range:** open-from, open-to, both-set, both-absent; rejects invalid dates with `date` field error; rejects `from > to` with `date` field error; accepts `from == to`; presence flips `hasFilterParams`.
+- **Tag filter:** collects single `tagId`, accumulates multiple, deduplicates repeated values; presence flips `hasFilterParams`.
+- **Sort:** parses single `column:direction`, accumulates multiple, rejects unknown columns/directions with `groupBy` field error; presence flips `hasFilterParams`.
 
 ## Cross-references
 

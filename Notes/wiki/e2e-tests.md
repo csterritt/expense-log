@@ -120,7 +120,12 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/`, organized by feat
 - [e2e-tests/recurring/05-cron-28th-shift.spec.ts](./e2e-tests/recurring/05-cron-28th-shift.spec.md) — Issue 14. Monthly template anchored on day 31; four clock advances (mid-Feb → Mar 1 → Apr 1 → May 1) with `POST /test/run-cron`; asserts Feb 28 / Mar 31 / Apr 30 generated rows with `expense-row-recurring-badge` and `span.underline`.
 - [e2e-tests/recurring/06-cron-idempotency.spec.ts](./e2e-tests/recurring/06-cron-idempotency.spec.md) — Issue 14. Three sub-tests: first-occurrence rule (generated=0), catch-up generation (generated=4), idempotency (second run generated=0, row count unchanged).
 - [e2e-tests/recurring/07-generated-row-rendering.spec.ts](./e2e-tests/recurring/07-generated-row-rendering.spec.md) — Issue 14. Badge + underline on generated rows; manual rows lack badge; editing a generated row preserves `recurringId`; re-run cron on same clock = idempotent.
-- [e2e-tests/recurring/08-generated-in-queries.spec.ts](./e2e-tests/recurring/08-generated-in-queries.spec.md) — Issue 14. Generated rows participate in description search, category filter, tag filter, and summary grand total identically to manual rows.
+- [e2e-tests/recurring/08-generated-in-queries.spec.ts](./e2e-tests/recurring/08-generated-in-queries.spec.md) — Issue 14. Generated rows participate in description search, category filter, tag filter, and summary identically to manual rows.
+
+## Summary (`e2e-tests/summary/`)
+
+- [e2e-tests/summary/01-summary-defaults-and-controls.spec.ts](./e2e-tests/summary/01-summary-defaults-and-controls.spec.md) — Issue 17. Default state (month granularity, category dimension), dimension switching (time, tag, category-tag), granularity switching (quarter, year), sortable column headers, tag AND-semantic note, clear-reset flow, and empty state.
+- [e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.ts](./e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.md) — Issue 17. Single-tag filter, multi-tag AND filter, three-tag AND empty result, recurring template exclusion until materialized, and materialized recurring row counting like a manual expense.
 
 ## Notes
 

@@ -4,7 +4,7 @@
 
 ## Purpose
 
-2026-05-22 placeholder test. The original Issue 12 spec (month/year grouping, grand total, filter bar) was removed when the full summary implementation was deleted. This file now asserts the placeholder page renders correctly.
+2026-05-22 placeholder test. The original Issue 12 spec (month/year grouping, grand total, filter bar) was removed when the full summary implementation was deleted. Issue 17 introduced new summary E2E tests under `e2e-tests/summary/` instead. This file remains a minimal placeholder.
 
 ## Test cases
 
@@ -12,5 +12,6 @@
 
 ## Cross-references
 
-- [../../src/routes/build-summary.md](../../src/routes/build-summary.md) — route under test (now a placeholder).
+- [../../src/routes/build-summary.md](../../src/routes/build-summary.md) — route under test.
+- [../summary/01-summary-defaults-and-controls.spec.md](../summary/01-summary-defaults-and-controls.spec.md) — Issue 17 replacement spec.
 
