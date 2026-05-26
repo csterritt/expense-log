@@ -7,20 +7,21 @@ The main ideas here are:
 - We want to log our expenses as we make them.
 - We want to categorize our expenses.
 - We want to tag expenses for additional context.
-- Categories and Tags are single words, with no whitespace, which can contain ONLY letters, numbers, hyphens, and underscores. Duplicates are not allowed, and all values are stored and shown in lowercase.
+- Categories and Tags are single words, with no whitespace, which can contain ONLY ASCII letters, numbers, hyphens, and underscores. Duplicates are not allowed, and all values are stored and shown in lowercase.
 - We want to be able to search for expenses by description, category, or tag.
 - We want to be able to filter expenses by date range.
 - When filtering by one or more tags, we want a switch between "All tags must appear" (AND) and "Any tag, but at least one" (OR).
-- We want to see the most recent expenses for the last three calendar months.
+- We want to see the most recent expenses for the last three calendar months. Default range is current calendar month plus two preceding calendar months, inclusive, from the first day of the month two months before today through today in ET.
 - We want to be able to enter expenses manually:
   - Description - required
   - Amount - required
   - Category - required
   - Tags - optional
   - Date - required (defaults to today)
-- We want to be able to choose a category or a tag from a drop-down list, or enter a new one if it doesn't exist.
-- The drop-down lists should be populated from existing categories and tags.
-- The drop-down lists should be searchable.
+- We want to be able to choose a category from a drop-down list, or enter a new one if it doesn't exist.
+- We want to be able to choose a tag from a block of checkboxes shown as chips, or enter a new one if it doesn't exist.
+- The category drop-down lists/tag blocks should be populated from existing categories and tags.
+- The category drop-down list should be searchable.
 - We want full CRUD for expenses, categories, and tags.
 - This is a web app that runs in the browser.
 - It does not need to be able to run offline.
@@ -52,7 +53,7 @@ The main ideas here are:
     - Grouping period (month, quarter, year)
     - Count of expenses
     - Total amount
-- For both entering new expenses and for the summarization page, the existing tags should be shown as a block of checkboxes shown as chips, with (on entry) the ability to add new tags.
+- For both entering new expenses and for the summarization page, the existing tags should be shown as a block of checkboxes shown as chips, with (on expense entry or expense edit) the ability to add new tags.
   - The chips should be sorted alphabetically.
   - The chips should be clickable to select/deselect them.
   - The chips should be displayed in a row, wrapping to the current viewport width.
@@ -60,9 +61,9 @@ The main ideas here are:
 - For both individual Months and Quarters, the year should be added at the end of the label after the month or quarter, e.g. "March 2025".
   - They still should sort chronologically, not alphabetically.
   - This allows proper grouping, in that I don't want data from March 2025 to be grouped with March 2026.
-- Since this is a multi-user database, we need to address what happens when (for example) two people submit the same tag simultaneously.
-  - There should be a database constraint to ensure that the tag is only created once.
-  - The user should not see an error, but should see the existing tag selected.
+- Since this is a multi-user database, we need to address what happens when (for example) two people submit the same category or tag simultaneously.
+  - There should be a database constraint to ensure that the category or tag is only created once.
+  - The user should not see an error, but should see the existing category or tag selected.
 - User submitted data should never be trusted, but validated and sanitized. Browsers can be tricked, and we don't want to be vulnerable to attacks.
 
 Example data:
