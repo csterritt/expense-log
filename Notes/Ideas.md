@@ -7,6 +7,7 @@ The main ideas here are:
 - We want to log our expenses as we make them.
 - We want to categorize our expenses.
 - We want to tag expenses for additional context.
+- Categories and Tags are single words, with no whitespace, which can contain ONLY letters, numbers, hyphens, and underscores. Duplicates are not allowed, and all values are stored and shown in lowercase.
 - We want to be able to search for expenses by description, category, or tag.
 - We want to be able to filter expenses by date range.
 - When filtering by one or more tags, we want a switch between "All tags must appear" (AND) and "Any tag, but at least one" (OR).
@@ -56,6 +57,13 @@ The main ideas here are:
   - The chips should be clickable to select/deselect them.
   - The chips should be displayed in a row, wrapping to the current viewport width.
 - For the summary page, the months and quarters should be sorted chronologically, and not alphabetically.
+- For both individual Months and Quarters, the year should be added at the end of the label after the month or quarter, e.g. "March 2025".
+  - They still should sort chronologically, not alphabetically.
+  - This allows proper grouping, in that I don't want data from March 2025 to be grouped with March 2026.
+- Since this is a multi-user database, we need to address what happens when (for example) two people submit the same tag simultaneously.
+  - There should be a database constraint to ensure that the tag is only created once.
+  - The user should not see an error, but should see the existing tag selected.
+- User submitted data should never be trusted, but validated and sanitized. Browsers can be tricked, and we don't want to be vulnerable to attacks.
 
 Example data:
 

@@ -73,8 +73,8 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 37. As a signed-in user, I want the summary's tag filter rendered as the same alphabetically-sorted, wrapping block of checkbox-chips used on the entry and list-filter UIs (no inline create), accepting zero or more tags with AND semantics when more than one is selected (empty = include all expenses), so that I can narrow the summary to a specific tag combination before grouping using a consistent UI.
 38. As a signed-in user, I want a date-range filter with optional `from` / `to` fields whose first-load default matches the list default (first-of-month three months ago through today, ET), and a one-click control to clear all filters back to defaults, so that I can scope the summary to any window.
 39. As a signed-in user, I want the result table's columns to be derived from the group-by dimension — a `category` column iff the dimension includes Category, a `tag` column iff the dimension includes Tag, a time-period column always, plus `count` and `total` — with no grand-total row and no percent-of-total column, so that every row stands alone and I am not misled by sums of double-counted tag rows.
-40. As a signed-in user, I want the time-period column rendered as `Mmm` (capitalized calendar month name abbreviation, e.g. 'Jan', ET) for Month, capitalized `Mmm-Mmm` for calendar Quarter (`Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`), and `YYYY` for Year, so that the label format is unambiguous.
-41. As a signed-in user, I want every column header to be clickable to toggle ascending / descending sort by that column, where the time-period column sorts **chronologically** (calendar order — `Jan` before `Feb`, `Jan-Mar` before `Apr-Jun`) and never alphabetically, with default = group columns ascending and then time-period chronologically ascending; an empty-state message rendered when no rows match; and recurring-generated expenses counted exactly like manual ones but only after the cron has materialized them (a future-dated occurrence is never anticipated by the summary), so that the table is sortable, never blank-looking, and consistent with the list.
+40. As a signed-in user, I want the time-period column rendered with its year so that data from different years never visually collide: Month is `Mmm YYYY` (e.g. `Mar 2026`, ET), Quarter is `Mmm-Mmm YYYY` (e.g. `Jan-Mar 2026`), and Year is `YYYY`. Aggregation keys carry the year too — Month and Quarter rows do not roll up across years.
+41. As a signed-in user, I want every column header to be clickable to toggle ascending / descending sort by that column, where the time-period column sorts **chronologically** by an internal year-aware key (year, then month/quarter index — e.g. `Jan 2026` before `Feb 2026`, and `Dec 2025` before `Jan 2026`) and never by the rendered label's alphabetical order, with default = group columns ascending and then time-period chronologically ascending. When the user clicks `count`, `total`, `category`, or `tag`, ties break on the default group/time ordering (group columns ascending, then chronological time-period ascending). An empty-state message renders when no rows match, and recurring-generated expenses are counted exactly like manual ones but only after the cron has materialized them (a future-dated occurrence is never anticipated by the summary), so that the table is sortable, never blank-looking, and consistent with the list.
 
 ### Management: categories
 
@@ -175,16 +175,18 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
   - `Category + Tag` — columns `category | tag | time-period | count | total`. Same tag double-counting rule.
 - **Time-period granularity** selector: `Month` (default) | `Quarter` | `Year`. The time-period column is always present (one of three formats below).
 - **Time-period column formats** (all anchored to `America/New_York`):
-  - Month: `Mmm` (capitalized calendar month name abbreviation, e.g. 'Jan').
-  - Quarter: capitalized `Mmm-Mmm` for calendar Quarter (`Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`).
+  - Month: `Mmm YYYY` (capitalized calendar month name abbreviation followed by the four-digit year, e.g. `Mar 2026`).
+  - Quarter: capitalized `Mmm-Mmm YYYY` for calendar Quarter (`Jan-Mar 2026`, `Apr-Jun 2026`, `Jul-Sep 2026`, `Oct-Dec 2026`).
   - Year: `YYYY`.
+- **Time-period aggregation keys**: Month and Quarter rows are keyed by `(year, monthIndex)` / `(year, quarterIndex)`; rows from different calendar years never aggregate together. Sorting uses these internal keys, not rendered labels.
 - **Tag filter**: zero or more tag ids, rendered as the shared chip-checkbox block (alphabetically sorted, wrapping, no inline create). Empty = include all expenses. Two or more selected = AND (expense must carry every selected tag). The filter narrows the expense set before grouping; it does not change which columns appear (column visibility is governed solely by the group-by dimension).
 - **Date-range filter**: optional `from` / `to` (`YYYY-MM-DD`), inclusive. First-load default matches the list default (first of month three months ago through today, ET). Open-ended ranges allowed. A single "Clear" control resets all filters and the dimension/granularity selectors to defaults.
 - **Defaults**: group-by `Category`, granularity `Month`, no tag filter, date range = list default.
 - **Row semantics**: every row stands alone. `count` is the number of (expense, group-key) participations contributing to the row; `total` is the sum of `amountCents` for those participations. **There is no grand-total row and no percent-of-total column.** When the dimension includes `Tag`, an expense with N tags contributes once per tag (so summing `count` or `total` across rows can exceed the underlying expense count/total — intentional, surfaced with a short inline note on the page).
-- **Sort**: every column header is clickable to toggle ascending / descending sort by that column. Default sort = group columns ascending (case-insensitive alphabetical for category/tag), then time-period **chronologically** ascending. The time-period column always sorts chronologically (calendar order: Jan→Dec for Month, Jan-Mar→Oct-Dec for Quarter, numeric for Year) regardless of its rendered label; alphabetical sort of month/quarter labels is explicitly forbidden.
+- **Sort**: every column header is clickable to toggle ascending / descending sort by that column. Default sort = group columns ascending (case-insensitive alphabetical for category/tag), then time-period **chronologically** ascending using the internal `(year, monthIndex|quarterIndex)` key. The time-period column always sorts on this internal key (year first, then month/quarter index for Month/Quarter; numeric for Year) regardless of its rendered label. **No code path in the Summary sort may compare rendered month or quarter labels alphabetically.** When the user clicks `count`, `total`, `category`, or `tag`, ties retain the default ordering (group columns ascending, then chronological time-period ascending).
 - **Empty results**: render an empty-state message under the controls.
 - **Recurring/generated expenses**: counted exactly like manual expenses, but only `expense` rows already materialized at query time are included. A future-dated recurring occurrence is never anticipated — it participates in summaries only after the cron (or the dev-only manual trigger) has inserted the row.
+- **Malformed query parameters**: handlers must never 500 on bad input. Unknown `tagId` values are silently dropped from the filter set; invalid `dimension`, `granularity`, sort column name, or sort direction fall back to defaults; non-`YYYY-MM-DD` `from` / `to` values are treated as absent. Validation errors here are not logged as server errors.
 
 ### Forms and validation
 
@@ -192,6 +194,31 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
 - Client-side validation via HTML attributes (`required`, `maxlength`, `pattern`, `min`).
 - Form inputs use `value` (not `defaultValue`) for pre-population on edit and on re-render after validation errors.
 - Post-redirect-get on successful create/update/delete.
+
+### Tag input contract (server-authoritative)
+
+The UI is never trusted; every handler revalidates. The contract applies uniformly to mutation forms (expense create/edit, recurring create/edit), the list-page tag filter, and the Summary tag filter, differing only in how unknown values are treated.
+
+- **Submitted `tagId`**: zero or more repeated form or query values. Handlers must dedupe repeated `tagId` values on the server, then validate that each remaining id exists.
+  - Mutation forms: an unknown or stale `tagId` (e.g. tag deleted between page render and submit) renders a recoverable global error on the form, with all other field values preserved.
+  - List filter and Summary filter: unknown `tagId` values are silently ignored; the page still renders.
+- **Submitted `newTags`** (mutation forms only): a single text field whose contents are split on commas and whitespace, then for each token: trim → lowercase → drop empty → letters, digits, hyphens and underscores only → dedupe case-insensitively. Per-token validation rejects names > 20 characters. Raw-input safety limits also apply: the raw `newTags` string is capped (e.g. 500 characters) and the post-split token count is capped (e.g. 32 tokens); exceeding either is a recoverable validation error.
+- **Collision between `tagId` and `newTags`**: if a normalized `newTags` token matches the lowercase name of any existing tag (whether selected via `tagId` or not), treat it as a selection of the existing tag — do not create a confirmation entry for an already-existing name, and do not double-attach.
+- **Confirmation-time race**: if, between the initial submit and the confirmation submit, another request creates a tag with the same name, the confirm handler must reuse the now-existing tag (silently attach it) rather than failing with a generic unique-constraint conflict. Any other unique-constraint failure surfaces a recoverable user-facing message that re-renders the confirmation page with all values preserved.
+- **Validation-error preservation**: every re-render path (form validation error, confirmation cancel, confirmation-time conflict) preserves chip selections, `newTags` text, the new-category text, and all other field values — on the entry form, the edit form, and the recurring create/edit forms.
+- **Auth gating**: every page and POST handler touched by this contract continues to require signed-in access via the existing middleware (same pattern as `buildPrivate`); this includes confirmation routes and the recurring equivalents.
+
+### Safe rendering of user-controlled values
+
+- **Server-rendered HTML**: tag names, new-tag tokens, category names, and any other user-controlled value rendered into chip labels, hidden inputs, preserved form values, error messages, and confirmation pages must be HTML-escaped by the renderer (JSX's default escaping is sufficient; never inject via `dangerouslySetInnerHTML`).
+- **Client JS**: optimistic chips and any DOM nodes built from user input must use safe DOM APIs (`textContent`, `setAttribute`) — never `innerHTML` for user-controlled strings.
+- **Optimistic chips are visual only**: JS-created chips render selected names visually, but the submitted form data still flows through the existing native fields (`tagId` checkboxes for existing tags, `newTags` text input for new names). The server never trusts JS-only state.
+
+### Error handling and logging
+
+- **JS failure isolation**: an exception in `tag-chip-checkboxes.js` or `category-combobox.js` must not block native checkbox toggling or form submission; enhancement code is wrapped so that init failures are swallowed (logged to `console.error` only).
+- **Asset 404 tolerance**: removing `public/js/tag-chip-picker.js` must not produce a 404 from any rendered page; all `<script>` references to it are removed in the same change.
+- **Logging scope**: validation errors are not logged as server errors. Unexpected server errors in post/confirm handlers log route, error class, and stack — but never raw form bodies, full query strings, expense descriptions, amounts, or tag names. (Data is shared across signed-in users; logs may have broader exposure.)
 
 ### Client JS (progressive enhancement)
 
@@ -250,7 +277,7 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
   - **Interface**:
     - `todayEt(): string` — `YYYY-MM-DD`.
     - `defaultRangeEt(): { from: string; to: string }` — first of (today − 2 months) through today.
-    - `monthKeyEt(ymd: string): string`, `quarterKeyEt(ymd: string): string`, `yearKeyEt(ymd: string): string` — for date-grouped summaries (formats `MM`, `mmm-mmm`, `YYYY` respectively).
+    - `monthKeyEt(ymd: string): { year: number; monthIndex: number; label: string }`, `quarterKeyEt(ymd: string): { year: number; quarterIndex: number; label: string }`, `yearKeyEt(ymd: string): { year: number; label: string }` — internal chronological keys plus rendered labels (`Mmm YYYY`, `Mmm-Mmm YYYY`, `YYYY`) for date-grouped summaries; sort uses the numeric fields, render uses `label`.
     - `isValidYmd(s: string): boolean`.
   - **Tested**: yes
 
@@ -281,7 +308,7 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
     - `listTags() / createTag / renameTag / mergeTag / deleteTag`
     - `listRecurring() / getRecurring / createRecurring / updateRecurring / deleteRecurring`
     - `materializeRecurring(today): Promise<{ generated: number; failed: { recurringId: string; error: string }[] }>` — iterates all templates, calls the `recurrence` module for dates, inserts `expense` rows with `recurringId` + `occurrenceDate`, swallows unique-constraint violations as no-ops.
-    - `summarize(input: { dimension: 'time' | 'category' | 'tag' | 'category-tag'; granularity: 'month' | 'quarter' | 'year'; filters: { from?: string; to?: string; tagIds?: string[] }; sort?: { column: string; direction: 'asc' | 'desc' }[] }): Promise<SummaryRow[]>` — returns rows whose shape matches the requested dimension (group columns + time-period + count + total). No grand total. Tag dimensions intentionally double-count multi-tagged expenses.
+    - `summarize(input: { dimension: 'time' | 'category' | 'tag' | 'category-tag'; granularity: 'month' | 'quarter' | 'year'; filters: { from?: string; to?: string; tagIds?: string[] }; sort?: { column: string; direction: 'asc' | 'desc' }[] }): Promise<SummaryRow[]>` — returns rows whose shape matches the requested dimension (group columns + time-period + count + total). Each row carries an internal `(year, monthIndex|quarterIndex)` chronological key for sorting plus the rendered label (`Mmm YYYY` / `Mmm-Mmm YYYY` / `YYYY`); Month/Quarter rows from different years are distinct rows and never aggregate together. The `sort` input is validated against an allow-list of column names and directions; unknown values fall back to defaults rather than erroring. No grand total. Tag dimensions intentionally double-count multi-tagged expenses.
   - Failure modes: `NotFound`, `Conflict` (unique), `Referenced` (delete blocked), `ValidationError`.
   - **Tested**: yes (integration tests against local D1 / in-memory SQLite)
 
@@ -310,7 +337,7 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
   - `et-date`: boundary tests around DST transitions, month boundaries, and the month/quarter/year key formatters (including quarter-label casing).
   - `recurrence`: occurrence-date tables covering Monthly/Quarterly/Yearly with anchors on days 1, 15, 28, 29, 30, 31; Feb 29 yearly anchors in leap and non-leap years; catch-up across multiple missed periods; first-occurrence rule for newly created templates.
   - `expense-validators`: schema pass/fail tables, including the recurring-template schema.
-  - `expense-repo`: CRUD, referential integrity, merge-on-rename, AND/OR tag filtering, summary aggregation math across all four dimensions and all three granularities (covering by-tag double-counting, AND tag-filter narrowing, sort toggling, **chronological** time-period ordering for Month and Quarter granularities — verifying that `Apr` follows `Jan`/`Feb`/`Mar` and `Apr-Jun` follows `Jan-Mar` regardless of label alphabetical order — empty-result handling, and that only materialized recurring rows participate), `materializeRecurring` idempotency and catch-up, `ON DELETE SET NULL` behavior when a template is deleted.
+  - `expense-repo`: CRUD, referential integrity, merge-on-rename, AND/OR tag filtering, summary aggregation math across all four dimensions and all three granularities (covering by-tag double-counting, AND tag-filter narrowing, sort toggling, **chronological** time-period ordering by internal `(year, monthIndex|quarterIndex)` key for Month and Quarter granularities — verifying that `Apr 2026` follows `Jan 2026`/`Feb 2026`/`Mar 2026`, that `Apr-Jun 2026` follows `Jan-Mar 2026`, and that `Dec 2025` precedes `Jan 2026` regardless of label alphabetical order; that Month/Quarter rows from different years remain distinct; that ties on a clicked `count`/`total`/`category`/`tag` column break on the default group/time ordering; empty-result handling; that only materialized recurring rows participate; and that malformed query parameters fall back to defaults rather than erroring), server-side dedupe and existence-validation of submitted `tagId` values, `newTags` normalization (split, trim, lowercase, drop empty, dedupe, reject > 20 chars, raw-length and token-count caps), collision handling between `tagId` and `newTags`, confirmation-time race resolution (concurrent tag creation), `materializeRecurring` idempotency and catch-up, `ON DELETE SET NULL` behavior when a template is deleted.
 - **Prior art**: existing Playwright tests under `e2e-tests/` and helpers in `e2e-tests/support/` are the reference for navigation, form submission, and validation assertions. Reuse helpers where available; add new helpers for expense/category/tag forms in the same style.
 
 ## Out of Scope
