@@ -51,6 +51,11 @@ The main ideas here are:
     - Grouping period (month, quarter, year)
     - Count of expenses
     - Total amount
+- For both entering new expenses and for the summarization page, the existing tags should be shown as a block of checkboxes shown as chips, with (on entry) the ability to add new tags.
+  - The chips should be sorted alphabetically.
+  - The chips should be clickable to select/deselect them.
+  - The chips should be displayed in a row, wrapping to the current viewport width.
+- For the summary page, the months and quarters should be sorted chronologically, and not alphabetically.
 
 Example data:
 

@@ -9,7 +9,7 @@ Signed-in users of the app need a simple way to record spending as it happens an
 When the feature is complete, any signed-in user can:
 
 - Log an expense in a few seconds from a form that sits at the top of the default landing page.
-- Pick a category from a searchable dropdown (or create one inline) and attach zero or more tags via a chip picker (creating new tags inline).
+- Pick a category from a searchable dropdown (or create one inline) and attach zero or more tags by toggling checkbox-chips that show every existing tag (with an inline affordance to create new tags).
 - See the most recent expenses — everything in the current calendar month and the two preceding months — in a single scrollable list, newest first.
 - Search that list by description and filter it by an arbitrary date range, by category, and by one or more tags (with an AND/OR toggle for tags).
 - View summaries on a dedicated page: pick a group-by dimension (`Time only`, `Category`, `Tag`, or `Category + Tag`), a time-period granularity (`Month`, `Quarter`, or `Year`), an optional tag filter (AND when more than one), and an optional date range.
@@ -28,10 +28,10 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 4. As a signed-in user, I want the amount field to accept `1234.56`, `1,234.56`, `1234`, `.50`, and similar forms, so that I can type naturally; the system strips commas and validates up to two decimal places, with the value strictly greater than zero.
 5. As a signed-in user, I want to select a category from a searchable dropdown, so that I can find existing categories quickly.
 6. As a signed-in user, I want to type a brand-new category name in the dropdown and be asked "Create category 'foo'?" on submit, so that I can create a category without leaving the form.
-7. As a signed-in user, I want to add tags one at a time from a searchable picker that accumulates selected tags as chips, so that I can attach multiple tags without re-typing.
-8. As a signed-in user, I want to remove a tag chip by clicking its × control, so that I can correct mistakes before submitting.
-9. As a signed-in user, I want duplicate tag selections to be silently ignored, so that a tag appears at most once on an expense.
-10. As a signed-in user, I want to type a brand-new tag name in the tag picker and be asked "Create tag 'foo'?" on submit, so that I can create tags without leaving the form.
+7. As a signed-in user, I want every existing tag rendered as a checkbox-chip in a single block above the submit button, sorted alphabetically (case-insensitive) and wrapping to the viewport width, so that I can see at a glance every tag that exists.
+8. As a signed-in user, I want to toggle a tag's selection by clicking its chip (selected state visually distinct from unselected), so that attaching or detaching a tag is one click.
+9. As a signed-in user, I want each tag to be selectable at most once (the checkbox model makes duplicates structurally impossible), so that a tag appears at most once on an expense.
+10. As a signed-in user, I want a small inline "new tag" text input adjacent to the chip block that lets me add one or more brand-new tag names, each of which appears as an already-selected chip and is confirmed via the standard inline-create flow on submit, so that I can create tags without leaving the form.
 11. As a signed-in user, when my submission contains multiple new categories or tags, I want a single confirmation page listing every new name and the full expense data, so that I can review all creations at once.
 12. As a signed-in user, if I cancel the confirmation, I want to return to the form with all my values preserved, so that I do not lose work.
 13. As a signed-in user, after a successful submit I want the page to redirect back to the list with a cleared form and the new row visible, so that I can log the next expense fresh.
@@ -61,7 +61,7 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 28. As a signed-in user, I want a date-range filter with "from" and "to" fields, each independently optional (open-ended ranges allowed), so that I can look at any window.
 29. As a signed-in user, I want the date-range default — on first load of the filter UI — to be "from the first of the month three months ago" "to today", matching the default list view.
 30. As a signed-in user, I want a category filter that picks zero or one category, so that I can narrow by a single category.
-31. As a signed-in user, I want a tag filter that picks zero or more tags plus an AND/OR toggle ("all tags must appear" vs "any tag, at least one"), so that I can intersect or union across tags.
+31. As a signed-in user, I want a tag filter rendered as the same alphabetically-sorted, wrapping block of checkbox-chips used on the entry form (no inline create here — filtering only operates over existing tags), with an AND/OR toggle ("all tags must appear" vs "any tag, at least one"), so that I can intersect or union across tags using a consistent UI.
 32. As a signed-in user, I want search, date-range, category, and tag filters to combine with AND semantics across fields (tag-internal semantics governed by the toggle), so that I can progressively narrow results.
 33. As a signed-in user, I want to clear all filters with one control, so that I can return to the default view.
 
@@ -70,11 +70,11 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 34. As a signed-in user, I want a Summary page (linked from the header) whose default view groups by Category with Month granularity, no tag filter, and a date range matching the default list window, so that I see a useful summary without configuring anything.
 35. As a signed-in user, I want a "group-by dimension" selector with four mutually-exclusive options — `Time only`, `Category`, `Tag`, `Category + Tag` — so that I can shape the summary to what I want to see.
 36. As a signed-in user, I want a "time-period granularity" selector with `Month` (default), `Quarter`, and `Year`, so that I can summarize at the resolution I care about.
-37. As a signed-in user, I want a tag filter that accepts zero or more tags with AND semantics when more than one is selected (empty = include all expenses), so that I can narrow the summary to a specific tag combination before grouping.
+37. As a signed-in user, I want the summary's tag filter rendered as the same alphabetically-sorted, wrapping block of checkbox-chips used on the entry and list-filter UIs (no inline create), accepting zero or more tags with AND semantics when more than one is selected (empty = include all expenses), so that I can narrow the summary to a specific tag combination before grouping using a consistent UI.
 38. As a signed-in user, I want a date-range filter with optional `from` / `to` fields whose first-load default matches the list default (first-of-month three months ago through today, ET), and a one-click control to clear all filters back to defaults, so that I can scope the summary to any window.
 39. As a signed-in user, I want the result table's columns to be derived from the group-by dimension — a `category` column iff the dimension includes Category, a `tag` column iff the dimension includes Tag, a time-period column always, plus `count` and `total` — with no grand-total row and no percent-of-total column, so that every row stands alone and I am not misled by sums of double-counted tag rows.
 40. As a signed-in user, I want the time-period column rendered as `Mmm` (capitalized calendar month name abbreviation, e.g. 'Jan', ET) for Month, capitalized `Mmm-Mmm` for calendar Quarter (`Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`), and `YYYY` for Year, so that the label format is unambiguous.
-41. As a signed-in user, I want every column header to be clickable to toggle ascending / descending sort by that column (default = group columns ascending, then time-period ascending), an empty-state message rendered when no rows match, and recurring-generated expenses counted exactly like manual ones but only after the cron has materialized them (a future-dated occurrence is never anticipated by the summary), so that the table is sortable, never blank-looking, and consistent with the list.
+41. As a signed-in user, I want every column header to be clickable to toggle ascending / descending sort by that column, where the time-period column sorts **chronologically** (calendar order — `Jan` before `Feb`, `Jan-Mar` before `Apr-Jun`) and never alphabetically, with default = group columns ascending and then time-period chronologically ascending; an empty-state message rendered when no rows match; and recurring-generated expenses counted exactly like manual ones but only after the cron has materialized them (a future-dated occurrence is never anticipated by the summary), so that the table is sortable, never blank-looking, and consistent with the list.
 
 ### Management: categories
 
@@ -178,11 +178,11 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
   - Month: `Mmm` (capitalized calendar month name abbreviation, e.g. 'Jan').
   - Quarter: capitalized `Mmm-Mmm` for calendar Quarter (`Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`).
   - Year: `YYYY`.
-- **Tag filter**: zero or more tag ids. Empty = include all expenses. Two or more selected = AND (expense must carry every selected tag). The filter narrows the expense set before grouping; it does not change which columns appear (column visibility is governed solely by the group-by dimension).
+- **Tag filter**: zero or more tag ids, rendered as the shared chip-checkbox block (alphabetically sorted, wrapping, no inline create). Empty = include all expenses. Two or more selected = AND (expense must carry every selected tag). The filter narrows the expense set before grouping; it does not change which columns appear (column visibility is governed solely by the group-by dimension).
 - **Date-range filter**: optional `from` / `to` (`YYYY-MM-DD`), inclusive. First-load default matches the list default (first of month three months ago through today, ET). Open-ended ranges allowed. A single "Clear" control resets all filters and the dimension/granularity selectors to defaults.
 - **Defaults**: group-by `Category`, granularity `Month`, no tag filter, date range = list default.
 - **Row semantics**: every row stands alone. `count` is the number of (expense, group-key) participations contributing to the row; `total` is the sum of `amountCents` for those participations. **There is no grand-total row and no percent-of-total column.** When the dimension includes `Tag`, an expense with N tags contributes once per tag (so summing `count` or `total` across rows can exceed the underlying expense count/total — intentional, surfaced with a short inline note on the page).
-- **Sort**: every column header is clickable to toggle ascending / descending sort by that column. Default sort = group columns ascending (case-insensitive alphabetical for category/tag), then time-period ascending.
+- **Sort**: every column header is clickable to toggle ascending / descending sort by that column. Default sort = group columns ascending (case-insensitive alphabetical for category/tag), then time-period **chronologically** ascending. The time-period column always sorts chronologically (calendar order: Jan→Dec for Month, Jan-Mar→Oct-Dec for Quarter, numeric for Year) regardless of its rendered label; alphabetical sort of month/quarter labels is explicitly forbidden.
 - **Empty results**: render an empty-state message under the controls.
 - **Recurring/generated expenses**: counted exactly like manual expenses, but only `expense` rows already materialized at query time are included. A future-dated recurring occurrence is never anticipated — it participates in summaries only after the cron (or the dev-only manual trigger) has inserted the row.
 
@@ -197,8 +197,9 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
 
 - Add a small vanilla-JS bundle served as a static asset that enhances:
   - **Category combobox**: `<input list>` + custom dropdown listing existing categories filtered by typed text, with a "Create 'foo'" affordance; falls back to a plain text input when JS is off.
-  - **Tag chip picker**: searchable list of existing tags, selection accumulates chips with × remove buttons; a hidden input carries the JSON/CSV of selected tag names; falls back to a comma-separated text input when JS is off.
+  - **Tag chip-checkbox block**: every existing tag is rendered server-side as a labeled checkbox styled as a chip, alphabetically sorted (case-insensitive) and wrapping to the viewport. Toggling a chip toggles its underlying checkbox; the form submits the standard checkbox name/value pairs. On the entry and recurring-template forms (only), an additional small text input next to the block lets the user add one or more new tag names (comma- or whitespace-separated); JS optimistically renders them as already-selected chips, and the server-side confirmation page handles them via the same inline-create flow used for new categories. The block degrades gracefully without JS: the checkboxes work natively, and the new-tag text input is submitted as-is to the same confirmation flow.
 - Without JS, both inputs still submit names; the server-side confirmation page handles unknown-name creation identically for both paths.
+- The same chip-checkbox block component (without the new-tag input) is reused by the list-page tag filter and the summary-page tag filter, so the tag-selection UI is consistent across entry, filter, and summary.
 
 ### Auth and multi-user
 
@@ -295,9 +296,9 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
   - **Interface**: the Cloudflare Workers `ExportedHandlerScheduledHandler` signature.
   - **Tested**: via Playwright e2e exercising the `/test/run-cron` dev-only route, plus unit tests of `recurrence` and `expense-repo.materializeRecurring`.
 
-- **Client JS enhancement modules** (`public/js/category-combobox.js`, `public/js/tag-chip-picker.js`)
-  - **Responsibility**: Progressive enhancement of the category and tag inputs.
-  - **Interface**: vanilla-JS auto-init on DOM elements with specific `data-*` attributes; degrades gracefully when absent.
+- **Client JS enhancement modules** (`public/js/category-combobox.js`, `public/js/tag-chip-checkboxes.js`)
+  - **Responsibility**: Progressive enhancement of the category dropdown and the tag chip-checkbox block (including the new-tag inline-add affordance on entry/recurring forms).
+  - **Interface**: vanilla-JS auto-init on DOM elements with specific `data-*` attributes; degrades gracefully when absent (native checkboxes continue to work, the new-tag text input flows through the confirmation page).
   - **Tested**: via Playwright e2e only.
 
 ## Testing Decisions
@@ -309,7 +310,7 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
   - `et-date`: boundary tests around DST transitions, month boundaries, and the month/quarter/year key formatters (including quarter-label casing).
   - `recurrence`: occurrence-date tables covering Monthly/Quarterly/Yearly with anchors on days 1, 15, 28, 29, 30, 31; Feb 29 yearly anchors in leap and non-leap years; catch-up across multiple missed periods; first-occurrence rule for newly created templates.
   - `expense-validators`: schema pass/fail tables, including the recurring-template schema.
-  - `expense-repo`: CRUD, referential integrity, merge-on-rename, AND/OR tag filtering, summary aggregation math across all four dimensions and all three granularities (covering by-tag double-counting, AND tag-filter narrowing, sort toggling, empty-result handling, and that only materialized recurring rows participate), `materializeRecurring` idempotency and catch-up, `ON DELETE SET NULL` behavior when a template is deleted.
+  - `expense-repo`: CRUD, referential integrity, merge-on-rename, AND/OR tag filtering, summary aggregation math across all four dimensions and all three granularities (covering by-tag double-counting, AND tag-filter narrowing, sort toggling, **chronological** time-period ordering for Month and Quarter granularities — verifying that `Apr` follows `Jan`/`Feb`/`Mar` and `Apr-Jun` follows `Jan-Mar` regardless of label alphabetical order — empty-result handling, and that only materialized recurring rows participate), `materializeRecurring` idempotency and catch-up, `ON DELETE SET NULL` behavior when a template is deleted.
 - **Prior art**: existing Playwright tests under `e2e-tests/` and helpers in `e2e-tests/support/` are the reference for navigation, form submission, and validation assertions. Reuse helpers where available; add new helpers for expense/category/tag forms in the same style.
 
 ## Out of Scope
