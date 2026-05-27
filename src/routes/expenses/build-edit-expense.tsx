@@ -26,14 +26,13 @@ import {
 } from '../../lib/db/category-access'
 import {
   listTags,
-  findTagsByNames,
 } from '../../lib/db/tag-access'
 import { formatCents, formatCentsPlain } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseExpenseCreate,
   parseNewCategoryName,
-  parseTagCsv,
+  parseTagInputs,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import {
@@ -61,13 +60,20 @@ const confirmEditNewPath = (id: string): string => `/expenses/${id}/confirm-edit
 const deletePath = (id: string): string => `/expenses/${id}/delete`
 
 const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
-  const form = await c.req.parseBody()
+  const form = await c.req.parseBody({ all: true })
+  const rawTagId = form['tagId']
+  const tagId: string[] = Array.isArray(rawTagId)
+    ? rawTagId.filter((v): v is string => typeof v === 'string')
+    : typeof rawTagId === 'string'
+      ? [rawTagId]
+      : []
   return {
     description: typeof form.description === 'string' ? form.description : '',
     amount: typeof form.amount === 'string' ? form.amount : '',
     date: typeof form.date === 'string' ? form.date : '',
     category: typeof form.category === 'string' ? form.category : '',
-    tags: typeof form.tags === 'string' ? form.tags : '',
+    tagId,
+    newTags: typeof form.newTags === 'string' ? form.newTags : '',
     action: typeof form.action === 'string' ? form.action : '',
   }
 }
@@ -102,7 +108,7 @@ const renderEditPage = (props: EditFormProps) => {
         </a>
       </div>
       <script src='/js/category-combobox.js' defer></script>
-      <script src='/js/tag-chip-picker.js' defer></script>
+      <script src='/js/tag-chip-checkboxes.js' defer></script>
     </div>
   )
 }
@@ -173,6 +179,7 @@ const buildEditState = (
     amountCents: number
     categoryName: string
     tagNames: string[]
+    tagIds: string[]
   },
   flash: { fieldErrors?: FieldErrors; values?: ExpenseFormValues } | undefined,
 ): ExpenseFormState => {
@@ -181,7 +188,8 @@ const buildEditState = (
     amount: formatCentsPlain(loaded.amountCents),
     date: loaded.date,
     category: loaded.categoryName,
-    tags: loaded.tagNames.join(', '),
+    tagIds: loaded.tagIds,
+    newTags: '',
   }
   if (!flash) {
     return { fieldErrors: {}, values: seedValues }
@@ -193,48 +201,9 @@ const buildEditState = (
       amount: flash.values?.amount ?? seedValues.amount,
       date: flash.values?.date ?? seedValues.date,
       category: flash.values?.category ?? seedValues.category,
-      tags: flash.values?.tags ?? seedValues.tags,
+      tagIds: flash.values?.tagIds ?? seedValues.tagIds,
+      newTags: flash.values?.newTags ?? seedValues.newTags,
     },
-  }
-}
-
-type DiffResult = {
-  newCategoryIsNew: boolean
-  existingCategoryRow: { id: string; name: string } | null
-  existingTagIds: string[]
-  newTagNames: string[]
-  // Lookup of the existing tag rows that matched the supplied lower-cased
-  // names — useful for callers that need both ids and names.
-  existingTagRows: { id: string; name: string }[]
-}
-
-// Helper shared between the create and edit POST flows for computing the
-// "what's new" diff after `findCategoryByName` and `findTagsByNames`.
-const computeNewItemsDiff = (
-  categoryLookup: { id: string; name: string } | null,
-  tagLookup: { id: string; name: string }[],
-  loweredTagNames: string[],
-): DiffResult => {
-  const existingTagByLower = new Map<string, { id: string; name: string }>()
-  for (const row of tagLookup) {
-    existingTagByLower.set(row.name.toLowerCase(), row)
-  }
-  const newTagNames: string[] = []
-  const existingTagIds: string[] = []
-  for (const lowered of loweredTagNames) {
-    const match = existingTagByLower.get(lowered)
-    if (match) {
-      existingTagIds.push(match.id)
-    } else {
-      newTagNames.push(lowered)
-    }
-  }
-  return {
-    newCategoryIsNew: categoryLookup === null,
-    existingCategoryRow: categoryLookup,
-    existingTagIds,
-    newTagNames,
-    existingTagRows: tagLookup,
   }
 }
 
@@ -265,7 +234,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       }
       const payloads: ExpenseFormPayloads = {
         categories: categoriesResult.value.map((row) => ({ name: row.name })),
-        tags: tagsResult.value.map((row) => ({ name: row.name })),
+        tags: tagsResult.value.map((row) => ({ id: row.id, name: row.name })),
       }
       const flash = readAndClearFormState(c)
       const state = buildEditState(loaded, flash)
@@ -281,12 +250,23 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
     async (c: Context<{ Bindings: Bindings }>) => {
       const id = requireId(c)
       const raw = await readRawBody(c)
-      const rawValues: ExpenseFormValues = {
+
+      const validated = parseExpenseCreate({
         description: raw.description,
         amount: raw.amount,
         date: raw.date,
         category: raw.category,
-        tags: raw.tags,
+      })
+      if (validated.isErr) {
+        const rawValues: ExpenseFormValues = {
+          description: raw.description,
+          amount: raw.amount,
+          date: raw.date,
+          category: raw.category,
+          tagIds: raw.tagId,
+          newTags: raw.newTags,
+        }
+        return redirectWithFormErrors(c, editPath(id), validated.error, rawValues)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)
@@ -298,32 +278,36 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
         return redirectWithError(c, PATHS.EXPENSES, 'Expense not found.')
       }
 
-      const validated = parseExpenseCreate({
-        description: raw.description,
-        amount: raw.amount,
-        date: raw.date,
-        category: raw.category,
-      })
-      const tagParse = parseTagCsv(raw.tags)
-      if (validated.isErr || tagParse.isErr) {
-        const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
-        if (tagParse.isErr) {
-          errs.tags = tagParse.error
+      const allTagsResult = await listTags(db)
+      if (allTagsResult.isErr) {
+        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
+      }
+
+      const tagInputParse = parseTagInputs(
+        { tagId: raw.tagId, newTags: raw.newTags },
+        allTagsResult.value,
+      )
+      if (Object.keys(tagInputParse.fieldErrors).length > 0) {
+        const rawValues: ExpenseFormValues = {
+          description: raw.description,
+          amount: raw.amount,
+          date: raw.date,
+          category: raw.category,
+          tagIds: raw.tagId,
+          newTags: tagInputParse.rawNewTagsPreserved,
         }
-        return redirectWithFormErrors(c, editPath(id), errs, rawValues)
+        return redirectWithFormErrors(c, editPath(id), tagInputParse.fieldErrors, rawValues)
       }
 
       const lookup = await findCategoryByName(db, validated.value.category)
       if (lookup.isErr) {
         return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
       }
-      const tagLookup = await findTagsByNames(db, tagParse.value)
-      if (tagLookup.isErr) {
-        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
-      }
 
-      const diff = computeNewItemsDiff(lookup.value, tagLookup.value, tagParse.value)
-      const anyNew = diff.newCategoryIsNew || diff.newTagNames.length > 0
+      const existingTagIds = tagInputParse.tagIds
+      const newTagNames = tagInputParse.newTags
+      const categoryIsNew = lookup.value === null
+      const anyNew = categoryIsNew || newTagNames.length > 0
 
       if (!anyNew) {
         const updateResult = await updateExpenseWithTags(db, {
@@ -331,8 +315,8 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
           description: validated.value.description,
           amountCents: validated.value.amountCents,
           date: validated.value.date,
-          categoryId: diff.existingCategoryRow!.id,
-          tagIds: diff.existingTagIds,
+          categoryId: lookup.value!.id,
+          tagIds: existingTagIds,
         })
         if (updateResult.isErr) {
           return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
@@ -343,19 +327,41 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       // Something is new — validate the new-category name when applicable.
       let normalizedNewCategory: string | null = null
       let finalCategoryName: string
-      if (diff.newCategoryIsNew) {
+      if (categoryIsNew) {
         const nameCheck = parseNewCategoryName(validated.value.category)
         if (nameCheck.isErr) {
+          const rawValues: ExpenseFormValues = {
+            description: raw.description,
+            amount: raw.amount,
+            date: raw.date,
+            category: raw.category,
+            tagIds: raw.tagId,
+            newTags: raw.newTags,
+          }
           return redirectWithFormErrors(c, editPath(id), { category: nameCheck.error }, rawValues)
         }
         normalizedNewCategory = nameCheck.value.toLowerCase()
         finalCategoryName = normalizedNewCategory
       } else {
-        finalCategoryName = diff.existingCategoryRow!.name
+        finalCategoryName = lookup.value!.name
       }
 
-      const sortedNewTags = diff.newTagNames.slice().sort((a, b) => a.localeCompare(b))
-      const finalTagNames = tagParse.value.slice().sort((a, b) => a.localeCompare(b))
+      const resolvedById = new Map(allTagsResult.value.map((t) => [t.id, t.name]))
+      const existingTagNames = existingTagIds.map((id) => resolvedById.get(id) ?? '').filter(Boolean)
+
+      const sortedNewTags = newTagNames.slice().sort((a, b) => a.localeCompare(b))
+      const allTagNames = [...existingTagNames, ...newTagNames]
+      const finalTagNames = allTagNames.slice().sort((a, b) => a.localeCompare(b))
+
+      const confirmValues: ExpenseFormValues = {
+        description: raw.description,
+        amount: raw.amount,
+        date: raw.date,
+        category: raw.category,
+        tagIds: existingTagIds,
+        newTags: newTagNames.join(','),
+      }
+
       return c.render(
         useLayout(
           c,
@@ -366,7 +372,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
             finalCategoryName,
             newTagNames: sortedNewTags,
             finalTagNames,
-            values: rawValues,
+            values: confirmValues,
           }),
         ),
       )
@@ -381,16 +387,26 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
     async (c: Context<{ Bindings: Bindings }>) => {
       const id = requireId(c)
       const raw = await readRawBody(c)
+
+      if (raw.action === 'cancel') {
+        const cancelValues: ExpenseFormValues = {
+          description: raw.description,
+          amount: raw.amount,
+          date: raw.date,
+          category: raw.category,
+          tagIds: raw.tagId,
+          newTags: raw.newTags,
+        }
+        return redirectWithFormErrors(c, editPath(id), {}, cancelValues)
+      }
+
       const rawValues: ExpenseFormValues = {
         description: raw.description,
         amount: raw.amount,
         date: raw.date,
         category: raw.category,
-        tags: raw.tags,
-      }
-
-      if (raw.action === 'cancel') {
-        return redirectWithFormErrors(c, editPath(id), {}, rawValues)
+        tagIds: raw.tagId,
+        newTags: raw.newTags,
       }
 
       const validated = parseExpenseCreate({
@@ -399,13 +415,8 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
         date: raw.date,
         category: raw.category,
       })
-      const tagParse = parseTagCsv(raw.tags)
-      if (validated.isErr || tagParse.isErr) {
-        const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
-        if (tagParse.isErr) {
-          errs.tags = tagParse.error
-        }
-        return redirectWithFormErrors(c, editPath(id), errs, rawValues)
+      if (validated.isErr) {
+        return redirectWithFormErrors(c, editPath(id), validated.error, rawValues)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)
@@ -417,20 +428,31 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
         return redirectWithError(c, PATHS.EXPENSES, 'Expense not found.')
       }
 
+      const allTagsResult = await listTags(db)
+      if (allTagsResult.isErr) {
+        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
+      }
+
+      const tagInputParse = parseTagInputs(
+        { tagId: raw.tagId, newTags: raw.newTags },
+        allTagsResult.value,
+      )
+      if (Object.keys(tagInputParse.fieldErrors).length > 0) {
+        return redirectWithFormErrors(c, editPath(id), tagInputParse.fieldErrors, rawValues)
+      }
+
       const lookup = await findCategoryByName(db, validated.value.category)
       if (lookup.isErr) {
         return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
       }
-      const tagLookup = await findTagsByNames(db, tagParse.value)
-      if (tagLookup.isErr) {
-        return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
-      }
-      const diff = computeNewItemsDiff(lookup.value, tagLookup.value, tagParse.value)
+
+      const existingTagIds = tagInputParse.tagIds
+      const newTagNames = tagInputParse.newTags
 
       let newCategoryName: string | null = null
       let existingCategoryId: string | null = null
-      if (diff.existingCategoryRow !== null) {
-        existingCategoryId = diff.existingCategoryRow.id
+      if (lookup.value !== null) {
+        existingCategoryId = lookup.value.id
       } else {
         const nameCheck = parseNewCategoryName(validated.value.category)
         if (nameCheck.isErr) {
@@ -443,8 +465,8 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
         id,
         newCategoryName,
         existingCategoryId,
-        newTagNames: diff.newTagNames,
-        existingTagIds: diff.existingTagIds,
+        newTagNames,
+        existingTagIds,
         date: validated.value.date,
         description: validated.value.description,
         amountCents: validated.value.amountCents,

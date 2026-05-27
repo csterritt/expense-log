@@ -4,7 +4,7 @@
 
 ## Purpose
 
-End-to-end coverage for the tag chip picker JavaScript-enhanced behavior on the expense entry form.
+End-to-end coverage for the tag chip-checkbox JavaScript-enhanced behavior on the expense entry form (JS-on). Tests toggling existing tag chips and typing new tag names in the `newTags` input.
 
 ## Setup
 
@@ -14,27 +14,22 @@ End-to-end coverage for the tag chip picker JavaScript-enhanced behavior on the 
 
 ## Tests
 
-### Add existing tag via Enter, create new tag via Create row, remove via × button
+### Toggle chip to select existing tag + type new tag, submit routes through confirmation
 
-- Asserts chip picker surface is visible.
-- Types `'gro'` in search input, ArrowDown then Enter to select existing `'groceries'` tag.
-- Asserts chip appears and hidden input has value `'groceries'`.
-- Types `'food'`, clicks Create row to create new tag.
-- Asserts `'food'` chip appears and hidden input has value `'groceries,food'`.
-- Clicks × button on `'groceries'` chip to remove it.
-- Asserts `'groceries'` chip gone, hidden input has value `'food'`.
-- Fills form and submits.
-- Asserts confirmation page appears with new tag line.
-- Confirms and asserts expense row appears with tag `'food'`.
+- Clicks the `'groceries'` chip to toggle its underlying checkbox on.
+- Asserts the checkbox inside the chip is checked.
+- Types `'food'` in the `newTags` text input.
+- Fills the rest of the form and submits.
+- Asserts `confirm-create-new-page` is visible with one `confirm-create-new-tag-line` listing `'food'`.
+- Confirms and asserts the created expense row has tags `'food, groceries'` (alphabetical).
 
-### Pre-seeded form value rehydrates as chips after a validation-error round-trip
+### Chip selections are preserved after a validation-error round-trip
 
-- Seeds `'food'` category for lookup.
-- Adds two chips (`'groceries'`, `'rent'`) via picker.
+- Seeds an expense with tags `'groceries'` and `'rent'`.
+- Toggles both chips to select them.
 - Fills invalid amount `'not-a-number'` to force server-side redirect with form-state.
 - Submits and waits for redirect back to `/expenses`.
-- Asserts form values restored including tags CSV.
-- Asserts both chips rehydrated from preserved CSV value.
+- Asserts both chip checkboxes are still checked after the round-trip.
 
 ---
 

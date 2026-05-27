@@ -293,7 +293,7 @@ export const renderExpenses = (
         renderExpenseTable(rows)
       )}
       <script src='/js/category-combobox.js' defer></script>
-      <script src='/js/tag-chip-picker.js' defer></script>
+      <script src='/js/tag-chip-checkboxes.js' defer></script>
     </div>
   )
 }

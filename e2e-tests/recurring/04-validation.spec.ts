@@ -22,7 +22,6 @@ const VALID_FORM = {
   anchorDate: '2025-06-15',
   recurrence: 'Monthly',
   category: 'somecat',
-  tags: '',
 }
 
 const fillForm = async (
@@ -33,14 +32,12 @@ const fillForm = async (
     anchorDate?: string
     recurrence?: string
     category?: string
-    tags?: string
   },
 ) => {
   const merged = { ...VALID_FORM, ...opts }
   await page.getByTestId('recurring-form-description').fill(merged.description)
   await page.getByTestId('recurring-form-amount').fill(merged.amount)
   await page.getByTestId('recurring-form-category').fill(merged.category)
-  await page.getByTestId('recurring-form-tags').fill(merged.tags)
   await page.getByTestId('recurring-form-anchor-date').fill(merged.anchorDate)
   if (merged.recurrence) {
     await page.getByTestId('recurring-form-recurrence').selectOption(merged.recurrence)

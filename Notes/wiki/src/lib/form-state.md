@@ -10,7 +10,7 @@ The payload is JSON-encoded into a dedicated `COOKIES.FORM_ERRORS` cookie that i
 
 ## Types
 
-- `ExpenseFormValues` — sticky values for the entry/category forms: `{ description?, amount?, date?, category?, tags?, name?, id?, sourceId?, targetId? }`. Each field is the raw string the user typed, not the parsed form, so the input redisplays exactly what they entered. (Issue 05 renamed `categoryId` → `category` when the entry form switched to a free-form text input. Issue 06 added `tags` for the CSV input. Issue 09 added category-management fields.)
+- `ExpenseFormValues` — sticky values for the entry/category forms: `{ description?, amount?, date?, category?, tags?, tagIds?, newTags?, name?, id?, sourceId?, targetId?, recurrence?, anchorDate? }`. Each field is the raw string the user typed, not the parsed form, so the input redisplays exactly what they entered. (Issue 05 renamed `categoryId` → `category`. Issue 06 added `tags` for the CSV input. Issue 09 added category-management fields. Tag chip-checkbox refactor added `tagIds?: string[]` and `newTags?: string` to support native checkbox selections plus free-text new tag names.)
 - `FormState` — `{ fieldErrors: FieldErrors, values: ExpenseFormValues }`. Generic enough that the expense entry form and category management page can both reuse it.
 
 ## Exports

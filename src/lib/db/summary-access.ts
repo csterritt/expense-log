@@ -12,7 +12,7 @@ import { Result } from 'true-myth'
 import { category, expense, expenseTag, tag } from '../../db/schema'
 import type { DrizzleClient } from '../../local-types'
 import { withRetry } from '../db-helpers'
-import { monthKeyEt, quarterKeyEt, yearKeyEt } from '../et-date'
+import { monthChronKeyEt, monthLabelEt, quarterChronKeyEt, quarterLabelEt, yearKeyEt } from '../et-date'
 
 export type SummaryDimension = 'time' | 'category' | 'tag' | 'category-tag'
 export type SummaryGranularity = 'month' | 'quarter' | 'year'
@@ -55,9 +55,20 @@ const buildDateConditions = (filters: SummarizeFilters): ReturnType<typeof eq>[]
   return conditions
 }
 
-/** Return the time-period key function for the given granularity. */
-const pickTimePeriodFn = (granularity: SummaryGranularity): ((ymd: string) => string) =>
-  granularity === 'year' ? yearKeyEt : granularity === 'quarter' ? quarterKeyEt : monthKeyEt
+/** Internal chronological sort key paired with the rendered label. */
+type TimePeriodResult = { key: number; label: string }
+
+/** Return the `{ key, label }` pair for `ymd` under the given granularity. */
+const timePeriodOf = (ymd: string, granularity: SummaryGranularity): TimePeriodResult => {
+  if (granularity === 'year') {
+    const y = parseInt(yearKeyEt(ymd), 10)
+    return { key: y, label: String(y) }
+  }
+  if (granularity === 'quarter') {
+    return { key: quarterChronKeyEt(ymd), label: quarterLabelEt(ymd) }
+  }
+  return { key: monthChronKeyEt(ymd), label: monthLabelEt(ymd) }
+}
 
 /**
  * Resolve tag-AND filter: return the expense ids that carry ALL `tagIds`, or
@@ -80,14 +91,22 @@ const resolveTagAndIds = async (
   return rows.map((r) => r.expenseId)
 }
 
-/** Mutable accumulator matching `SummaryRow` used only inside `summarizeActual`. */
+/**
+ * Mutable accumulator used only inside `summarizeActual`.
+ * `timePeriodKey` is the internal chronological sort key; it is stripped before
+ * the row is returned as the public `SummaryRow`.
+ */
 type MutableRow = {
   timePeriod: string
+  timePeriodKey: number
   categoryName?: string
   tagName?: string
   count: number
   totalCents: number
 }
+
+/** Ascending chronological tie-break on the internal key. */
+const chronoCmp = (a: MutableRow, b: MutableRow): number => a.timePeriodKey - b.timePeriodKey
 
 const accumulate = (map: Map<string, MutableRow>, key: string, row: MutableRow): void => {
   const existing = map.get(key)
@@ -160,18 +179,18 @@ const summarizeActual = async (
       }
     }
 
-    const timePeriodFn = pickTimePeriodFn(granularity)
     const groupMap = new Map<string, MutableRow>()
 
     for (const row of expenseRows) {
-      const timePeriod = timePeriodFn(row.date)
+      const { key: timePeriodKey, label: timePeriod } = timePeriodOf(row.date, granularity)
       const catName = row.categoryName
 
       if (dimension === 'time') {
-        accumulate(groupMap, timePeriod, { timePeriod, count: 1, totalCents: row.amountCents })
+        accumulate(groupMap, String(timePeriodKey), { timePeriod, timePeriodKey, count: 1, totalCents: row.amountCents })
       } else if (dimension === 'category') {
-        accumulate(groupMap, `${catName}\0${timePeriod}`, {
+        accumulate(groupMap, `${catName}\0${timePeriodKey}`, {
           timePeriod,
+          timePeriodKey,
           categoryName: catName,
           count: 1,
           totalCents: row.amountCents,
@@ -180,12 +199,13 @@ const summarizeActual = async (
         const expenseTags = tagsByExpense.get(row.id)
         if (!expenseTags || expenseTags.length === 0) continue
         for (const tagName of expenseTags) {
-          const key =
+          const mapKey =
             dimension === 'tag'
-              ? `${tagName}\0${timePeriod}`
-              : `${catName}\0${tagName}\0${timePeriod}`
-          accumulate(groupMap, key, {
+              ? `${tagName}\0${timePeriodKey}`
+              : `${catName}\0${tagName}\0${timePeriodKey}`
+          accumulate(groupMap, mapKey, {
             timePeriod,
+            timePeriodKey,
             tagName,
             ...(dimension === 'category-tag' ? { categoryName: catName } : {}),
             count: 1,
@@ -195,11 +215,16 @@ const summarizeActual = async (
       }
     }
 
-    let rows = Array.from(groupMap.values()) as SummaryRow[]
+    const mutableRows = Array.from(groupMap.values())
 
     if (sort && sort.length > 0) {
-      rows = rows.sort((a, b) => {
+      mutableRows.sort((a, b) => {
         for (const s of sort) {
+          if (s.column === 'timePeriod') {
+            const cmp = a.timePeriodKey - b.timePeriodKey
+            if (cmp !== 0) return s.direction === 'desc' ? -cmp : cmp
+            continue
+          }
           const av = (a as unknown as Record<string, unknown>)[s.column]
           const bv = (b as unknown as Record<string, unknown>)[s.column]
           if (av === bv) continue
@@ -209,19 +234,21 @@ const summarizeActual = async (
               : String(av ?? '').localeCompare(String(bv ?? ''))
           return s.direction === 'desc' ? -cmp : cmp
         }
-        return 0
+        return chronoCmp(a, b)
       })
     } else {
-      rows = rows.sort((a, b) => {
+      mutableRows.sort((a, b) => {
         const catCmp = (a.categoryName ?? '').localeCompare(b.categoryName ?? '')
         if (catCmp !== 0) return catCmp
         const tagCmp = (a.tagName ?? '').localeCompare(b.tagName ?? '')
         if (tagCmp !== 0) return tagCmp
-        return a.timePeriod.localeCompare(b.timePeriod)
+        return chronoCmp(a, b)
       })
     }
 
-    return Result.ok(rows)
+    const rows: SummaryRow[] = mutableRows.map(({ timePeriodKey: _k, ...rest }) => rest)
+
+    return Result.ok(rows as SummaryRow[])
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
   }

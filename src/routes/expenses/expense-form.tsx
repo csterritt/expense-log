@@ -15,13 +15,10 @@
 import {
   categoryNameMax,
   descriptionMax,
-  tagNameMax,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import type { ExpenseFormValues } from '../../lib/form-state'
-
-// Generous CSV maxlength: enough for ~8 max-length tags plus separators.
-const tagsCsvMax = (tagNameMax + 2) * 8
+import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
 
 export type ExpenseFormState = {
   fieldErrors: FieldErrors
@@ -30,7 +27,7 @@ export type ExpenseFormState = {
 
 export type ExpenseFormPayloads = {
   categories: { name: string }[]
-  tags: { name: string }[]
+  tags: { id: string; name: string }[]
 }
 
 export type ExpenseFormMode = 'create' | 'edit'
@@ -143,19 +140,14 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
       </div>
       <div className='md:col-span-5 flex flex-row justify-between gap-4'>
         <div className='flex flex-col flex-grow'>
-          <label className='label' htmlFor='expense-form-tags'>
-            <span className='label-text'>Tags (comma-separated)</span>
+          <label className='label'>
+            <span className='label-text'>Tags</span>
           </label>
-          <input
-            id='expense-form-tags'
-            name='tags'
-            type='text'
-            maxLength={tagsCsvMax}
-            className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
-            data-testid='expense-form-tags'
-            data-tag-chip-picker
-            value={values.tags ?? ''}
-            placeholder='e.g. food, groceries'
+          <TagChipCheckboxes
+            tags={payloads.tags}
+            selectedTagIds={new Set(values.tagIds ?? [])}
+            allowNewTags={true}
+            newTagsValue={values.newTags ?? ''}
           />
           {fieldError('tags', fieldErrors.tags)}
         </div>
@@ -170,11 +162,6 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
         type='application/json'
         data-testid='categories-data'
         dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.categories) }}
-      />
-      <script
-        type='application/json'
-        data-testid='tags-data'
-        dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.tags) }}
       />
     </form>
   )
@@ -282,7 +269,10 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
           </>
         )}
         <input type='hidden' name='category' value={values.category ?? ''} />
-        <input type='hidden' name='tags' value={values.tags ?? ''} />
+        {(values.tagIds ?? []).map((id) => (
+          <input type='hidden' name='tagId' value={id} />
+        ))}
+        <input type='hidden' name='newTags' value={values.newTags ?? ''} />
         <button
           type='submit'
           name='action'

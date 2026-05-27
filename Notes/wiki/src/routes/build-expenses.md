@@ -20,11 +20,11 @@ All routes use `secureHeaders` and `signedInAccess` middleware.
 
 ## Cross-references
 
-- [expense-get-handler.ts.md](expense-get-handler.ts.md) — GET handler implementation.
-- [expense-post-handler.ts.md](expense-post-handler.ts.md) — POST handler for expense creation.
-- [expense-confirm-post-handler.ts.md](expense-confirm-post-handler.ts.md) — POST handler for confirmation submission.
-- [expense-list-renderer.tsx.md](expense-list-renderer.tsx.md) — render functions for the expenses page.
-- [expense-form-helpers.ts.md](expense-form-helpers.ts.md) — form utility functions.
+- [expense-get-handler.md](expense-get-handler.md) — GET handler implementation.
+- [expense-post-handler.md](expense-post-handler.md) — POST handler for expense creation.
+- [expense-confirm-post-handler.md](expense-confirm-post-handler.md) — POST handler for confirmation submission.
+- [expense-list-renderer.md](expense-list-renderer.md) — render functions for the expenses page.
+- [expense-form-helpers.md](expense-form-helpers.md) — form utility functions.
 - [../../middleware/signed-in-access.md](../../middleware/signed-in-access.md) — auth gate.
 - [../../constants.md](../../constants.md) — `PATHS.EXPENSES`, `STANDARD_SECURE_HEADERS`, `ALLOW_SCRIPTS_SECURE_HEADERS`.
 

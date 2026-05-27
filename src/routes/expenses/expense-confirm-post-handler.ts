@@ -10,11 +10,10 @@
 import { Context } from 'hono'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
-import { findCategoryByName } from '../../lib/db/category-access'
-import { findTagsByNames } from '../../lib/db/tag-access'
 import { createManyAndExpense } from '../../lib/db/expense-access'
+import { resolveConfirmTagsAndCategory } from '../../lib/db/confirm-helpers'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
-import { parseExpenseCreate, parseNewCategoryName, parseTagCsv, type FieldErrors } from '../../lib/expense-validators'
+import { parseExpenseCreate, type FieldErrors } from '../../lib/expense-validators'
 import { redirectWithFormErrors, type ExpenseFormValues } from '../../lib/form-state'
 import { readRawBody } from './expense-form-helpers'
 import { PATHS } from '../../constants'
@@ -27,18 +26,26 @@ import { PATHS } from '../../constants'
  */
 export const handleExpensesConfirmPost = async (c: Context<{ Bindings: Bindings }>) => {
   const raw = await readRawBody(c)
+
+  if (raw.action === 'cancel') {
+    const cancelValues: ExpenseFormValues = {
+      description: raw.description,
+      amount: raw.amount,
+      date: raw.date,
+      category: raw.category,
+      tagIds: raw.tagId,
+      newTags: raw.newTags,
+    }
+    return redirectWithFormErrors(c, PATHS.EXPENSES, {}, cancelValues)
+  }
+
   const rawValues: ExpenseFormValues = {
     description: raw.description,
     amount: raw.amount,
     date: raw.date,
     category: raw.category,
-    tags: raw.tags,
-  }
-
-  if (raw.action === 'cancel') {
-    // Round-trip every typed value back to the entry form via the
-    // single-use form-state cookie, with no field errors.
-    return redirectWithFormErrors(c, PATHS.EXPENSES, {}, rawValues)
+    tagIds: raw.tagId,
+    newTags: raw.newTags,
   }
 
   // Defensive re-validation of every field — the user could have
@@ -49,54 +56,37 @@ export const handleExpensesConfirmPost = async (c: Context<{ Bindings: Bindings 
     date: raw.date,
     category: raw.category,
   })
-  const tagParse = parseTagCsv(raw.tags)
-  if (validated.isErr || tagParse.isErr) {
-    const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
-    if (tagParse.isErr) {
-      errs.tags = tagParse.error
-    }
-    return redirectWithFormErrors(c, PATHS.EXPENSES, errs, rawValues)
+  if (validated.isErr) {
+    return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, rawValues)
   }
 
   const db = createDbClient(c.env.PROJECT_DB)
-  const lookup = await findCategoryByName(db, validated.value.category)
-  if (lookup.isErr) {
-    return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
-  }
-  const tagLookup = await findTagsByNames(db, tagParse.value)
-  if (tagLookup.isErr) {
-    return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
-  }
-  const existingTagByLower = new Map<string, { id: string; name: string }>()
-  for (const row of tagLookup.value) {
-    existingTagByLower.set(row.name.toLowerCase(), row)
-  }
-  const newTagNames: string[] = []
-  const existingTagIds: string[] = []
-  for (const lowered of tagParse.value) {
-    const match = existingTagByLower.get(lowered)
-    if (match) {
-      existingTagIds.push(match.id)
-    } else {
-      newTagNames.push(lowered)
+  const resolved = await resolveConfirmTagsAndCategory(
+    db,
+    raw.tagId,
+    raw.newTags,
+    validated.value.category,
+  )
+  if (!resolved.ok) {
+    if (resolved.kind === 'tag-list-error') {
+      return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
+    }
+    if (resolved.kind === 'tag-input-error') {
+      return redirectWithFormErrors(c, PATHS.EXPENSES, resolved.fieldErrors, rawValues)
+    }
+    if (resolved.kind === 'category-lookup-error') {
+      return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
+    }
+    if (resolved.kind === 'new-category-name-error') {
+      return redirectWithFormErrors(c, PATHS.EXPENSES, { category: resolved.message }, rawValues)
     }
   }
 
-  let newCategoryName: string | null = null
-  let existingCategoryId: string | null = null
-  if (lookup.value !== null) {
-    existingCategoryId = lookup.value.id
-  } else {
-    const nameCheck = parseNewCategoryName(validated.value.category)
-    if (nameCheck.isErr) {
-      return redirectWithFormErrors(c, PATHS.EXPENSES, { category: nameCheck.error }, rawValues)
-    }
-    newCategoryName = nameCheck.value
-  }
+  const { existingTagIds, newTagNames, existingCategoryId, newCategoryName } = resolved as Extract<typeof resolved, { ok: true }>
 
   const createResult = await createManyAndExpense(db, {
-    newCategoryName,
-    existingCategoryId,
+    newCategoryName: newCategoryName ?? null,
+    existingCategoryId: existingCategoryId ?? null,
     newTagNames,
     existingTagIds,
     date: validated.value.date,
@@ -104,9 +94,6 @@ export const handleExpensesConfirmPost = async (c: Context<{ Bindings: Bindings 
     amountCents: validated.value.amountCents,
   })
   if (createResult.isErr) {
-    // Surface the collision message under whichever field is most likely
-    // to be at fault. We can't tell deterministically, so use `category`
-    // when a new category was being created and `tags` otherwise.
     const errs: FieldErrors =
       newCategoryName !== null
         ? { category: createResult.error.message }

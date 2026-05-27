@@ -38,14 +38,16 @@ const fillRecurringForm = async (
     anchorDate: string
     recurrence: string
     category: string
-    tags: string
+    newTags?: string
   },
 ) => {
   await page.getByTestId('recurring-form-description').fill(opts.description)
   await page.getByTestId('recurring-form-amount').fill(opts.amount)
   await page.getByTestId('recurring-form-anchor-date').fill(opts.anchorDate)
   await page.getByTestId('recurring-form-category').fill(opts.category)
-  await page.getByTestId('recurring-form-tags').fill(opts.tags)
+  if (opts.newTags) {
+    await page.getByTestId('new-tags-input').fill(opts.newTags)
+  }
   await page.getByTestId('recurring-form-recurrence').selectOption(opts.recurrence)
 }
 
@@ -78,7 +80,7 @@ test.describe('Recurring templates — list + create', () => {
         anchorDate: today,
         recurrence: 'Monthly',
         category: 'brandnewcat',
-        tags: 'brandnewtag',
+        newTags: 'brandnewtag',
       })
       await page.getByTestId('recurring-form-create').click()
 
@@ -135,8 +137,8 @@ test.describe('Recurring templates — list + create', () => {
         anchorDate: today,
         recurrence: 'Monthly',
         category: 'utilities',
-        tags: 'electric',
       })
+      await page.getByTestId('tag-chip-electric').click()
       await page.getByTestId('recurring-form-create').click()
 
       // No confirmation — goes straight to list

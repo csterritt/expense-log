@@ -1,6 +1,6 @@
 # Unit Tests Catalog
 
-Catalog of all unit tests under `tests/` (13 spec files total; Issue 13 adds new test cases to two existing files and a new `recurrence.spec.ts`; Issue 14 expands `recurrence.spec.ts` and `expense-access.spec.ts`; Issue 15 adds `po-notify.spec.ts` and `scheduled.spec.ts`; 2026-05-22 removes `summarize`, `parseSummaryQuery`, and `monthKeyEt`/`yearKeyEt` tests; Issue 17 re-introduces all three). Each file links to its individual wiki page.
+Catalog of all unit tests under `tests/` (14 spec files total; Issue 13 adds new test cases to two existing files and a new `recurrence.spec.ts`; Issue 14 expands `recurrence.spec.ts` and `expense-access.spec.ts`; Issue 15 adds `po-notify.spec.ts` and `scheduled.spec.ts`; 2026-05-22 removes `summarize`, `parseSummaryQuery`, and `monthKeyEt`/`yearKeyEt` tests; Issue 17 re-introduces all three; tag-chip-checkboxes.spec.ts added subsequently). Each file links to its individual wiki page.
 
 ## Test files
 
@@ -16,6 +16,7 @@ Catalog of all unit tests under `tests/` (13 spec files total; Issue 13 adds new
 - [tests/sign-up-utils.spec.ts](./tests/sign-up-utils.spec.md) — Tests sign-up validation and processing utilities (src/lib/sign-up-utils.ts). Validates email normalization, password strength checks, name trimming, and duplicate detection logic.
 - [tests/time-access.spec.ts](./tests/time-access.spec.md) — Tests time-access utilities (src/lib/time-access.ts). Covers clock manipulation for testing, duration formatting, and boundary conditions.
 - [tests/scheduled.spec.ts](./tests/scheduled.spec.md) — Issue 15. Tests `createScheduled` from `src/scheduled.ts` with injected mock deps (no `mock.module`). Covers: `materializeRecurring` invoked once with correct args; no Pushover call on clean success; Pushover called on partial failures (with count); Pushover called on hard `err` Result (with message); no re-throw on synchronous throw; `createDbClient` receives `env.PROJECT_DB`.
+- [tests/tag-chip-checkboxes.spec.ts](./tests/tag-chip-checkboxes.spec.md) — Tests `TagChipCheckboxes` component (`src/components/tag-chip-checkboxes.tsx`). Covers: checkbox rendering per tag, alphabetical ordering (case-insensitive), selected vs unselected visual classes, XSS safety via JSX escaping, `allowNewTags` prop controlling `newTags` input visibility, empty tag list states, and constant parity between TSX and `public/js/tag-chip-checkboxes.js`.
 - [tests/url-validation.spec.ts](./tests/url-validation.spec.md) — Tests URL validation helpers (src/lib/url-validation.ts). Validates allowed origin patterns, redirect URL safeness, and hostname matching logic.
 
 ## Notes

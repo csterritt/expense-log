@@ -405,3 +405,32 @@ Re-implemented the `/summary` route with a redesigned aggregation UI supporting 
 - `e2e-tests.md` — added `summary/` section with two new spec entries, updated `recurring/08` summary reference, updated placeholder spec descriptions.
 
 Verification: `cd tests && bun test` — all tests pass.
+
+## [2026-05-29] ingest | Tag chip-checkboxes component + expense entry e2e tests
+
+Updated wiki catalog pages to reflect recently added source and test files.
+
+**Source files ingested**:
+- `src/components/tag-chip-checkboxes.tsx` — Shared tag chip-checkbox component for mutation forms and filter forms. Renders native server-rendered checkboxes as DaisyUI badge chips, sorted alphabetically. Supports `allowNewTags` mode with adjacent `newTags` text input. Exports `CHIP_CLASS_BASE` and `CHIP_CLASS_SELECTED` consumed by the progressive-enhancement JS module.
+
+**Unit test file ingested**:
+- `tests/tag-chip-checkboxes.spec.ts` — Tests `TagChipCheckboxes` component rendering, alphabetical ordering, selected/unselected classes, XSS safety, `allowNewTags` prop, empty tag list states, and constant parity with `public/js/tag-chip-checkboxes.js`.
+
+**E2E test files ingested**:
+- `e2e-tests/expenses/18-entry-tag-chip-ui.spec.ts` — Tag chip-checkbox UI on expense entry form: chip rendering, toggling, visual distinction, form submission, and ULID values.
+- `e2e-tests/expenses/19-entry-new-tag-confirmation.spec.ts` — New-tag confirmation flow: `newTags` input reaches confirmation page, comma/whitespace separators, deduplication with selected chips.
+- `e2e-tests/expenses/20-entry-tamper-and-error.spec.ts` — Cancel preserves chip selections and `newTags`; tampered `tagId` values show recoverable errors with values preserved.
+- `e2e-tests/expenses/21-entry-no-js-and-broken-js.spec.ts` — Progressive-enhancement resilience: native checkboxes work with JS disabled and with a throwing JS module.
+
+**Individual wiki pages created**:
+- `src/components/tag-chip-checkboxes.md`
+- `tests/tag-chip-checkboxes.spec.md`
+- `e2e-tests/expenses/18-entry-tag-chip-ui.spec.md`
+- `e2e-tests/expenses/19-entry-new-tag-confirmation.spec.md`
+- `e2e-tests/expenses/20-entry-tamper-and-error.spec.md`
+- `e2e-tests/expenses/21-entry-no-js-and-broken-js.spec.md`
+
+**Catalog pages updated**:
+- `source-code.md` — added `src/components/tag-chip-checkboxes.tsx` entry.
+- `unit-tests.md` — added `tests/tag-chip-checkboxes.spec.ts` entry; updated spec file count 13 → 14.
+- `e2e-tests.md` — added four new `expenses/` entries (18–21).

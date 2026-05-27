@@ -39,7 +39,8 @@ test.describe('Recurring templates — edit', () => {
       await expect(page.getByTestId('recurring-form-description')).toHaveValue('Monthly rent')
       await expect(page.getByTestId('recurring-form-amount')).toHaveValue('1200.00')
       await expect(page.getByTestId('recurring-form-category')).toHaveValue('housing')
-      await expect(page.getByTestId('recurring-form-tags')).toHaveValue('rent')
+      const rentInput = page.getByTestId('tag-chip-rent').locator('input[type="checkbox"]')
+      await expect(rentInput).toBeChecked()
       await expect(page.getByTestId('recurring-form-recurrence')).toHaveValue('Monthly')
       await expect(page.getByTestId('recurring-form-anchor-date')).toHaveValue('2025-01-15')
 
@@ -69,8 +70,8 @@ test.describe('Recurring templates — edit', () => {
       await signIn(page)
       await page.goto(`http://localhost:3000/recurring/${id}/edit`)
 
-      // Append a new tag
-      await page.getByTestId('recurring-form-tags').fill('rent, newlytag')
+      // Append a new tag via the new-tags input
+      await page.getByTestId('new-tags-input').fill('newlytag')
       await page.getByTestId('recurring-form-save').click()
 
       // Should land on confirm-edit-new page
@@ -104,7 +105,7 @@ test.describe('Recurring templates — edit', () => {
 
       // Enter a new category and new tag to trigger confirmation
       await page.getByTestId('recurring-form-category').fill('freshcat')
-      await page.getByTestId('recurring-form-tags').fill('freshtag')
+      await page.getByTestId('new-tags-input').fill('freshtag')
       await page.getByTestId('recurring-form-save').click()
 
       await expect(page.getByTestId('confirm-recurring-edit-new-page')).toBeVisible()
@@ -113,7 +114,7 @@ test.describe('Recurring templates — edit', () => {
       await page.getByTestId('confirm-recurring-edit-new-cancel').click()
       await expect(page).toHaveURL(`http://localhost:3000/recurring/${id}/edit`)
       await expect(page.getByTestId('recurring-form-category')).toHaveValue('freshcat')
-      await expect(page.getByTestId('recurring-form-tags')).toHaveValue('freshtag')
+      await expect(page.getByTestId('new-tags-input')).toHaveValue('freshtag')
 
       // DB unchanged — template still in list with original category
       await page.goto(RECURRING_URL)

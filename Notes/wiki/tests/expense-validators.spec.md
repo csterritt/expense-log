@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery` (removed 2026-05-22), and Issue 16 with reversed-date-range cases for `parseExpenseListFilters`. Issue 17 re-introduced `parseSummaryQuery` with new dimension, granularity, sort, and tag-AND filter tests. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery` (removed 2026-05-22), Issue 16 with reversed-date-range cases for `parseExpenseListFilters`, Issue 17 re-introduced `parseSummaryQuery` with new dimension, granularity, sort, and tag-AND filter tests. Tag chip-checkbox refactor added `parseTagInputs` (Task 1a) and `parseCategoryInput` tests. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (156 total; was 110 before Issue 17 re-introduction of `parseSummaryQuery` tests)
+## Test cases (218 total; was 156 before tag chip-checkbox refactor added `parseTagInputs` and `parseCategoryInput` tests)
 
 ### `description`
 
@@ -98,6 +98,21 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - **Date range:** open-from, open-to, both-set, both-absent; rejects invalid dates with `date` field error; rejects `from > to` with `date` field error; accepts `from == to`; presence flips `hasFilterParams`.
 - **Tag filter:** collects single `tagId`, accumulates multiple, deduplicates repeated values; presence flips `hasFilterParams`.
 - **Sort:** parses single `column:direction`, accumulates multiple, rejects unknown columns/directions with `groupBy` field error; presence flips `hasFilterParams`.
+
+### `parseTagInputs` (Task 1a — pure parser, 62 cases)
+
+- **ULID syntactic validation:** accepts valid Crockford-base32 ULIDs; rejects lowercase, too short, too long, invalid chars (I/L/O/U), empty strings; filters invalid while keeping valid ones.
+- **Caps:** rejects more than `TAG_ID_RAW_CAP` tag IDs with `tags` field error; rejects `newTags` longer than `NEW_TAGS_RAW_LENGTH_CAP`; rejects more than `NEW_TAGS_TOKEN_COUNT_CAP` tokens.
+- **New tag token validation:** accepts lowercase alphanumeric, hyphens, underscores (1–20 chars); rejects invalid characters, empty tokens, tokens over 20 chars.
+- **Existing-tag resolution:** new tag tokens matching an existing tag name (case-insensitive) are resolved to that tag's ID; deduplication applies across both resolved IDs and unresolved tokens.
+- **Edge cases:** empty `tagId` and empty `newTags` returns empty arrays with no errors; whitespace-only `newTags` returns empty arrays with no errors; preserves raw `newTags` value in `rawNewTagsPreserved`.
+
+### `parseCategoryInput` (Task 1a — pure parser, 14 cases)
+
+- Validates `categoryId` as ULID (sets `lookupCandidateCategoryId`).
+- Validates `newCategory` as lowercase token matching the new-tag regex.
+- Resolves to existing category ID when `newCategory` matches an existing category name.
+- Returns `resolvedCategoryId`, `newCategory`, or `fieldErrors` as appropriate.
 
 ## Cross-references
 

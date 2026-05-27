@@ -19,7 +19,7 @@ import type { ExpenseFormState } from './expense-form'
  */
 export const emptyState = (today: string): ExpenseFormState => ({
   fieldErrors: {},
-  values: { description: '', amount: '', date: today, category: '', tags: '' },
+  values: { description: '', amount: '', date: today, category: '', tags: '', tagIds: [], newTags: '' },
 })
 
 /**
@@ -29,13 +29,21 @@ export const emptyState = (today: string): ExpenseFormState => ({
  * @returns The parsed form values as strings
  */
 export const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
-  const form = await c.req.parseBody()
+  const form = await c.req.parseBody({ all: true })
+  const rawTagId = form['tagId']
+  const tagId: string[] = Array.isArray(rawTagId)
+    ? rawTagId.filter((v): v is string => typeof v === 'string')
+    : typeof rawTagId === 'string'
+      ? [rawTagId]
+      : []
   return {
     description: typeof form.description === 'string' ? form.description : '',
     amount: typeof form.amount === 'string' ? form.amount : '',
     date: typeof form.date === 'string' ? form.date : '',
     category: typeof form.category === 'string' ? form.category : '',
     tags: typeof form.tags === 'string' ? form.tags : '',
+    tagId,
+    newTags: typeof form.newTags === 'string' ? form.newTags : '',
     action: typeof form.action === 'string' ? form.action : '',
   }
 }

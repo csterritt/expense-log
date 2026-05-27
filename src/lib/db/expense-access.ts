@@ -8,6 +8,7 @@
  */
 import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { Result } from 'true-myth'
+import { ulid } from 'ulid'
 
 import { category, expense, expenseTag, recurring, recurringTag, tag } from '../../db/schema'
 import type { DrizzleClient } from '../../local-types'
@@ -579,7 +580,7 @@ const updateManyAndExpenseActual = async (
         continue
       }
       if (!newTagIdByName.has(lowered)) {
-        newTagIdByName.set(lowered, crypto.randomUUID())
+        newTagIdByName.set(lowered, ulid())
       }
     }
     const createdTagIds: string[] = []
@@ -720,7 +721,7 @@ const createManyAndExpenseActual = async (
         continue
       }
       if (!newTagNames.has(lowered)) {
-        newTagNames.set(lowered, crypto.randomUUID())
+        newTagNames.set(lowered, ulid())
       }
     }
     const createdTagIds: string[] = []
@@ -1036,7 +1037,7 @@ const createManyAndRecurringActual = async (
         continue
       }
       if (!newTagNameMap.has(lowered)) {
-        newTagNameMap.set(lowered, crypto.randomUUID())
+        newTagNameMap.set(lowered, ulid())
       }
     }
     const createdTagIds: string[] = []
@@ -1233,7 +1234,7 @@ const updateManyAndRecurringActual = async (
         continue
       }
       if (!newTagIdByName.has(lowered)) {
-        newTagIdByName.set(lowered, crypto.randomUUID())
+        newTagIdByName.set(lowered, ulid())
       }
     }
     const createdTagIds: string[] = []

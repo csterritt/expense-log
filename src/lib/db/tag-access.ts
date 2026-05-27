@@ -8,6 +8,7 @@
  */
 import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm'
 import { Result } from 'true-myth'
+import { ulid } from 'ulid'
 
 import { expenseTag, recurringTag, tag } from '../../db/schema'
 import type { DrizzleClient } from '../../local-types'
@@ -93,6 +94,38 @@ const listTagsActual = async (db: DrizzleClient): Promise<Result<TagRow[], Error
   }
 }
 
+/**
+ * Look up tags by id. Unknown ids are silently omitted from the result.
+ * An empty input array short-circuits to `Result.ok([])` without querying.
+ *
+ * @param db - Database instance
+ * @param ids - Tag ids to look up
+ */
+export const listTagsByIds = (
+  db: DrizzleClient,
+  ids: string[],
+): Promise<Result<TagRow[], Error>> =>
+  withRetry('listTagsByIds', () => listTagsByIdsActual(db, ids))
+
+const listTagsByIdsActual = async (
+  db: DrizzleClient,
+  ids: string[],
+): Promise<Result<TagRow[], Error>> => {
+  try {
+    const unique = Array.from(new Set(ids))
+    if (unique.length === 0) {
+      return Result.ok([])
+    }
+    const rows = await db
+      .select({ id: tag.id, name: tag.name })
+      .from(tag)
+      .where(inArray(tag.id, unique))
+    return Result.ok(rows)
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
 export const createTag = (db: DrizzleClient, name: string): Promise<Result<TagRow, Error>> =>
   withRetry('createTag', () => createTagActual(db, name))
 
@@ -110,7 +143,7 @@ const createTagActual = async (db: DrizzleClient, name: string): Promise<Result<
     if (existing.length > 0) {
       return Result.err(new Error(`A tag named "${normalizedName}" already exists.`))
     }
-    const id = crypto.randomUUID()
+    const id = ulid()
     const now = new Date()
     await db.insert(tag).values({ id, name: normalizedName, createdAt: now, updatedAt: now })
     return Result.ok({ id, name: normalizedName })

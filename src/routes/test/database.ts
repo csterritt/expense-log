@@ -6,6 +6,7 @@ import { Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
 
 import { eq, and, isNull } from 'drizzle-orm'
+import { ulid } from 'ulid'
 
 import { createDbClient } from '../../db/client'
 import {
@@ -380,7 +381,7 @@ testDatabaseRouter.post('/seed-expenses', secureHeaders(STANDARD_SECURE_HEADERS)
         const tagKey = tagName.toLowerCase()
         let tagId = tagIdByLower.get(tagKey)
         if (!tagId) {
-          tagId = crypto.randomUUID()
+          tagId = ulid()
           await runDb(() =>
             db.insert(tag).values({ id: tagId!, name: tagName, createdAt: now, updatedAt: now }),
           )
@@ -496,7 +497,7 @@ testDatabaseRouter.post('/seed-tags', secureHeaders(STANDARD_SECURE_HEADERS), as
       if (existingByLower.has(key)) {
         continue
       }
-      const id = crypto.randomUUID()
+      const id = ulid()
       await runDb(() =>
         db.insert(tag).values({ id, name: row.name, createdAt: now, updatedAt: now }),
       )
@@ -573,7 +574,7 @@ testDatabaseRouter.post('/seed-recurring-templates', secureHeaders(STANDARD_SECU
         if (existingTags.length > 0) {
           tagId = existingTags[0].id
         } else {
-          tagId = crypto.randomUUID()
+          tagId = ulid()
           await runDb(() =>
             db.insert(tag).values({ id: tagId, name: lowerName, createdAt: now, updatedAt: now }),
           )

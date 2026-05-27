@@ -39,8 +39,11 @@ test.describe('Edit expense — consolidated confirmation flow', () => {
       await signInAndGoToExpenses(page)
       await page.getByTestId('expense-row-edit').first().click()
 
-      // Append a brand-new tag.
-      await page.getByTestId('expense-form-tags').fill('groceries, rent')
+      // groceries chip should already be checked from the seeded expense.
+      const groceriesInput = page.getByTestId('tag-chip-groceries').locator('input[type="checkbox"]')
+      await expect(groceriesInput).toBeChecked()
+      // Add brand-new tag via text input.
+      await page.getByTestId('new-tags-input').fill('rent')
       await page.getByTestId('expense-form-save').click()
 
       await expect(page.getByTestId('confirm-edit-new-page')).toBeVisible()
@@ -81,7 +84,10 @@ test.describe('Edit expense — consolidated confirmation flow', () => {
 
       // Brand-new category and brand-new tag.
       await page.getByTestId('expense-form-category').fill('Utilities')
-      await page.getByTestId('expense-form-tags').fill('groceries, Internet')
+      // groceries chip should be checked from seed; add a brand-new tag name.
+      const groceriesCheck = page.getByTestId('tag-chip-groceries').locator('input[type="checkbox"]')
+      await expect(groceriesCheck).toBeChecked()
+      await page.getByTestId('new-tags-input').fill('Internet')
       await page.getByTestId('expense-form-save').click()
 
       await expect(page.getByTestId('confirm-edit-new-page')).toBeVisible()
@@ -97,7 +103,10 @@ test.describe('Edit expense — consolidated confirmation flow', () => {
       await expect(page.getByTestId('expense-form-description')).toHaveValue('Weekly shop')
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('42.50')
       await expect(page.getByTestId('expense-form-category')).toHaveValue('Utilities')
-      await expect(page.getByTestId('expense-form-tags')).toHaveValue('groceries, Internet')
+      // groceries chip should still be checked.
+      await expect(groceriesCheck).toBeChecked()
+      // new-tags-input should still have the typed value.
+      await expect(page.getByTestId('new-tags-input')).toHaveValue('internet')
 
       // Go back to the list and confirm the row is unchanged.
       await page.goto(BASE_URLS.EXPENSES)
@@ -125,7 +134,7 @@ test.describe('Edit expense — consolidated confirmation flow', () => {
       await page.getByTestId('expense-row-edit').first().click()
 
       await page.getByTestId('expense-form-category').fill('Beverages')
-      await page.getByTestId('expense-form-tags').fill('caffeine')
+      await page.getByTestId('new-tags-input').fill('caffeine')
       await page.getByTestId('expense-form-save').click()
 
       await expect(page.getByTestId('confirm-edit-new-page')).toBeVisible()

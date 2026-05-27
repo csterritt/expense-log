@@ -12,10 +12,10 @@ import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
 import { findCategoryByName } from '../../lib/db/category-access'
-import { findTagsByNames } from '../../lib/db/tag-access'
+import { listTags } from '../../lib/db/tag-access'
 import { createExpenseWithTags } from '../../lib/db/expense-access'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
-import { parseExpenseCreate, parseNewCategoryName, parseTagCsv, type FieldErrors } from '../../lib/expense-validators'
+import { parseExpenseCreate, parseNewCategoryName, parseTagInputs } from '../../lib/expense-validators'
 import { redirectWithFormErrors, type ExpenseFormValues } from '../../lib/form-state'
 import { readRawBody } from './expense-form-helpers'
 import { renderConfirmNewItems } from './expense-form'
@@ -31,13 +31,6 @@ const CONFIRM_CREATE_NEW_PATH = '/expenses/confirm-create-new'
  */
 export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => {
   const raw = await readRawBody(c)
-  const rawValues: ExpenseFormValues = {
-    description: raw.description,
-    amount: raw.amount,
-    date: raw.date,
-    category: raw.category,
-    tags: raw.tags,
-  }
 
   const validated = parseExpenseCreate({
     description: raw.description,
@@ -45,39 +38,63 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
     date: raw.date,
     category: raw.category,
   })
-  const tagParse = parseTagCsv(raw.tags)
-  if (validated.isErr || tagParse.isErr) {
-    const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
-    if (tagParse.isErr) {
-      errs.tags = tagParse.error
+
+  if (validated.isErr) {
+    const rawValues: ExpenseFormValues = {
+      description: raw.description,
+      amount: raw.amount,
+      date: raw.date,
+      category: raw.category,
+      tagIds: raw.tagId,
+      newTags: raw.newTags,
     }
-    return redirectWithFormErrors(c, PATHS.EXPENSES, errs, rawValues)
+    return redirectWithFormErrors(c, PATHS.EXPENSES, validated.error, rawValues)
   }
 
   const db = createDbClient(c.env.PROJECT_DB)
+
+  const allTagsResult = await listTags(db)
+  if (allTagsResult.isErr) {
+    return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
+  }
+
+  const tagInputParse = parseTagInputs(
+    { tagId: raw.tagId, newTags: raw.newTags },
+    allTagsResult.value,
+  )
+  if (Object.keys(tagInputParse.fieldErrors).length > 0) {
+    const rawValues: ExpenseFormValues = {
+      description: raw.description,
+      amount: raw.amount,
+      date: raw.date,
+      category: raw.category,
+      tagIds: raw.tagId,
+      newTags: tagInputParse.rawNewTagsPreserved,
+    }
+    return redirectWithFormErrors(c, PATHS.EXPENSES, tagInputParse.fieldErrors, rawValues)
+  }
+
+  const resolvedIdSet = new Set(allTagsResult.value.map((t) => t.id))
+  const unknownIds = tagInputParse.lookupCandidateTagIds.filter((id) => !resolvedIdSet.has(id))
+  if (unknownIds.length > 0) {
+    const rawValues: ExpenseFormValues = {
+      description: raw.description,
+      amount: raw.amount,
+      date: raw.date,
+      category: raw.category,
+      tagIds: raw.tagId,
+      newTags: raw.newTags,
+    }
+    return redirectWithFormErrors(c, PATHS.EXPENSES, { tags: 'One or more selected tags no longer exist.' }, rawValues)
+  }
+
   const lookup = await findCategoryByName(db, validated.value.category)
   if (lookup.isErr) {
     return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
   }
 
-  const tagLookup = await findTagsByNames(db, tagParse.value)
-  if (tagLookup.isErr) {
-    return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
-  }
-  const existingTagByLower = new Map<string, { id: string; name: string }>()
-  for (const row of tagLookup.value) {
-    existingTagByLower.set(row.name.toLowerCase(), row)
-  }
-  const newTagNames: string[] = []
-  const existingTagIds: string[] = []
-  for (const lowered of tagParse.value) {
-    const match = existingTagByLower.get(lowered)
-    if (match) {
-      existingTagIds.push(match.id)
-    } else {
-      newTagNames.push(lowered)
-    }
-  }
+  const existingTagIds = tagInputParse.tagIds
+  const newTagNames = tagInputParse.newTags
 
   const categoryIsNew = lookup.value === null
   const anyNew = categoryIsNew || newTagNames.length > 0
@@ -103,6 +120,14 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
   if (categoryIsNew) {
     const nameCheck = parseNewCategoryName(validated.value.category)
     if (nameCheck.isErr) {
+      const rawValues: ExpenseFormValues = {
+        description: raw.description,
+        amount: raw.amount,
+        date: raw.date,
+        category: raw.category,
+        tagIds: raw.tagId,
+        newTags: raw.newTags,
+      }
       return redirectWithFormErrors(c, PATHS.EXPENSES, { category: nameCheck.error }, rawValues)
     }
     normalizedNewCategory = nameCheck.value.toLowerCase()
@@ -111,9 +136,24 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
     finalCategoryName = lookup.value!.name
   }
 
+  // Look up names for already-existing selected tags from the already-fetched tag list.
+  const allTagsById = new Map(allTagsResult.value.map((t) => [t.id, t.name]))
+  const existingTagNames = existingTagIds.map((id) => allTagsById.get(id) ?? '').filter(Boolean)
+
   // Render the consolidated confirmation page. No DB writes yet.
   const sortedNewTags = newTagNames.slice().sort((a, b) => a.localeCompare(b))
-  const finalTagNames = tagParse.value.slice().sort((a, b) => a.localeCompare(b))
+  const allTagNames = [...existingTagNames, ...newTagNames]
+  const finalTagNames = allTagNames.slice().sort((a, b) => a.localeCompare(b))
+
+  const confirmValues: ExpenseFormValues = {
+    description: raw.description,
+    amount: raw.amount,
+    date: raw.date,
+    category: raw.category,
+    tagIds: existingTagIds,
+    newTags: newTagNames.join(','),
+  }
+
   return c.render(
     useLayout(
       c,
@@ -124,7 +164,7 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
         finalCategoryName,
         newTagNames: sortedNewTags,
         finalTagNames,
-        values: rawValues,
+        values: confirmValues,
       }),
     ),
   )

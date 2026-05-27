@@ -603,45 +603,236 @@ export const parseTagDelete = (raw: RawTagDelete): Result<ParsedTagDelete, Field
   return Result.ok({ id: id.value })
 }
 
-// ---------- Shared query-string helpers ----------
+// ---------- Mutation-form tag-input validator (Task 2) ----------
 
-/**
- * Collapse a repeated query param (single string or array) into a deduplicated
- * array of trimmed, non-empty strings preserving first-appearance order.
- */
-const parseRepeatedTagIds = (raw: string | string[] | undefined): string[] => {
-  const rawIds: string[] = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : []
+export const TAG_ID_RAW_CAP = 64
+export const NEW_TAGS_RAW_LENGTH_CAP = 500
+export const NEW_TAGS_TOKEN_COUNT_CAP = 32
+
+const ULID_REGEX = /^[0-9A-HJKMNP-TV-Z]{26}$/
+const NEW_TAG_TOKEN_REGEX = /^[a-z0-9_-]{1,20}$/
+
+export type ExistingTag = {
+  id: string
+  name: string
+}
+
+export type ExistingCategory = {
+  id: string
+  name: string
+}
+
+export type RawTagInputs = {
+  tagId: string | string[]
+  newTags: string
+}
+
+export type ParsedTagInputs = {
+  lookupCandidateTagIds: string[]
+  tagIds: string[]
+  newTags: string[]
+  rawNewTagsPreserved: string
+  fieldErrors: FieldErrors
+}
+
+export type RawCategoryInput = {
+  categoryId: string
+  newCategory: string
+}
+
+export type ParsedCategoryInput = {
+  lookupCandidateCategoryId: string | undefined
+  resolvedCategoryId: string | undefined
+  newCategory: string | undefined
+  fieldErrors: FieldErrors
+}
+
+const isValidUlid = (value: string): boolean => ULID_REGEX.test(value)
+
+const filterSyntacticUlids = (rawIds: string[]): string[] => {
   const seen = new Set<string>()
   const result: string[] = []
-  for (const t of rawIds) {
-    const trimmed = typeof t === 'string' ? t.trim() : ''
-    if (trimmed.length > 0 && !seen.has(trimmed)) {
-      seen.add(trimmed)
-      result.push(trimmed)
+  for (const id of rawIds) {
+    if (isValidUlid(id) && !seen.has(id)) {
+      seen.add(id)
+      result.push(id)
     }
   }
   return result
 }
 
+const splitAndNormalizeTokens = (raw: string): string[] =>
+  raw
+    .split(/[,\s]+/)
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0)
+
+export const parseTagInputs = (raw: RawTagInputs, existingTags: ExistingTag[]): ParsedTagInputs => {
+  const fieldErrors: FieldErrors = {}
+
+  const rawIds: string[] = Array.isArray(raw.tagId)
+    ? raw.tagId
+    : typeof raw.tagId === 'string' && raw.tagId.length > 0
+      ? [raw.tagId]
+      : []
+
+  if (rawIds.length > TAG_ID_RAW_CAP) {
+    fieldErrors.tags = `Too many tag selections (max ${TAG_ID_RAW_CAP}).`
+  }
+
+  const syntacticIds = filterSyntacticUlids(rawIds)
+
+  const rawNewTags = typeof raw.newTags === 'string' ? raw.newTags : ''
+
+  if (rawNewTags.length > NEW_TAGS_RAW_LENGTH_CAP) {
+    fieldErrors.tags = fieldErrors.tags ?? `New tags text is too long (max ${NEW_TAGS_RAW_LENGTH_CAP} characters).`
+    return {
+      lookupCandidateTagIds: syntacticIds,
+      tagIds: syntacticIds,
+      newTags: [],
+      rawNewTagsPreserved: rawNewTags,
+      fieldErrors,
+    }
+  }
+
+  const rawTokens = splitAndNormalizeTokens(rawNewTags)
+
+  if (rawTokens.length > NEW_TAGS_TOKEN_COUNT_CAP) {
+    fieldErrors.tags = fieldErrors.tags ?? `Too many new tags (max ${NEW_TAGS_TOKEN_COUNT_CAP}).`
+    return {
+      lookupCandidateTagIds: syntacticIds,
+      tagIds: syntacticIds,
+      newTags: [],
+      rawNewTagsPreserved: rawNewTags,
+      fieldErrors,
+    }
+  }
+
+  const seenTokens = new Set<string>()
+  const validTokens: string[] = []
+  for (const token of rawTokens) {
+    if (!NEW_TAG_TOKEN_REGEX.test(token)) {
+      fieldErrors.tags = fieldErrors.tags ?? `Invalid new tag name: "${token}". Use only lowercase letters, digits, hyphens, and underscores (1–20 chars).`
+    } else if (!seenTokens.has(token)) {
+      seenTokens.add(token)
+      validTokens.push(token)
+    }
+  }
+
+  if (fieldErrors.tags) {
+    return {
+      lookupCandidateTagIds: syntacticIds,
+      tagIds: syntacticIds,
+      newTags: [],
+      rawNewTagsPreserved: rawNewTags,
+      fieldErrors,
+    }
+  }
+
+  const existingByName = new Map<string, string>()
+  for (const tag of existingTags) {
+    existingByName.set(tag.name.toLowerCase(), tag.id)
+  }
+
+  const resolvedTagIds = new Set<string>(syntacticIds)
+  const unresolvedTokens: string[] = []
+  for (const token of validTokens) {
+    const existingId = existingByName.get(token)
+    if (existingId !== undefined) {
+      resolvedTagIds.add(existingId)
+    } else {
+      unresolvedTokens.push(token)
+    }
+  }
+
+  const residual = unresolvedTokens.join(',')
+
+  return {
+    lookupCandidateTagIds: syntacticIds,
+    tagIds: Array.from(resolvedTagIds),
+    newTags: unresolvedTokens,
+    rawNewTagsPreserved: residual,
+    fieldErrors,
+  }
+}
+
+export const parseCategoryInput = (
+  raw: RawCategoryInput,
+  existingCategory: ExistingCategory | null,
+): ParsedCategoryInput => {
+  const fieldErrors: FieldErrors = {}
+
+  const rawCategoryId = typeof raw.categoryId === 'string' ? raw.categoryId.trim() : ''
+  const lookupCandidateCategoryId = isValidUlid(rawCategoryId) ? rawCategoryId : undefined
+
+  const rawNewCategory = typeof raw.newCategory === 'string' ? raw.newCategory.trim().toLowerCase() : ''
+
+  if (rawNewCategory.length === 0) {
+    return {
+      lookupCandidateCategoryId,
+      resolvedCategoryId: undefined,
+      newCategory: undefined,
+      fieldErrors,
+    }
+  }
+
+  if (!NEW_TAG_TOKEN_REGEX.test(rawNewCategory)) {
+    fieldErrors.category = `Invalid category name: "${rawNewCategory}". Use only lowercase letters, digits, hyphens, and underscores (1–20 chars).`
+    return {
+      lookupCandidateCategoryId,
+      resolvedCategoryId: undefined,
+      newCategory: undefined,
+      fieldErrors,
+    }
+  }
+
+  if (existingCategory !== null && existingCategory.name.toLowerCase() === rawNewCategory) {
+    return {
+      lookupCandidateCategoryId,
+      resolvedCategoryId: existingCategory.id,
+      newCategory: undefined,
+      fieldErrors,
+    }
+  }
+
+  return {
+    lookupCandidateCategoryId,
+    resolvedCategoryId: undefined,
+    newCategory: rawNewCategory,
+    fieldErrors,
+  }
+}
+
+// ---------- Shared query-string helpers ----------
+
+/**
+ * Filter-side tag-id accumulator shared by `parseExpenseListFilters` and
+ * `parseSummaryQuery`: silently drops non-ULID values and truncates to
+ * `TAG_ID_RAW_CAP` without producing a field error (page still renders).
+ */
+const parseFilterTagIds = (raw: string | string[] | undefined): string[] => {
+  const rawIds: string[] = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : []
+  const truncated = rawIds.slice(0, TAG_ID_RAW_CAP)
+  return filterSyntacticUlids(truncated)
+}
+
 /**
  * Parse an optional `from`/`to` date-range pair from raw string inputs.
- * Returns validated values (or `undefined` when absent/invalid) and any
- * `fieldErrors.date` message. Does **not** mutate the caller's errors object
- * — the caller merges the returned error string as needed.
+ * Invalid dates (wrong shape or impossible calendar dates) are silently
+ * treated as absent — no error is produced. Only `from > to` (both valid)
+ * produces an error. Does **not** mutate the caller's errors object —
+ * the caller merges the returned error string as needed.
  */
 const parseDateRange = (
   rawFrom: string | undefined,
   rawTo: string | undefined,
 ): { from: string | undefined; to: string | undefined; dateError: string | undefined } => {
   let from: string | undefined
-  let dateError: string | undefined
 
   if (typeof rawFrom === 'string' && rawFrom.trim().length > 0) {
     const trimmed = rawFrom.trim()
     if (isValidYmd(trimmed)) {
       from = trimmed
-    } else {
-      dateError = 'From date must be a valid date (YYYY-MM-DD).'
     }
   }
 
@@ -650,13 +841,12 @@ const parseDateRange = (
     const trimmed = rawTo.trim()
     if (isValidYmd(trimmed)) {
       to = trimmed
-    } else {
-      dateError = dateError ?? 'To date must be a valid date (YYYY-MM-DD).'
     }
   }
 
+  let dateError: string | undefined
   if (from !== undefined && to !== undefined && from > to) {
-    dateError = dateError ?? 'From date must be on or before To date.'
+    dateError = 'From date must be on or before To date.'
   }
 
   return { from, to, dateError }
@@ -744,7 +934,7 @@ export const parseExpenseListFilters = (raw: RawExpenseListFilters): ExpenseList
     categoryId = raw.categoryId.trim()
   }
 
-  const tagIds = parseRepeatedTagIds(raw.tagId)
+  const tagIds = parseFilterTagIds(raw.tagId)
 
   let tagMode: 'or' | 'and' = 'or'
   if (raw.tagMode === 'and') {
@@ -924,7 +1114,14 @@ export type SummaryDimension = (typeof VALID_DIMENSIONS)[number]
 const VALID_GRANULARITIES = ['month', 'quarter', 'year'] as const
 export type SummaryGranularity = (typeof VALID_GRANULARITIES)[number]
 
-const VALID_SORT_COLUMNS = ['timePeriod', 'categoryName', 'tagName', 'count', 'totalCents'] as const
+const VALID_SORT_COLUMNS_ALWAYS = ['timePeriod', 'count', 'total'] as const
+
+const DIMENSION_EXTRA_SORT_COLUMNS: Record<string, readonly string[]> = {
+  time: [],
+  category: ['category'],
+  tag: ['tag'],
+  'category-tag': ['category', 'tag'],
+}
 
 /**
  * Raw query-string values from the summary page filter bar.
@@ -1011,7 +1208,12 @@ export const parseSummaryQuery = (raw: RawSummaryQuery): SummaryQueryResult => {
     fieldErrors.date = dateError
   }
 
-  const tagIds = parseRepeatedTagIds(raw.tagId)
+  const tagIds = parseFilterTagIds(raw.tagId)
+
+  const validSortColumnsForDimension: readonly string[] = [
+    ...VALID_SORT_COLUMNS_ALWAYS,
+    ...(DIMENSION_EXTRA_SORT_COLUMNS[dimension] ?? []),
+  ]
 
   const sortRaw = raw.sort
   const rawSortParams: string[] = Array.isArray(sortRaw)
@@ -1023,21 +1225,14 @@ export const parseSummaryQuery = (raw: RawSummaryQuery): SummaryQueryResult => {
   for (const param of rawSortParams) {
     const colonIdx = param.lastIndexOf(':')
     if (colonIdx < 1) {
-      fieldErrors.groupBy = fieldErrors.groupBy ? fieldErrors.groupBy : 'Invalid sort parameter.'
       continue
     }
     const column = param.slice(0, colonIdx).trim()
     const direction = param.slice(colonIdx + 1).trim()
-    if (!(VALID_SORT_COLUMNS as readonly string[]).includes(column)) {
-      fieldErrors.groupBy = fieldErrors.groupBy
-        ? fieldErrors.groupBy
-        : `Unknown sort column: ${column}.`
+    if (!validSortColumnsForDimension.includes(column)) {
       continue
     }
     if (direction !== 'asc' && direction !== 'desc') {
-      fieldErrors.groupBy = fieldErrors.groupBy
-        ? fieldErrors.groupBy
-        : `Sort direction must be asc or desc.`
       continue
     }
     sort.push({ column, direction })

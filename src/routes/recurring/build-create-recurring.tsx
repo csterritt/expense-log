@@ -21,18 +21,14 @@ import {
   createManyAndRecurring,
 } from '../../lib/db/expense-access'
 import {
-  listCategories,
-  findCategoryByName,
-} from '../../lib/db/category-access'
+  resolveConfirmTagsAndCategory,
+} from '../../lib/db/confirm-helpers'
 import {
-  listTags,
-  findTagsByNames,
-} from '../../lib/db/tag-access'
+  listCategories,
+} from '../../lib/db/category-access'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseRecurringCreate,
-  parseNewCategoryName,
-  parseTagCsv,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import {
@@ -60,60 +56,33 @@ const emptyRecurringState = (today: string): RecurringFormState => ({
     description: '',
     amount: '',
     category: '',
-    tags: '',
+    tagIds: [],
+    newTags: '',
     recurrence: '',
     anchorDate: today,
   },
 })
 
 const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
-  const form = await c.req.parseBody()
+  const form = await c.req.parseBody({ all: true })
+  const rawTagId = form['tagId']
+  const tagId: string[] = Array.isArray(rawTagId)
+    ? rawTagId.filter((v): v is string => typeof v === 'string')
+    : typeof rawTagId === 'string'
+      ? [rawTagId]
+      : []
   return {
     description: typeof form.description === 'string' ? form.description : '',
     amount: typeof form.amount === 'string' ? form.amount : '',
     category: typeof form.category === 'string' ? form.category : '',
-    tags: typeof form.tags === 'string' ? form.tags : '',
+    tagId,
+    newTags: typeof form.newTags === 'string' ? form.newTags : '',
     recurrence: typeof form.recurrence === 'string' ? form.recurrence : '',
     anchorDate: typeof form.anchorDate === 'string' ? form.anchorDate : '',
     action: typeof form.action === 'string' ? form.action : '',
   }
 }
 
-type DiffResult = {
-  newCategoryIsNew: boolean
-  existingCategoryRow: { id: string; name: string } | null
-  existingTagIds: string[]
-  newTagNames: string[]
-  existingTagRows: { id: string; name: string }[]
-}
-
-const computeNewItemsDiff = (
-  categoryLookup: { id: string; name: string } | null,
-  tagLookup: { id: string; name: string }[],
-  loweredTagNames: string[],
-): DiffResult => {
-  const existingTagByLower = new Map<string, { id: string; name: string }>()
-  for (const row of tagLookup) {
-    existingTagByLower.set(row.name.toLowerCase(), row)
-  }
-  const newTagNames: string[] = []
-  const existingTagIds: string[] = []
-  for (const lowered of loweredTagNames) {
-    const match = existingTagByLower.get(lowered)
-    if (match) {
-      existingTagIds.push(match.id)
-    } else {
-      newTagNames.push(lowered)
-    }
-  }
-  return {
-    newCategoryIsNew: categoryLookup === null,
-    existingCategoryRow: categoryLookup,
-    existingTagIds,
-    newTagNames,
-    existingTagRows: tagLookup,
-  }
-}
 
 export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
   // ---------- GET /recurring/new ----------
@@ -133,7 +102,7 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
       }
       const payloads: RecurringFormPayloads = {
         categories: categoriesResult.value.map((row) => ({ name: row.name })),
-        tags: tagsResult.value.map((row) => ({ name: row.name })),
+        tags: tagsResult.value,
       }
       const flash = readAndClearFormState(c)
       const today = todayEt()
@@ -144,7 +113,8 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
               description: flash.values?.description ?? '',
               amount: flash.values?.amount ?? '',
               category: flash.values?.category ?? '',
-              tags: flash.values?.tags ?? '',
+              tagIds: flash.values?.tagIds ?? [],
+              newTags: flash.values?.newTags ?? '',
               recurrence: flash.values?.recurrence ?? '',
               anchorDate: flash.values?.anchorDate ?? today,
             },
@@ -165,7 +135,7 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
               Back to list
             </a>
             <script src='/js/category-combobox.js' defer></script>
-            <script src='/js/tag-chip-picker.js' defer></script>
+            <script src='/js/tag-chip-checkboxes.js' defer></script>
           </div>,
         ),
       )
@@ -183,7 +153,8 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
         description: raw.description,
         amount: raw.amount,
         category: raw.category,
-        tags: raw.tags,
+        tagIds: raw.tagId,
+        newTags: raw.newTags,
         recurrence: raw.recurrence,
         anchorDate: raw.anchorDate,
       }
@@ -192,40 +163,57 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
         description: raw.description,
         amount: raw.amount,
         category: raw.category,
-        tags: raw.tags,
         recurrence: raw.recurrence,
         anchorDate: raw.anchorDate,
       })
-      const tagParse = parseTagCsv(raw.tags)
-      if (validated.isErr || tagParse.isErr) {
-        const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
-        if (tagParse.isErr) {
-          errs.tags = tagParse.error
-        }
-        return redirectWithFormErrors(c, newPath, errs, rawValues)
+
+      if (validated.isErr) {
+        return redirectWithFormErrors(c, newPath, validated.error, rawValues)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)
+
+      const allTagsResult = await listTags(db)
+      if (allTagsResult.isErr) {
+        return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
+      }
+
+      const tagInputParse = parseTagInputs(
+        { tagId: raw.tagId, newTags: raw.newTags },
+        allTagsResult.value,
+      )
+      if (Object.keys(tagInputParse.fieldErrors).length > 0) {
+        return redirectWithFormErrors(c, newPath, tagInputParse.fieldErrors, {
+          ...rawValues,
+          newTags: tagInputParse.rawNewTagsPreserved,
+        })
+      }
+
+      const resolvedIdSet = new Set(allTagsResult.value.map((t) => t.id))
+      const unknownIds = tagInputParse.lookupCandidateTagIds.filter((id) => !resolvedIdSet.has(id))
+      if (unknownIds.length > 0) {
+        return redirectWithFormErrors(c, newPath, { tags: 'One or more selected tags no longer exist.' }, rawValues)
+      }
+
       const lookup = await findCategoryByName(db, validated.value.category)
       if (lookup.isErr) {
         return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
       }
-      const tagLookup = await findTagsByNames(db, tagParse.value)
-      if (tagLookup.isErr) {
-        return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
-      }
 
-      const diff = computeNewItemsDiff(lookup.value, tagLookup.value, tagParse.value)
-      const anyNew = diff.newCategoryIsNew || diff.newTagNames.length > 0
+      const existingTagIds = tagInputParse.tagIds
+      const newTagNames = tagInputParse.newTags
+
+      const categoryIsNew = lookup.value === null
+      const anyNew = categoryIsNew || newTagNames.length > 0
 
       if (!anyNew) {
         const createResult = await createRecurringWithTags(db, {
           description: validated.value.description,
           amountCents: validated.value.amountCents,
-          categoryId: diff.existingCategoryRow!.id,
+          categoryId: lookup.value!.id,
           recurrence: validated.value.recurrence,
           anchorDate: validated.value.anchorDate,
-          tagIds: diff.existingTagIds,
+          tagIds: existingTagIds,
         })
         if (createResult.isErr) {
           return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
@@ -235,7 +223,7 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
 
       let normalizedNewCategory: string | null = null
       let finalCategoryName: string
-      if (diff.newCategoryIsNew) {
+      if (categoryIsNew) {
         const nameCheck = parseNewCategoryName(validated.value.category)
         if (nameCheck.isErr) {
           return redirectWithFormErrors(c, newPath, { category: nameCheck.error }, rawValues)
@@ -243,11 +231,26 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
         normalizedNewCategory = nameCheck.value.toLowerCase()
         finalCategoryName = normalizedNewCategory
       } else {
-        finalCategoryName = diff.existingCategoryRow!.name
+        finalCategoryName = lookup.value!.name
       }
 
-      const sortedNewTags = diff.newTagNames.slice().sort((a, b) => a.localeCompare(b))
-      const finalTagNames = tagParse.value.slice().sort((a, b) => a.localeCompare(b))
+      const allTagsById = new Map(allTagsResult.value.map((t) => [t.id, t.name]))
+      const existingTagNames = existingTagIds.map((id) => allTagsById.get(id) ?? '').filter(Boolean)
+
+      const sortedNewTags = newTagNames.slice().sort((a, b) => a.localeCompare(b))
+      const allTagNames = [...existingTagNames, ...newTagNames]
+      const finalTagNames = allTagNames.slice().sort((a, b) => a.localeCompare(b))
+
+      const confirmValues: ExpenseFormValues = {
+        description: raw.description,
+        amount: raw.amount,
+        category: raw.category,
+        tagIds: existingTagIds,
+        newTags: newTagNames.join(','),
+        recurrence: raw.recurrence,
+        anchorDate: raw.anchorDate,
+      }
+
       return c.render(
         useLayout(
           c,
@@ -259,7 +262,7 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
             finalCategoryName,
             newTagNames: sortedNewTags,
             finalTagNames,
-            values: rawValues,
+            values: confirmValues,
           }),
         ),
       )
@@ -277,7 +280,8 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
         description: raw.description,
         amount: raw.amount,
         category: raw.category,
-        tags: raw.tags,
+        tagIds: raw.tagId,
+        newTags: raw.newTags,
         recurrence: raw.recurrence,
         anchorDate: raw.anchorDate,
       }
@@ -290,47 +294,47 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
         description: raw.description,
         amount: raw.amount,
         category: raw.category,
-        tags: raw.tags,
         recurrence: raw.recurrence,
         anchorDate: raw.anchorDate,
       })
-      const tagParse = parseTagCsv(raw.tags)
-      if (validated.isErr || tagParse.isErr) {
-        const errs: FieldErrors = validated.isErr ? { ...validated.error } : {}
-        if (tagParse.isErr) {
-          errs.tags = tagParse.error
-        }
-        return redirectWithFormErrors(c, newPath, errs, rawValues)
+
+      if (validated.isErr) {
+        return redirectWithFormErrors(c, newPath, validated.error, rawValues)
       }
 
       const db = createDbClient(c.env.PROJECT_DB)
-      const lookup = await findCategoryByName(db, validated.value.category)
-      if (lookup.isErr) {
-        return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
-      }
-      const tagLookup = await findTagsByNames(db, tagParse.value)
-      if (tagLookup.isErr) {
-        return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
-      }
-      const diff = computeNewItemsDiff(lookup.value, tagLookup.value, tagParse.value)
 
-      let newCategoryName: string | null = null
-      let existingCategoryId: string | null = null
-      if (diff.existingCategoryRow !== null) {
-        existingCategoryId = diff.existingCategoryRow.id
-      } else {
-        const nameCheck = parseNewCategoryName(validated.value.category)
-        if (nameCheck.isErr) {
-          return redirectWithFormErrors(c, newPath, { category: nameCheck.error }, rawValues)
+      const resolved = await resolveConfirmTagsAndCategory(
+        db,
+        raw.tagId,
+        raw.newTags,
+        validated.value.category,
+      )
+      if (!resolved.ok) {
+        if (resolved.kind === 'tag-list-error') {
+          return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
         }
-        newCategoryName = nameCheck.value
+        if (resolved.kind === 'tag-input-error') {
+          return redirectWithFormErrors(c, newPath, resolved.fieldErrors, {
+            ...rawValues,
+            newTags: resolved.rawNewTagsPreserved,
+          })
+        }
+        if (resolved.kind === 'category-lookup-error') {
+          return redirectWithError(c, newPath, 'Failed to save template. Please try again.')
+        }
+        if (resolved.kind === 'new-category-name-error') {
+          return redirectWithFormErrors(c, newPath, { category: resolved.message }, rawValues)
+        }
       }
+
+      const { existingTagIds, newTagNames, existingCategoryId, newCategoryName } = resolved as Extract<typeof resolved, { ok: true }>
 
       const createResult = await createManyAndRecurring(db, {
-        newCategoryName,
-        existingCategoryId,
-        newTagNames: diff.newTagNames,
-        existingTagIds: diff.existingTagIds,
+        newCategoryName: newCategoryName ?? null,
+        existingCategoryId: existingCategoryId ?? null,
+        newTagNames,
+        existingTagIds,
         description: validated.value.description,
         amountCents: validated.value.amountCents,
         recurrence: validated.value.recurrence,

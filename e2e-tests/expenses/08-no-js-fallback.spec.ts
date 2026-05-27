@@ -40,22 +40,19 @@ test.describe('JS-disabled fallback (Issue 5/6 server flow untouched)', () => {
       await submitSignInForm(page, TEST_USERS.KNOWN_USER)
       await page.goto(BASE_URLS.EXPENSES)
 
-      // No combobox dropdown / chip surface should mount when JS is off.
+      // No combobox dropdown should mount when JS is off.
       await page.getByTestId('expense-form-category').focus()
       await expect(page.getByTestId('category-combobox-dropdown')).toHaveCount(0)
-      await expect(page.getByTestId('tag-chip-picker-surface')).toHaveCount(0)
 
-      // The category and tags inputs should remain plain text inputs.
+      // The category input should remain a plain text input.
       await expect(page.getByTestId('expense-form-category')).toHaveAttribute('type', 'text')
-      await expect(page.getByTestId('expense-form-tags')).toHaveAttribute('type', 'text')
 
-      // All-existing submission goes straight to /expenses with no
-      // confirmation page.
+      // All-existing submission: toggle the groceries chip and submit.
+      await page.getByTestId('tag-chip-groceries').click()
       await page.getByTestId('expense-form-description').fill('Plain submit')
       await page.getByTestId('expense-form-amount').fill('3.50')
       await page.getByTestId('expense-form-date').fill(todayEt())
       await page.getByTestId('expense-form-category').fill('food')
-      await page.getByTestId('expense-form-tags').fill('groceries')
       await page.getByTestId('expense-form-create').click()
 
       await page.waitForURL(BASE_URLS.EXPENSES)
@@ -64,12 +61,12 @@ test.describe('JS-disabled fallback (Issue 5/6 server flow untouched)', () => {
       await expect(plainRow).toHaveCount(1)
       await expect(plainRow.getByTestId('expense-row-tags')).toHaveText('groceries')
 
-      // Brand-new category + new tag CSV reaches the confirmation page.
+      // Brand-new category + new tag in free-text field reaches the confirmation page.
       await page.getByTestId('expense-form-description').fill('Brand new')
       await page.getByTestId('expense-form-amount').fill('9.99')
       await page.getByTestId('expense-form-date').fill(todayEt())
       await page.getByTestId('expense-form-category').fill('rent')
-      await page.getByTestId('expense-form-tags').fill('utilities, monthly')
+      await page.getByTestId('new-tags-input').fill('utilities, monthly')
       await page.getByTestId('expense-form-create').click()
 
       await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()

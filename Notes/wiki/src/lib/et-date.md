@@ -35,6 +35,22 @@ Returns the calendar-quarter label `Mmm-Mmm` for a `YYYY-MM-DD` ET-anchored date
 
 Returns the four-digit year string for a `YYYY-MM-DD` ET-anchored date string (e.g. `'2026'`). Rejects invalid dates.
 
+### `monthLabelEt(ymd: string): string`
+
+Returns the `Mmm YYYY` month label (e.g. `'Jan 2026'`).
+
+### `monthChronKeyEt(ymd: string): number`
+
+Returns the numeric chronological key `year * 100 + monthIndex` (0-based) for sorting month rows across year boundaries.
+
+### `quarterLabelEt(ymd: string): string`
+
+Returns the `Mmm-Mmm YYYY` quarter label (e.g. `'Jan-Mar 2026'`).
+
+### `quarterChronKeyEt(ymd: string): number`
+
+Returns the numeric chronological key `year * 10 + quarterIndex` (0-based) for sorting quarter rows across year boundaries.
+
 ## Cross-references
 
 - [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — calls `defaultRangeEt()` to build the listing window.

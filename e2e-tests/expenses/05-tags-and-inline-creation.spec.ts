@@ -5,10 +5,6 @@ import { submitSignInForm } from '../support/form-helpers'
 import { testWithDatabase } from '../support/test-helpers'
 import { seedCategories, seedExpenses } from '../support/db-helpers'
 
-// Matches `tagNameMax` in src/lib/expense-validators.ts — tests use the
-// larger (non-production) value. Keep in sync.
-const tagNameMax = 22
-
 const todayEt = (): string =>
   new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/New_York',
@@ -28,7 +24,7 @@ type EntryOpts = {
   amount: string
   date: string
   category: string
-  tags: string
+  newTags: string
 }
 
 const fillEntryForm = async (page: any, opts: EntryOpts) => {
@@ -36,23 +32,20 @@ const fillEntryForm = async (page: any, opts: EntryOpts) => {
   await page.getByTestId('expense-form-amount').fill(opts.amount)
   await page.getByTestId('expense-form-date').fill(opts.date)
   await page.getByTestId('expense-form-category').fill(opts.category)
-  await page.getByTestId('expense-form-tags').fill(opts.tags)
+  await page.getByTestId('new-tags-input').fill(opts.newTags)
 }
 
 const submitEntryForm = async (page: any) => {
   await page.getByTestId('expense-form-create').click()
 }
 
-test.describe('Tags (no-JS CSV) + inline tag creation', () => {
-  // This spec exercises the no-JS server flow: the entry form posts a raw
-  // tags CSV in the original `expense-form-tags` text input. Issue 07
-  // mounts a chip picker on that input when JS is enabled (which would
-  // convert it to type='hidden'), so disable JS here to keep the test
-  // pinned to the no-JS path. The JS-on equivalent is `07-tag-chip-picker-js.spec.ts`.
+test.describe('Tags (chip-checkbox) + inline tag creation', () => {
+  // Disable JS to exercise the plain server-side flow with native checkboxes
+  // and the newTags text input. The JS-on equivalent is `18-entry-tag-chip-ui.spec.ts`.
   test.use({ javaScriptEnabled: false })
 
   test(
-    'mixed existing+new tags routes through confirmation, dedup applies, list shows alphabetical tags',
+    'chip-checked existing tag + new tag in text routes through confirmation, list shows alphabetical tags',
     testWithDatabase(async ({ page }) => {
       // Seed an existing category and an existing tag named `groceries`.
       await seedExpenses([
@@ -67,19 +60,22 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
 
       await signInAndGoToExpenses(page)
 
+      // Toggle the groceries chip (existing tag).
+      await page.getByTestId('tag-chip-groceries').click()
+
       await fillEntryForm(page, {
         description: 'Weekly shop',
         amount: '42.50',
         date: todayEt(),
         category: 'food',
-        tags: 'food, groceries, food',
+        newTags: 'food',
       })
       await submitEntryForm(page)
 
       await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
       // No new category line (category exists).
       await expect(page.getByTestId('confirm-create-new-category-line')).toHaveCount(0)
-      // Exactly one new tag: `food` (`groceries` is existing).
+      // Exactly one new tag: `food` (`groceries` is existing chip selection).
       const tagLines = page.getByTestId('confirm-create-new-tag-line')
       await expect(tagLines).toHaveCount(1)
       await expect(tagLines.first()).toContainText("'food'")
@@ -106,7 +102,7 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
         amount: '1000',
         date: todayEt(),
         category: 'Groceries',
-        tags: 'Rent, Utilities',
+        newTags: 'Rent, Utilities',
       })
       await submitEntryForm(page)
 
@@ -128,13 +124,14 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
       await expect(rentRow.getByTestId('expense-row-category')).toHaveText('groceries')
       await expect(rentRow.getByTestId('expense-row-tags')).toHaveText('rent, utilities')
 
-      // Second submission — every name now exists. No confirmation page.
+      // Second submission — rent chip should now be available, select it. No confirmation.
+      await page.getByTestId('tag-chip-rent').click()
       await fillEntryForm(page, {
         description: 'Snacks',
         amount: '7.00',
         date: todayEt(),
         category: 'GROCERIES',
-        tags: 'Rent',
+        newTags: '',
       })
       await submitEntryForm(page)
 
@@ -147,18 +144,18 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
   )
 
   test(
-    'cancel preserves the raw typed tag CSV (case + duplicates) and creates nothing',
+    'cancel preserves new-tags input value and creates nothing',
     testWithDatabase(async ({ page }) => {
       await seedCategories([{ name: 'Food' }])
       await signInAndGoToExpenses(page)
 
-      const rawTagInput = 'Food, food, Groceries'
+      const rawNewTagInput = 'mynewtag'
       await fillEntryForm(page, {
         description: 'Weekly shop',
         amount: '42.50',
         date: todayEt(),
         category: 'food',
-        tags: rawTagInput,
+        newTags: rawNewTagInput,
       })
       await submitEntryForm(page)
 
@@ -171,24 +168,25 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('42.50')
       await expect(page.getByTestId('expense-form-date')).toHaveValue(todayEt())
       await expect(page.getByTestId('expense-form-category')).toHaveValue('food')
-      await expect(page.getByTestId('expense-form-tags')).toHaveValue(rawTagInput)
+      await expect(page.getByTestId('new-tags-input')).toHaveValue(rawNewTagInput)
       await expect(page.getByTestId('expense-row')).toHaveCount(0)
     }),
   )
 
   test(
-    'over-max tag name shows tags field error and skips the confirmation page',
+    'over-max tag name in new-tags shows tags field error and skips the confirmation page',
     testWithDatabase(async ({ page }) => {
       await seedCategories([{ name: 'Food' }])
       await signInAndGoToExpenses(page)
 
+      const tagNameMax = 22
       const tooLong = 'g'.repeat(tagNameMax + 1)
       await fillEntryForm(page, {
         description: 'Big tag',
         amount: '5.00',
         date: todayEt(),
         category: 'food',
-        tags: `food, ${tooLong}`,
+        newTags: tooLong,
       })
       await submitEntryForm(page)
 
@@ -199,13 +197,12 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('5.00')
       await expect(page.getByTestId('expense-form-date')).toHaveValue(todayEt())
       await expect(page.getByTestId('expense-form-category')).toHaveValue('food')
-      await expect(page.getByTestId('expense-form-tags')).toHaveValue(`food, ${tooLong}`)
       await expect(page.getByTestId('expense-row')).toHaveCount(0)
     }),
   )
 
   test(
-    'whitespace-only tag CSV creates the expense with no tags attached',
+    'whitespace-only new-tags creates the expense with no tags attached',
     testWithDatabase(async ({ page }) => {
       await seedCategories([{ name: 'Food' }])
       await signInAndGoToExpenses(page)
@@ -215,7 +212,7 @@ test.describe('Tags (no-JS CSV) + inline tag creation', () => {
         amount: '5.00',
         date: todayEt(),
         category: 'food',
-        tags: ' , ,   ',
+        newTags: ' , ,   ',
       })
       await submitEntryForm(page)
 

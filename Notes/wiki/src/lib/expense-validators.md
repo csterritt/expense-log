@@ -81,6 +81,23 @@ Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the 
 - `from`/`to`: each independently optional; validated as `YYYY-MM-DD` via `isValidYmd`. Issue 16 adds: when **both** are present and valid, `from > to` sets `fieldErrors.date = 'From date must be on or before To date.'` (only if no earlier date-format error is already present).
 - Returns `{ hasFilterParams, filters: ParsedExpenseListFilters, fieldErrors: FieldErrors }`; does not short-circuit on errors (route decides how to handle them).
 
+### `parseTagInputs(raw: RawTagInputs, existingTags: ExistingTag[]): ParsedTagInputs` (Tag chip-checkbox refactor)
+
+Replaces the old `parseTagCsv` approach for the entry/edit forms. Handles both selected existing tag IDs (from native checkboxes) and new tag names (from the `newTags` text input).
+
+- **ULID validation:** `tagId` values are filtered through Crockford-base32 ULID regex (`/^[0-9A-HJKMNP-TV-Z]{26}$/`). Invalid IDs are silently dropped; duplicates are deduplicated.
+- **Caps:** `TAG_ID_RAW_CAP` (64) limits raw tag ID count; `NEW_TAGS_RAW_LENGTH_CAP` (500) limits the raw new-tags string length; `NEW_TAGS_TOKEN_COUNT_CAP` (32) limits the number of parsed new-tag tokens.
+- **New tag parsing:** splits `newTags` on comma/whitespace, trims, lowercases, deduplicates. Each token must match `/^[a-z0-9_-]{1,20}$/`.
+- **Existing-tag resolution:** new tag tokens that match an existing tag name (case-insensitive) are converted to that tag's ID instead of being treated as new.
+- **Returns:** `{ lookupCandidateTagIds, tagIds, newTags, rawNewTagsPreserved, fieldErrors }`.
+
+### `parseCategoryInput(raw: RawCategoryInput, existingCategory: ExistingCategory | null): ParsedCategoryInput`
+
+- Validates `categoryId` as a ULID (sets `lookupCandidateCategoryId`).
+- Validates `newCategory` as a lowercase token matching the new-tag regex.
+- If `newCategory` matches an existing category name, resolves to that category's ID.
+- Returns `{ lookupCandidateCategoryId, resolvedCategoryId, newCategory, fieldErrors }`.
+
 ### `parseSummaryQuery(raw: RawSummaryQuery): SummaryQueryResult` (Issue 17)
 
 Re-introduced in Issue 17 with a new signature reflecting the updated summary design.

@@ -48,7 +48,7 @@ Core aggregation function.
 
 ## Cross-references
 
-- [../et-date.md](../et-date.md) — provides `monthKeyEt`, `quarterKeyEt`, `yearKeyEt`.
+- [../et-date.md](../et-date.md) — provides `monthKeyEt`, `monthLabelEt`, `monthChronKeyEt`, `quarterKeyEt`, `quarterLabelEt`, `quarterChronKeyEt`, `yearKeyEt`.
 - [../../routes/build-summary.md](../../routes/build-summary.md) — route that calls `summarize`.
 - [../../../tests/summary-access.spec.md](../../../tests/summary-access.spec.md) — unit coverage.
 

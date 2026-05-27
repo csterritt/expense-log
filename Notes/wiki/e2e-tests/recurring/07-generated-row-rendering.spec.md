@@ -8,5 +8,5 @@ Seeds one manual expense and one Monthly recurring template. Runs cron to genera
 
 ## Cross-references
 
-- [src/routes/expenses/expense-list-renderer.tsx.md](../../src/routes/expenses/expense-list-renderer.tsx.md)
+- [src/routes/expenses/expense-list-renderer.md](../../src/routes/expenses/expense-list-renderer.md)
 - [src/lib/db/expense-access.md](../../src/lib/db/expense-access.md)

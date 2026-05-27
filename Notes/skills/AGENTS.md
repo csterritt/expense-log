@@ -8,5 +8,5 @@
 - `code-writing/database-access` - You must read this when it is time to write code to access the database
 - `code-writing/running-the-server` - You must read this when it is time to run the server or tests
 - `code-writing/styling-html-and-tsx` - You must read this when it is time to style HTML and TSX
-- `code-writing/typescript-ruiles` - You must read this when it is time to write typescript
+- `code-writing/typescript-rules` - You must read this when it is time to write typescript
 - `code-writing/web-behavior` - You must read this when it is time to write web code

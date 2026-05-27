@@ -15,7 +15,7 @@ DB_PATH=$(/bin/ls .wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite | eg
 
 # Clear tables if requested
 if [ "$CLEAR_DATA" = true ]; then
-  echo "Clearing account and user tables..."
+  echo "Clearing tables..."
   echo "DELETE FROM account;" | sqlite3 $DB_PATH
   echo "DELETE FROM user;" | sqlite3 $DB_PATH
   echo "DELETE FROM expense;" | sqlite3 $DB_PATH

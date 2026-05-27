@@ -171,7 +171,7 @@ describe('summarize — dimension: time', () => {
     }
   })
 
-  it('month granularity produces Mmm timePeriod labels', async () => {
+  it('month granularity produces Mmm YYYY timePeriod labels', async () => {
     const db = await createTestDb()
     await buildDataset(db)
     const result = await summarize(db, {
@@ -182,15 +182,15 @@ describe('summarize — dimension: time', () => {
     assert.strictEqual(result.isOk, true)
     if (result.isOk) {
       const periods = result.value.map((r) => r.timePeriod)
-      assert.ok(periods.includes('Jan'), `expected Jan in ${periods.join(', ')}`)
-      assert.ok(periods.includes('Mar'), `expected Mar in ${periods.join(', ')}`)
+      assert.ok(periods.includes('Jan 2024'), `expected Jan 2024 in ${periods.join(', ')}`)
+      assert.ok(periods.includes('Mar 2024'), `expected Mar 2024 in ${periods.join(', ')}`)
       for (const p of periods) {
-        assert.match(p, /^[A-Z][a-z]{2}$/, `"${p}" is not a Mmm label`)
+        assert.match(p, /^[A-Z][a-z]{2} \d{4}$/, `"${p}" is not a Mmm YYYY label`)
       }
     }
   })
 
-  it('quarter granularity produces Mmm-Mmm timePeriod labels', async () => {
+  it('quarter granularity produces Mmm-Mmm YYYY timePeriod labels', async () => {
     const db = await createTestDb()
     await buildDataset(db)
     const result = await summarize(db, {
@@ -201,7 +201,7 @@ describe('summarize — dimension: time', () => {
     assert.strictEqual(result.isOk, true)
     if (result.isOk) {
       for (const row of result.value) {
-        assert.match(row.timePeriod, /^[A-Z][a-z]{2}-[A-Z][a-z]{2}$/, `"${row.timePeriod}" is not Mmm-Mmm`)
+        assert.match(row.timePeriod, /^[A-Z][a-z]{2}-[A-Z][a-z]{2} \d{4}$/, `"${row.timePeriod}" is not Mmm-Mmm YYYY`)
       }
     }
   })
@@ -237,7 +237,7 @@ describe('summarize — dimension: time', () => {
     if (result.isOk) {
       assert.strictEqual(result.value.length, 1)
       const row = result.value[0]
-      assert.strictEqual(row?.timePeriod, 'Jan')
+      assert.strictEqual(row?.timePeriod, 'Jan 2024')
       assert.strictEqual(row?.count, 2)
       assert.strictEqual(row?.totalCents, 300)
     }
@@ -509,7 +509,7 @@ describe('summarize — materialized recurring rows', () => {
 })
 
 describe('summarize — default sort', () => {
-  it('default sort is group columns asc (case-insensitive) then timePeriod asc', async () => {
+  it('default sort is group columns asc (case-insensitive) then timePeriod chronological asc', async () => {
     const db = await createTestDb()
     await buildDataset(db)
     const result = await summarize(db, {
@@ -519,9 +519,13 @@ describe('summarize — default sort', () => {
     })
     assert.strictEqual(result.isOk, true)
     if (result.isOk) {
-      const catPeriods = result.value.map((r) => `${r.categoryName}:${r.timePeriod}`)
-      const sorted = [...catPeriods].sort((a, b) => a.localeCompare(b))
-      assert.deepStrictEqual(catPeriods, sorted)
+      const cats = result.value.map((r) => r.categoryName ?? '')
+      for (let i = 1; i < cats.length; i++) {
+        assert.ok(
+          cats[i - 1]!.localeCompare(cats[i]!) <= 0,
+          `expected category sort at index ${i}: "${cats[i - 1]}" should be <= "${cats[i]}"`
+        )
+      }
     }
   })
 })
@@ -545,6 +549,224 @@ describe('summarize — explicit sort override', () => {
           `expected descending totalCents at index ${i}`,
         )
       }
+    }
+  })
+})
+
+// ====================================
+// Task 7: Year-bearing labels + chronological sort
+// ====================================
+
+describe('summarize — year-bearing labels', () => {
+  it('month granularity produces Mmm YYYY labels (not bare Mmm)', async () => {
+    const db = await createTestDb()
+    await buildDataset(db)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'month',
+      filters: { from: '2024-01-01', to: '2024-03-31' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const periods = result.value.map((r) => r.timePeriod)
+      assert.ok(periods.includes('Jan 2024'), `expected "Jan 2024" in ${periods.join(', ')}`)
+      assert.ok(periods.includes('Mar 2024'), `expected "Mar 2024" in ${periods.join(', ')}`)
+      for (const p of periods) {
+        assert.match(p, /^[A-Z][a-z]{2} \d{4}$/, `"${p}" is not a Mmm YYYY label`)
+      }
+    }
+  })
+
+  it('quarter granularity produces Mmm-Mmm YYYY labels', async () => {
+    const db = await createTestDb()
+    await buildDataset(db)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'quarter',
+      filters: { from: '2024-01-01', to: '2024-06-30' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const periods = result.value.map((r) => r.timePeriod)
+      for (const p of periods) {
+        assert.match(p, /^[A-Z][a-z]{2}-[A-Z][a-z]{2} \d{4}$/, `"${p}" is not a Mmm-Mmm YYYY label`)
+      }
+      assert.ok(periods.includes('Jan-Mar 2024'), `expected "Jan-Mar 2024" in ${periods.join(', ')}`)
+    }
+  })
+
+  it('year granularity still produces YYYY labels (unchanged)', async () => {
+    const db = await createTestDb()
+    await buildDataset(db)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'year',
+      filters: {},
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      for (const row of result.value) {
+        assert.match(row.timePeriod, /^\d{4}$/, `"${row.timePeriod}" is not YYYY`)
+      }
+    }
+  })
+})
+
+describe('summarize — chronological sort by internal key', () => {
+  it('Dec 2025 and Jan 2026 are distinct rows (no cross-year aggregation)', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-misc', 'misc')
+    await seedExpense(db, 'e-dec25', 'cat-misc', '2025-12-15', 500)
+    await seedExpense(db, 'e-jan26', 'cat-misc', '2026-01-10', 600)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'month',
+      filters: { from: '2025-12-01', to: '2026-01-31' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.length, 2, `expected 2 rows but got: ${result.value.map((r) => r.timePeriod).join(', ')}`)
+      const periods = result.value.map((r) => r.timePeriod)
+      assert.ok(periods.includes('Dec 2025'), `expected "Dec 2025" in ${periods.join(', ')}`)
+      assert.ok(periods.includes('Jan 2026'), `expected "Jan 2026" in ${periods.join(', ')}`)
+    }
+  })
+
+  it('default sort places Dec 2025 before Jan 2026 in ascending order', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-misc2', 'misc2')
+    await seedExpense(db, 'e-dec25b', 'cat-misc2', '2025-12-15', 500)
+    await seedExpense(db, 'e-jan26b', 'cat-misc2', '2026-01-10', 600)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'month',
+      filters: { from: '2025-12-01', to: '2026-01-31' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.length, 2)
+      assert.strictEqual(result.value[0]?.timePeriod, 'Dec 2025', `expected first row to be "Dec 2025", got "${result.value[0]?.timePeriod}"`)
+      assert.strictEqual(result.value[1]?.timePeriod, 'Jan 2026', `expected second row to be "Jan 2026", got "${result.value[1]?.timePeriod}"`)
+    }
+  })
+
+  it('Apr 2026 sorts after Jan/Feb/Mar 2026 (chronological, not alphabetical)', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-ord', 'ord')
+    await seedExpense(db, 'e-jan26-ord', 'cat-ord', '2026-01-05', 100)
+    await seedExpense(db, 'e-feb26-ord', 'cat-ord', '2026-02-05', 200)
+    await seedExpense(db, 'e-mar26-ord', 'cat-ord', '2026-03-05', 300)
+    await seedExpense(db, 'e-apr26-ord', 'cat-ord', '2026-04-05', 400)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'month',
+      filters: { from: '2026-01-01', to: '2026-04-30' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const periods = result.value.map((r) => r.timePeriod)
+      assert.deepStrictEqual(periods, ['Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026'], `got: ${periods.join(', ')}`)
+    }
+  })
+
+  it('quarters within a year sort chronologically: Jan-Mar before Apr-Jun before Jul-Sep before Oct-Dec', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-qtr', 'qtr')
+    await seedExpense(db, 'e-q1', 'cat-qtr', '2026-01-15', 100)
+    await seedExpense(db, 'e-q2', 'cat-qtr', '2026-04-15', 200)
+    await seedExpense(db, 'e-q3', 'cat-qtr', '2026-07-15', 300)
+    await seedExpense(db, 'e-q4', 'cat-qtr', '2026-10-15', 400)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'quarter',
+      filters: { from: '2026-01-01', to: '2026-12-31' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const periods = result.value.map((r) => r.timePeriod)
+      assert.deepStrictEqual(periods, ['Jan-Mar 2026', 'Apr-Jun 2026', 'Jul-Sep 2026', 'Oct-Dec 2026'], `got: ${periods.join(', ')}`)
+    }
+  })
+
+  it('cross-year quarters sort chronologically: Oct-Dec 2025 before Jan-Mar 2026', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-cqtr', 'cqtr')
+    await seedExpense(db, 'e-q4-25', 'cat-cqtr', '2025-10-15', 100)
+    await seedExpense(db, 'e-q1-26', 'cat-cqtr', '2026-01-15', 200)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'quarter',
+      filters: { from: '2025-10-01', to: '2026-03-31' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const periods = result.value.map((r) => r.timePeriod)
+      assert.deepStrictEqual(periods, ['Oct-Dec 2025', 'Jan-Mar 2026'], `got: ${periods.join(', ')}`)
+    }
+  })
+
+  it('when sorting by count, ties retain chronological time-period ordering', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-tie', 'tie')
+    await seedExpense(db, 'e-jan26-t1', 'cat-tie', '2026-01-05', 100)
+    await seedExpense(db, 'e-feb26-t1', 'cat-tie', '2026-02-05', 100)
+    await seedExpense(db, 'e-mar26-t1', 'cat-tie', '2026-03-05', 100)
+    const result = await summarize(db, {
+      dimension: 'time',
+      granularity: 'month',
+      filters: { from: '2026-01-01', to: '2026-03-31' },
+      sort: [{ column: 'count', direction: 'asc' }],
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const periods = result.value.map((r) => r.timePeriod)
+      assert.deepStrictEqual(periods, ['Jan 2026', 'Feb 2026', 'Mar 2026'], `expected chronological tie-break, got: ${periods.join(', ')}`)
+    }
+  })
+
+  it('category dimension default sort: group asc then chronological timePeriod asc (cross-year)', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-alpha', 'alpha')
+    await seedExpense(db, 'e-alpha-dec25', 'cat-alpha', '2025-12-10', 100)
+    await seedExpense(db, 'e-alpha-jan26', 'cat-alpha', '2026-01-10', 200)
+    const result = await summarize(db, {
+      dimension: 'category',
+      granularity: 'month',
+      filters: { from: '2025-12-01', to: '2026-01-31' },
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const rows = result.value
+      assert.strictEqual(rows.length, 2)
+      assert.strictEqual(rows[0]?.timePeriod, 'Dec 2025')
+      assert.strictEqual(rows[1]?.timePeriod, 'Jan 2026')
+    }
+  })
+
+  it('category-tag dimension: sort=category asc ties break on tag asc then timePeriod asc', async () => {
+    const db = await createTestDb()
+    await seedCat(db, 'cat-ct1', 'aacat')
+    await seedCat(db, 'cat-ct2', 'zzcat')
+    await seedTag(db, 'tag-ct1', 'aatag')
+    await seedTag(db, 'tag-ct2', 'zztag')
+    await seedExpense(db, 'e-ct-1', 'cat-ct1', '2026-02-01', 100)
+    await seedExpense(db, 'e-ct-2', 'cat-ct1', '2026-01-01', 200)
+    await seedExpenseTag(db, 'e-ct-1', 'tag-ct1')
+    await seedExpenseTag(db, 'e-ct-2', 'tag-ct1')
+    const result = await summarize(db, {
+      dimension: 'category-tag',
+      granularity: 'month',
+      filters: { from: '2026-01-01', to: '2026-02-28' },
+      sort: [{ column: 'categoryName', direction: 'asc' }],
+    })
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      const rows = result.value
+      assert.ok(rows.length >= 2)
+      const aaRows = rows.filter((r) => r.categoryName === 'aacat')
+      assert.ok(aaRows.length >= 2)
+      assert.strictEqual(aaRows[0]?.timePeriod, 'Jan 2026', `expected Jan 2026 first, got ${aaRows[0]?.timePeriod}`)
+      assert.strictEqual(aaRows[1]?.timePeriod, 'Feb 2026', `expected Feb 2026 second, got ${aaRows[1]?.timePeriod}`)
     }
   })
 })

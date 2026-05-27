@@ -74,7 +74,7 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
   }
   const payloads: ExpenseFormPayloads = {
     categories: categoriesResult.value.map((row) => ({ name: row.name })),
-    tags: tagsResult.value.map((row) => ({ name: row.name })),
+    tags: tagsResult.value.map((row) => ({ id: row.id, name: row.name })),
   }
   const today = todayEt()
   const flash = readAndClearFormState(c)
@@ -86,7 +86,8 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
           amount: flash.values.amount ?? '',
           date: flash.values.date ?? today,
           category: flash.values.category ?? '',
-          tags: flash.values.tags ?? '',
+          tagIds: flash.values.tagIds ?? [],
+          newTags: flash.values.newTags ?? '',
         },
       }
     : emptyState(today)

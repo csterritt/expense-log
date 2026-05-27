@@ -14,13 +14,11 @@
 import {
   categoryNameMax,
   descriptionMax,
-  tagNameMax,
   VALID_RECURRENCES,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import type { ExpenseFormValues } from '../../lib/form-state'
-
-const tagsCsvMax = (tagNameMax + 2) * 8
+import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
 
 export type RecurringFormState = {
   fieldErrors: FieldErrors
@@ -29,7 +27,7 @@ export type RecurringFormState = {
 
 export type RecurringFormPayloads = {
   categories: { name: string }[]
-  tags: { name: string }[]
+  tags: { id: string; name: string }[]
 }
 
 export type RecurringFormMode = 'create' | 'edit'
@@ -131,11 +129,10 @@ export const renderRecurringForm = (props: RenderRecurringFormProps) => {
           name='recurrence'
           className={inputClass('select select-bordered w-full', !!fieldErrors.recurrence)}
           data-testid='recurring-form-recurrence'
-          value={values.recurrence ?? ''}
         >
-          <option value=''>-- select --</option>
+          <option value='' selected={!values.recurrence}>-- select --</option>
           {VALID_RECURRENCES.map((r) => (
-            <option key={r} value={r}>
+            <option key={r} value={r} selected={r === values.recurrence}>
               {r}
             </option>
           ))}
@@ -159,19 +156,14 @@ export const renderRecurringForm = (props: RenderRecurringFormProps) => {
       </div>
 
       <div className='flex flex-col md:col-span-5'>
-        <label className='label' htmlFor='recurring-form-tags'>
+        <label className='label'>
           <span className='label-text'>Tags</span>
         </label>
-        <input
-          id='recurring-form-tags'
-          name='tags'
-          type='text'
-          maxLength={tagsCsvMax}
-          className={inputClass('input input-bordered w-full', !!fieldErrors.tags)}
-          data-testid='recurring-form-tags'
-          data-tag-chip-picker
-          value={values.tags ?? ''}
-          placeholder='e.g. rent, housing'
+        <TagChipCheckboxes
+          tags={payloads.tags}
+          selectedTagIds={new Set(values.tagIds ?? [])}
+          allowNewTags={true}
+          newTagsValue={values.newTags ?? ''}
         />
         {fieldError('tags', fieldErrors.tags)}
       </div>
@@ -186,11 +178,6 @@ export const renderRecurringForm = (props: RenderRecurringFormProps) => {
         type='application/json'
         data-testid='categories-data'
         dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.categories) }}
-      />
-      <script
-        type='application/json'
-        data-testid='tags-data'
-        dangerouslySetInnerHTML={{ __html: safeJsonForScript(payloads.tags) }}
       />
     </form>
   )

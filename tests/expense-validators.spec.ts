@@ -21,10 +21,17 @@ import {
   parseTagDelete,
   parseTagMergeConfirm,
   parseTagRename,
+  parseTagInputs,
+  parseCategoryInput,
+  TAG_ID_RAW_CAP,
+  NEW_TAGS_RAW_LENGTH_CAP,
+  NEW_TAGS_TOKEN_COUNT_CAP,
   descriptionMax,
   categoryNameMax,
   tagNameMax,
   type FieldErrors,
+  type ExistingTag,
+  type ExistingCategory,
 } from '../src/lib/expense-validators'
 
 const VALID = {
@@ -519,10 +526,10 @@ describe('parseExpenseListFilters (Issue 11)', () => {
     assert.deepStrictEqual(r.fieldErrors, {})
   })
 
-  it('returns a field error for a bad from date', () => {
+  it('silently drops a bad from date (treated as absent, no error)', () => {
     const r = parseExpenseListFilters({ from: '2024-13-99' })
     assert.strictEqual(r.filters.from, undefined)
-    assert.ok(r.fieldErrors.date)
+    assert.deepStrictEqual(r.fieldErrors, {})
   })
 
   it('parses a valid to date', () => {
@@ -531,10 +538,10 @@ describe('parseExpenseListFilters (Issue 11)', () => {
     assert.deepStrictEqual(r.fieldErrors, {})
   })
 
-  it('returns a field error for a bad to date', () => {
+  it('silently drops a bad to date (treated as absent, no error)', () => {
     const r = parseExpenseListFilters({ to: 'not-a-date' })
     assert.strictEqual(r.filters.to, undefined)
-    assert.ok(r.fieldErrors.date)
+    assert.deepStrictEqual(r.fieldErrors, {})
   })
 
   it('open-from: only from set, to absent', () => {
@@ -561,14 +568,14 @@ describe('parseExpenseListFilters (Issue 11)', () => {
     assert.strictEqual(r.filters.to, undefined)
   })
 
-  it('collects and deduplicates multiple tagId values', () => {
-    const r = parseExpenseListFilters({ tagId: ['id-1', 'id-2', 'id-1'] })
-    assert.deepStrictEqual(r.filters.tagIds, ['id-1', 'id-2'])
+  it('collects and deduplicates multiple valid ULID tagId values', () => {
+    const r = parseExpenseListFilters({ tagId: [VALID_ULID, VALID_ULID_2, VALID_ULID] })
+    assert.deepStrictEqual(r.filters.tagIds, [VALID_ULID, VALID_ULID_2])
   })
 
-  it('handles a single tagId string', () => {
-    const r = parseExpenseListFilters({ tagId: 'single-id' })
-    assert.deepStrictEqual(r.filters.tagIds, ['single-id'])
+  it('handles a single valid ULID tagId string', () => {
+    const r = parseExpenseListFilters({ tagId: VALID_ULID })
+    assert.deepStrictEqual(r.filters.tagIds, [VALID_ULID])
   })
 
   it('tagMode defaults to or when absent', () => {
@@ -631,10 +638,11 @@ describe('parseExpenseListFilters (Issue 11)', () => {
     assert.deepStrictEqual(r.fieldErrors, {})
   })
 
-  it('keeps the earlier bad-format error when from is invalid and from > to would also apply', () => {
+  it('silently drops invalid from and leaves to intact, no error even when from > to would apply', () => {
     const r = parseExpenseListFilters({ from: 'bad', to: '2024-01-01' })
-    assert.ok(r.fieldErrors.date)
+    assert.deepStrictEqual(r.fieldErrors, {})
     assert.strictEqual(r.filters.from, undefined)
+    assert.strictEqual(r.filters.to, '2024-01-01')
   })
 })
 
@@ -959,15 +967,15 @@ describe('parseSummaryQuery', () => {
       assert.strictEqual(r.to, undefined)
     })
 
-    it('rejects an invalid from date with a date field error', () => {
+    it('silently drops an invalid from date (treated as absent, no error)', () => {
       const r = parseSummaryQuery({ from: '2024-13-99' })
-      assert.ok(r.fieldErrors.date)
+      assert.deepStrictEqual(r.fieldErrors, {})
       assert.strictEqual(r.from, undefined)
     })
 
-    it('rejects an invalid to date with a date field error', () => {
+    it('silently drops an invalid to date (treated as absent, no error)', () => {
       const r = parseSummaryQuery({ to: 'not-a-date' })
-      assert.ok(r.fieldErrors.date)
+      assert.deepStrictEqual(r.fieldErrors, {})
       assert.strictEqual(r.to, undefined)
     })
 
@@ -993,55 +1001,532 @@ describe('parseSummaryQuery', () => {
   })
 
   describe('tagIds', () => {
-    it('collects a single tagId value', () => {
-      const r = parseSummaryQuery({ tagId: 'id-1' })
-      assert.deepStrictEqual(r.tagIds, ['id-1'])
+    it('collects a single valid ULID tagId value', () => {
+      const r = parseSummaryQuery({ tagId: VALID_ULID })
+      assert.deepStrictEqual(r.tagIds, [VALID_ULID])
     })
 
-    it('accumulates multiple tagId values into the array', () => {
-      const r = parseSummaryQuery({ tagId: ['id-1', 'id-2', 'id-3'] })
-      assert.deepStrictEqual(r.tagIds, ['id-1', 'id-2', 'id-3'])
+    it('accumulates multiple valid ULID tagId values into the array', () => {
+      const r = parseSummaryQuery({ tagId: [VALID_ULID, VALID_ULID_2, VALID_ULID] })
+      assert.deepStrictEqual(r.tagIds, [VALID_ULID, VALID_ULID_2])
     })
 
-    it('deduplicates repeated tagId values', () => {
-      const r = parseSummaryQuery({ tagId: ['id-1', 'id-2', 'id-1'] })
-      assert.deepStrictEqual(r.tagIds, ['id-1', 'id-2'])
+    it('deduplicates repeated valid ULID tagId values', () => {
+      const r = parseSummaryQuery({ tagId: [VALID_ULID, VALID_ULID_2, VALID_ULID] })
+      assert.deepStrictEqual(r.tagIds, [VALID_ULID, VALID_ULID_2])
     })
 
-    it('presence of tagId flips hasFilterParams to true', () => {
-      const r = parseSummaryQuery({ tagId: 'id-1' })
+    it('presence of valid tagId flips hasFilterParams to true', () => {
+      const r = parseSummaryQuery({ tagId: VALID_ULID })
       assert.strictEqual(r.hasFilterParams, true)
     })
   })
 
   describe('sort', () => {
     it('parses a single valid sort param column:direction', () => {
-      const r = parseSummaryQuery({ sort: 'totalCents:desc' })
-      assert.deepStrictEqual(r.sort, [{ column: 'totalCents', direction: 'desc' }])
+      const r = parseSummaryQuery({ sort: 'total:desc' })
+      assert.deepStrictEqual(r.sort, [{ column: 'total', direction: 'desc' }])
       assert.deepStrictEqual(r.fieldErrors, {})
     })
 
     it('accumulates multiple sort params in order', () => {
-      const r = parseSummaryQuery({ sort: ['categoryName:asc', 'totalCents:desc'] })
+      const r = parseSummaryQuery({ dimension: 'category', sort: ['category:asc', 'total:desc'] })
       assert.deepStrictEqual(r.sort, [
-        { column: 'categoryName', direction: 'asc' },
-        { column: 'totalCents', direction: 'desc' },
+        { column: 'category', direction: 'asc' },
+        { column: 'total', direction: 'desc' },
       ])
     })
 
-    it('rejects an unknown sort column with a field error', () => {
+    it('silently drops an unknown sort column (falls back, no error)', () => {
       const r = parseSummaryQuery({ sort: 'bogus:asc' })
-      assert.ok(r.fieldErrors.groupBy, `expected groupBy error; got ${JSON.stringify(r.fieldErrors)}`)
+      assert.deepStrictEqual(r.sort, [])
+      assert.deepStrictEqual(r.fieldErrors, {})
     })
 
-    it('rejects an unknown sort direction with a field error', () => {
+    it('silently drops an unknown sort direction (falls back, no error)', () => {
       const r = parseSummaryQuery({ sort: 'totalCents:sideways' })
-      assert.ok(r.fieldErrors.groupBy, `expected groupBy error; got ${JSON.stringify(r.fieldErrors)}`)
+      assert.deepStrictEqual(r.sort, [])
+      assert.deepStrictEqual(r.fieldErrors, {})
     })
 
     it('presence of sort flips hasFilterParams to true', () => {
       const r = parseSummaryQuery({ sort: 'totalCents:asc' })
       assert.strictEqual(r.hasFilterParams, true)
+    })
+  })
+})
+
+// ====================================
+// Task 4: filter-side tagId[] ULID drop + truncation, dimension-aware sort, silent invalid date drop
+// ====================================
+
+const VALID_ULID = '01ARZ3NDEKTSV4RRFFQ69G5FAV'
+const VALID_ULID_2 = '01BX5ZZKBKACTAV9WEVGEMMVS0'
+
+describe('parseExpenseListFilters — Task 4: ULID drop + cap truncation', () => {
+  it('silently drops non-ULID tagId values, keeping only syntactically valid ones', () => {
+    const r = parseExpenseListFilters({ tagId: [VALID_ULID, 'not-a-ulid', VALID_ULID_2] })
+    assert.deepStrictEqual(r.filters.tagIds, [VALID_ULID, VALID_ULID_2])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently drops lowercase ULID values (not silently uppercased)', () => {
+    const lower = VALID_ULID.toLowerCase()
+    const r = parseExpenseListFilters({ tagId: [lower, VALID_ULID_2] })
+    assert.deepStrictEqual(r.filters.tagIds, [VALID_ULID_2])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently drops all non-ULID tagId values without a field error', () => {
+    const r = parseExpenseListFilters({ tagId: ['bad', 'also-bad', 'short'] })
+    assert.deepStrictEqual(r.filters.tagIds, [])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('truncates tagId array to TAG_ID_RAW_CAP without erroring when cap is exceeded', () => {
+    const ids = Array.from({ length: TAG_ID_RAW_CAP + 5 }, () => VALID_ULID)
+    const r = parseExpenseListFilters({ tagId: ids })
+    assert.ok(r.filters.tagIds.length <= TAG_ID_RAW_CAP, `expected at most ${TAG_ID_RAW_CAP} tagIds; got ${r.filters.tagIds.length}`)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('does not produce a tags field error when raw tagId count exceeds cap', () => {
+    const ids = Array.from({ length: TAG_ID_RAW_CAP + 5 }, () => VALID_ULID)
+    const r = parseExpenseListFilters({ tagId: ids })
+    assert.strictEqual(r.fieldErrors.tags, undefined)
+  })
+
+  it('silently treats shape-correct but invalid calendar from date as absent (e.g. 2026-02-31)', () => {
+    const r = parseExpenseListFilters({ from: '2026-02-31' })
+    assert.strictEqual(r.filters.from, undefined)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently treats shape-correct but invalid calendar to date as absent (e.g. 2026-13-01)', () => {
+    const r = parseExpenseListFilters({ to: '2026-13-01' })
+    assert.strictEqual(r.filters.to, undefined)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently treats shape-correct but invalid month-zero date as absent (e.g. 2026-00-10)', () => {
+    const r = parseExpenseListFilters({ from: '2026-00-10' })
+    assert.strictEqual(r.filters.from, undefined)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+})
+
+describe('parseSummaryQuery — Task 4: ULID drop + cap truncation', () => {
+  it('silently drops non-ULID tagId values, keeping only syntactically valid ones', () => {
+    const r = parseSummaryQuery({ tagId: [VALID_ULID, 'not-a-ulid', VALID_ULID_2] })
+    assert.deepStrictEqual(r.tagIds, [VALID_ULID, VALID_ULID_2])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently drops lowercase ULID tagId values (not silently uppercased)', () => {
+    const lower = VALID_ULID.toLowerCase()
+    const r = parseSummaryQuery({ tagId: [lower, VALID_ULID_2] })
+    assert.deepStrictEqual(r.tagIds, [VALID_ULID_2])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently drops all non-ULID tagId values without a field error', () => {
+    const r = parseSummaryQuery({ tagId: ['bad', 'also-bad'] })
+    assert.deepStrictEqual(r.tagIds, [])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('truncates tagId array to TAG_ID_RAW_CAP without erroring when cap is exceeded', () => {
+    const ids = Array.from({ length: TAG_ID_RAW_CAP + 5 }, () => VALID_ULID)
+    const r = parseSummaryQuery({ tagId: ids })
+    assert.ok(r.tagIds.length <= TAG_ID_RAW_CAP, `expected at most ${TAG_ID_RAW_CAP} tagIds; got ${r.tagIds.length}`)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently treats shape-correct but invalid calendar from date as absent (e.g. 2026-02-31)', () => {
+    const r = parseSummaryQuery({ from: '2026-02-31' })
+    assert.strictEqual(r.from, undefined)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently treats shape-correct but invalid calendar to date as absent (e.g. 2026-13-01)', () => {
+    const r = parseSummaryQuery({ to: '2026-13-01' })
+    assert.strictEqual(r.to, undefined)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('silently treats shape-correct but invalid month-zero date as absent (e.g. 2026-00-10)', () => {
+    const r = parseSummaryQuery({ from: '2026-00-10' })
+    assert.strictEqual(r.from, undefined)
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+})
+
+describe('parseSummaryQuery — Task 4: dimension-aware sort allow-list', () => {
+  it('sort=tag with dimension=category falls back to default (no sort entry, no error)', () => {
+    const r = parseSummaryQuery({ dimension: 'category', sort: 'tag:asc' })
+    assert.deepStrictEqual(r.sort, [])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=tag with dimension=time falls back to default (no sort entry, no error)', () => {
+    const r = parseSummaryQuery({ dimension: 'time', sort: 'tag:asc' })
+    assert.deepStrictEqual(r.sort, [])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=category with dimension=tag falls back to default (no sort entry, no error)', () => {
+    const r = parseSummaryQuery({ dimension: 'tag', sort: 'category:asc' })
+    assert.deepStrictEqual(r.sort, [])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=category with dimension=time falls back to default (no sort entry, no error)', () => {
+    const r = parseSummaryQuery({ dimension: 'time', sort: 'category:asc' })
+    assert.deepStrictEqual(r.sort, [])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=tag is valid for dimension=tag', () => {
+    const r = parseSummaryQuery({ dimension: 'tag', sort: 'tag:asc' })
+    assert.deepStrictEqual(r.sort, [{ column: 'tag', direction: 'asc' }])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=tag is valid for dimension=category-tag', () => {
+    const r = parseSummaryQuery({ dimension: 'category-tag', sort: 'tag:desc' })
+    assert.deepStrictEqual(r.sort, [{ column: 'tag', direction: 'desc' }])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=category is valid for dimension=category', () => {
+    const r = parseSummaryQuery({ dimension: 'category', sort: 'category:asc' })
+    assert.deepStrictEqual(r.sort, [{ column: 'category', direction: 'asc' }])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=category is valid for dimension=category-tag', () => {
+    const r = parseSummaryQuery({ dimension: 'category-tag', sort: 'category:asc' })
+    assert.deepStrictEqual(r.sort, [{ column: 'category', direction: 'asc' }])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+
+  it('sort=count is valid for all dimensions', () => {
+    for (const dimension of ['time', 'category', 'tag', 'category-tag'] as const) {
+      const r = parseSummaryQuery({ dimension, sort: 'count:asc' })
+      assert.deepStrictEqual(r.sort, [{ column: 'count', direction: 'asc' }], `failed for dimension=${dimension}`)
+      assert.deepStrictEqual(r.fieldErrors, {}, `failed for dimension=${dimension}`)
+    }
+  })
+
+  it('sort=total is valid for all dimensions', () => {
+    for (const dimension of ['time', 'category', 'tag', 'category-tag'] as const) {
+      const r = parseSummaryQuery({ dimension, sort: 'total:desc' })
+      assert.deepStrictEqual(r.sort, [{ column: 'total', direction: 'desc' }], `failed for dimension=${dimension}`)
+      assert.deepStrictEqual(r.fieldErrors, {}, `failed for dimension=${dimension}`)
+    }
+  })
+
+  it('sort=timePeriod is valid for all dimensions', () => {
+    for (const dimension of ['time', 'category', 'tag', 'category-tag'] as const) {
+      const r = parseSummaryQuery({ dimension, sort: 'timePeriod:asc' })
+      assert.deepStrictEqual(r.sort, [{ column: 'timePeriod', direction: 'asc' }], `failed for dimension=${dimension}`)
+      assert.deepStrictEqual(r.fieldErrors, {}, `failed for dimension=${dimension}`)
+    }
+  })
+
+  it('unknown sort direction falls back (no sort entry, no error)', () => {
+    const r = parseSummaryQuery({ dimension: 'category', sort: 'count:sideways' })
+    assert.deepStrictEqual(r.sort, [])
+    assert.deepStrictEqual(r.fieldErrors, {})
+  })
+})
+
+// ====================================
+// parseTagInputs — Task 1a pure parser unit tests
+// ====================================
+
+const makeTag = (id: string, name: string): ExistingTag => ({ id, name })
+
+describe('parseTagInputs (Task 1a — pure parser)', () => {
+  describe('ULID syntactic validation', () => {
+    it('accepts a valid Crockford-base32 ULID', () => {
+      const r = parseTagInputs({ tagId: [VALID_ULID], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [VALID_ULID])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('excludes a lowercase ULID (rejected, not silently uppercased)', () => {
+      const lower = VALID_ULID.toLowerCase()
+      const r = parseTagInputs({ tagId: [lower], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('excludes a 25-char value (too short)', () => {
+      const r = parseTagInputs({ tagId: ['01ARZ3NDEKTSV4RRFFQ69G5FA'], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [])
+    })
+
+    it('excludes a 27-char value (too long)', () => {
+      const r = parseTagInputs({ tagId: ['01ARZ3NDEKTSV4RRFFQ69G5FAVX'], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [])
+    })
+
+    it('excludes a value with invalid Crockford chars (I, L, O, U)', () => {
+      const r = parseTagInputs({ tagId: ['IIIIIIIIIIIIIIIIIIIIIIIIII'], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [])
+    })
+
+    it('excludes an empty string id', () => {
+      const r = parseTagInputs({ tagId: [''], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [])
+    })
+
+    it('filters invalid ids while keeping valid ones', () => {
+      const r = parseTagInputs({ tagId: [VALID_ULID, 'bad-id', VALID_ULID_2], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [VALID_ULID, VALID_ULID_2])
+    })
+  })
+
+  describe('raw tagId count cap', () => {
+    it('does not error when exactly TAG_ID_RAW_CAP ids are submitted', () => {
+      const ids = Array.from({ length: TAG_ID_RAW_CAP }, () => VALID_ULID)
+      const r = parseTagInputs({ tagId: ids, newTags: '' }, [])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('errors when TAG_ID_RAW_CAP + 1 ids are submitted (even if dedupe yields one)', () => {
+      const ids = Array.from({ length: TAG_ID_RAW_CAP + 1 }, () => VALID_ULID)
+      const r = parseTagInputs({ tagId: ids, newTags: '' }, [])
+      assert.ok(r.fieldErrors.tags, `expected tags error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+  })
+
+  describe('deduplication after syntactic filtering', () => {
+    it('deduplicates repeated valid ids', () => {
+      const r = parseTagInputs({ tagId: [VALID_ULID, VALID_ULID, VALID_ULID_2], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [VALID_ULID, VALID_ULID_2])
+    })
+  })
+
+  describe('newTags parsing', () => {
+    it('splits on comma separator', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo,bar' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo', 'bar'])
+    })
+
+    it('splits on space separator', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo bar' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo', 'bar'])
+    })
+
+    it('splits on comma+space', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo, bar' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo', 'bar'])
+    })
+
+    it('splits on double comma', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo,,bar' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo', 'bar'])
+    })
+
+    it('splits on newline separator', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo\nbar' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo', 'bar'])
+    })
+
+    it('splits on comma+spaces with leading/trailing', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo,  bar , baz' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo', 'bar', 'baz'])
+    })
+
+    it('lowercases tokens', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'Foo Bar' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo', 'bar'])
+    })
+
+    it('drops empty tokens', () => {
+      const r = parseTagInputs({ tagId: [], newTags: '  ,  , ' }, [])
+      assert.deepStrictEqual(r.newTags, [])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('rejects a token failing the regex (invalid char)', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'valid,inv@lid' }, [])
+      assert.ok(r.fieldErrors.tags, `expected tags error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+
+    it('rejects a token that is 21 characters (over the 20-char limit)', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'a'.repeat(21) }, [])
+      assert.ok(r.fieldErrors.tags, `expected tags error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+
+    it('accepts a token of exactly 20 characters', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'a'.repeat(20) }, [])
+      assert.deepStrictEqual(r.fieldErrors, {})
+      assert.deepStrictEqual(r.newTags, ['a'.repeat(20)])
+    })
+
+    it('accepts a single character token', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'a' }, [])
+      assert.deepStrictEqual(r.newTags, ['a'])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('accepts tokens with hyphens and underscores', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo-bar_baz' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo-bar_baz'])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('deduplicates tokens case-insensitively', () => {
+      const r = parseTagInputs({ tagId: [], newTags: 'foo Foo FOO' }, [])
+      assert.deepStrictEqual(r.newTags, ['foo'])
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('errors when raw newTags string exceeds NEW_TAGS_RAW_LENGTH_CAP', () => {
+      const longInput = 'a,'.repeat(NEW_TAGS_RAW_LENGTH_CAP)
+      const r = parseTagInputs({ tagId: [], newTags: longInput }, [])
+      assert.ok(r.fieldErrors.tags, `expected tags error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+
+    it('preserves raw newTags text verbatim on validation error', () => {
+      const raw = 'valid,inv@lid'
+      const r = parseTagInputs({ tagId: [], newTags: raw }, [])
+      assert.ok(r.fieldErrors.tags)
+      assert.strictEqual(r.rawNewTagsPreserved, raw)
+    })
+
+    it('errors when post-split token count exceeds NEW_TAGS_TOKEN_COUNT_CAP', () => {
+      const tokens = Array.from({ length: NEW_TAGS_TOKEN_COUNT_CAP + 1 }, (_, i) => `tag${i}`)
+      const r = parseTagInputs({ tagId: [], newTags: tokens.join(',') }, [])
+      assert.ok(r.fieldErrors.tags, `expected tags error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+  })
+
+  describe('newTags collision with existing tag names', () => {
+    it('folds a newTags token matching an existing tag name into tagIds', () => {
+      const existing = [makeTag(VALID_ULID, 'food')]
+      const r = parseTagInputs({ tagId: [], newTags: 'food' }, existing)
+      assert.ok(r.tagIds.includes(VALID_ULID), `expected ${VALID_ULID} in tagIds; got ${JSON.stringify(r.tagIds)}`)
+      assert.deepStrictEqual(r.newTags, [])
+    })
+
+    it('matching is case-insensitive: typed "Food" matches existing "food"', () => {
+      const existing = [makeTag(VALID_ULID, 'food')]
+      const r = parseTagInputs({ tagId: [], newTags: 'Food' }, existing)
+      assert.ok(r.tagIds.includes(VALID_ULID))
+      assert.deepStrictEqual(r.newTags, [])
+    })
+
+    it('attaches existing tag exactly once even if also chip-selected', () => {
+      const existing = [makeTag(VALID_ULID, 'food')]
+      const r = parseTagInputs({ tagId: [VALID_ULID], newTags: 'food' }, existing)
+      assert.strictEqual(r.tagIds.filter((id: string) => id === VALID_ULID).length, 1)
+      assert.deepStrictEqual(r.newTags, [])
+    })
+
+    it('residual newTags contains only unresolved tokens', () => {
+      const existing = [makeTag(VALID_ULID, 'food')]
+      const r = parseTagInputs({ tagId: [], newTags: 'food,travel' }, existing)
+      assert.deepStrictEqual(r.newTags, ['travel'])
+      assert.ok(r.tagIds.includes(VALID_ULID))
+    })
+
+    it('replaces rawNewTagsPreserved with normalized residual on success', () => {
+      const existing = [makeTag(VALID_ULID, 'food')]
+      const r = parseTagInputs({ tagId: [], newTags: 'food,travel' }, existing)
+      assert.deepStrictEqual(r.fieldErrors, {})
+      assert.strictEqual(r.rawNewTagsPreserved, 'travel')
+    })
+  })
+
+  describe('lookupCandidateTagIds vs final tagIds', () => {
+    it('lookupCandidateTagIds contains only syntactically-valid ids before any DB lookup', () => {
+      const r = parseTagInputs({ tagId: [VALID_ULID, 'not-a-ulid', VALID_ULID_2], newTags: '' }, [])
+      assert.deepStrictEqual(r.lookupCandidateTagIds, [VALID_ULID, VALID_ULID_2])
+    })
+  })
+})
+
+// ====================================
+// parseCategoryInput — Task 1a categoryId parallel block
+// ====================================
+
+describe('parseCategoryInput (Task 1a — categoryId parallel block)', () => {
+  describe('categoryId syntactic validation', () => {
+    it('accepts a valid Crockford-base32 ULID for categoryId', () => {
+      const r = parseCategoryInput({ categoryId: VALID_ULID, newCategory: '' }, null)
+      assert.strictEqual(r.lookupCandidateCategoryId, VALID_ULID)
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('excludes a lowercase categoryId (not silently uppercased)', () => {
+      const lower = VALID_ULID.toLowerCase()
+      const r = parseCategoryInput({ categoryId: lower, newCategory: '' }, null)
+      assert.strictEqual(r.lookupCandidateCategoryId, undefined)
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('excludes a non-ULID categoryId', () => {
+      const r = parseCategoryInput({ categoryId: 'not-a-ulid', newCategory: '' }, null)
+      assert.strictEqual(r.lookupCandidateCategoryId, undefined)
+    })
+
+    it('treats absent categoryId as no lookup candidate', () => {
+      const r = parseCategoryInput({ categoryId: '', newCategory: '' }, null)
+      assert.strictEqual(r.lookupCandidateCategoryId, undefined)
+    })
+  })
+
+  describe('newCategory name validation', () => {
+    it('accepts a valid new-category name', () => {
+      const r = parseCategoryInput({ categoryId: '', newCategory: 'groceries' }, null)
+      assert.strictEqual(r.newCategory, 'groceries')
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('trims and lowercases the new-category name', () => {
+      const r = parseCategoryInput({ categoryId: '', newCategory: '  Groceries  ' }, null)
+      assert.strictEqual(r.newCategory, 'groceries')
+    })
+
+    it('rejects a name with invalid chars (per ^[a-z0-9_-]{1,20}$ after lowercase)', () => {
+      const r = parseCategoryInput({ categoryId: '', newCategory: 'inv@lid!' }, null)
+      assert.ok(r.fieldErrors.category, `expected category error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+
+    it('rejects a name that is 21 characters (over limit)', () => {
+      const r = parseCategoryInput({ categoryId: '', newCategory: 'a'.repeat(21) }, null)
+      assert.ok(r.fieldErrors.category, `expected category error; got ${JSON.stringify(r.fieldErrors)}`)
+    })
+
+    it('accepts a name of exactly 20 characters', () => {
+      const r = parseCategoryInput({ categoryId: '', newCategory: 'a'.repeat(20) }, null)
+      assert.deepStrictEqual(r.fieldErrors, {})
+      assert.strictEqual(r.newCategory, 'a'.repeat(20))
+    })
+
+    it('folds newCategory matching existing category name into categoryId', () => {
+      const existing: ExistingCategory = { id: VALID_ULID, name: 'food' }
+      const r = parseCategoryInput({ categoryId: '', newCategory: 'food' }, existing)
+      assert.strictEqual(r.resolvedCategoryId, VALID_ULID)
+      assert.strictEqual(r.newCategory, undefined)
+      assert.deepStrictEqual(r.fieldErrors, {})
+    })
+
+    it('fold is case-insensitive: "Food" matches existing "food"', () => {
+      const existing: ExistingCategory = { id: VALID_ULID, name: 'food' }
+      const r = parseCategoryInput({ categoryId: '', newCategory: 'Food' }, existing)
+      assert.strictEqual(r.resolvedCategoryId, VALID_ULID)
+      assert.strictEqual(r.newCategory, undefined)
+    })
+
+    it('treats empty newCategory as absent (no new-category entry)', () => {
+      const r = parseCategoryInput({ categoryId: '', newCategory: '  ' }, null)
+      assert.strictEqual(r.newCategory, undefined)
+      assert.deepStrictEqual(r.fieldErrors, {})
     })
   })
 })

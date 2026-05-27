@@ -32,6 +32,8 @@ export type ExpenseFormValues = {
   date?: string
   category?: string
   tags?: string
+  tagIds?: string[]
+  newTags?: string
   name?: string
   id?: string
   sourceId?: string

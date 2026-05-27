@@ -47,8 +47,11 @@ test.describe('Edit expense (no new items)', () => {
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('42.50')
       await expect(page.getByTestId('expense-form-date')).toHaveValue(todayEt())
       await expect(page.getByTestId('expense-form-category')).toHaveValue('food')
-      // Tags joined as alphabetized CSV.
-      await expect(page.getByTestId('expense-form-tags')).toHaveValue('dairy, groceries')
+      // Tags pre-selected as chip-checkboxes.
+      const dairyInput = page.getByTestId('tag-chip-dairy').locator('input[type="checkbox"]')
+      await expect(dairyInput).toBeChecked()
+      const groceriesInput = page.getByTestId('tag-chip-groceries').locator('input[type="checkbox"]')
+      await expect(groceriesInput).toBeChecked()
       await expect(page.getByTestId('expense-form-save')).toBeVisible()
     }),
   )
@@ -83,7 +86,7 @@ test.describe('Edit expense (no new items)', () => {
   )
 
   test(
-    'changing description and date saves both fields',
+    'changing description and date saves both fields (no tags on this expense)',
     testWithDatabase(async ({ page }) => {
       await seedExpenses([
         {

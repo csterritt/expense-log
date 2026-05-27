@@ -51,6 +51,13 @@ interface MergeTagInput {
 - Returns `{ id, name }` rows from `tag`, sorted case-insensitively by `lower(name) ASC` (consistent with the list-view tiebreak convention).
 - Used by the entry form on `/expenses` to populate the tag list.
 
+### `listTagsByIds(db, ids): Promise<Result<TagRow[], Error>>`
+
+- Public wrapper: `withRetry('listTagsByIds', () => listTagsByIdsActual(db, ids))`.
+- Looks up tags by id array. Unknown ids are silently omitted from the result.
+- An empty input array short-circuits to `Result.ok([])` without querying.
+- Used by confirmation handlers to resolve tag names from submitted `tagId` values.
+
 ### `createTag(db, name): Promise<Result<TagRow, Error>>`
 
 - Added in Issue 10. Public wrapper: `withRetry('createTag', () => createTagActual(db, name))`.

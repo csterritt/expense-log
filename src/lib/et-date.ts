@@ -93,12 +93,52 @@ export const monthKeyEt = (ymd: string): string => {
 }
 
 /**
+ * Returns the `Mmm YYYY` month label for a `YYYY-MM-DD` ET-anchored date
+ * string (e.g. `'Jan 2026'`).
+ */
+export const monthLabelEt = (ymd: string): string => {
+  const month = parsedMonth(ymd)
+  const year = ymd.slice(0, 4)
+  return `${MONTH_NAMES[month - 1]} ${year}`
+}
+
+/**
+ * Returns the numeric chronological key `year * 100 + monthIndex` (0-based)
+ * for a `YYYY-MM-DD` date, used to sort month rows across year boundaries.
+ */
+export const monthChronKeyEt = (ymd: string): number => {
+  const month = parsedMonth(ymd)
+  const year = parseInt(ymd.slice(0, 4), 10)
+  return year * 100 + (month - 1)
+}
+
+/**
  * Returns the calendar-quarter label `Mmm-Mmm` for a `YYYY-MM-DD` ET-anchored
  * date string (one of `'Jan-Mar'`, `'Apr-Jun'`, `'Jul-Sep'`, `'Oct-Dec'`).
  */
 export const quarterKeyEt = (ymd: string): string => {
   const month = parsedMonth(ymd)
   return QUARTER_LABELS[Math.ceil(month / 3) - 1]
+}
+
+/**
+ * Returns the `Mmm-Mmm YYYY` quarter label for a `YYYY-MM-DD` ET-anchored
+ * date string (e.g. `'Jan-Mar 2026'`).
+ */
+export const quarterLabelEt = (ymd: string): string => {
+  const month = parsedMonth(ymd)
+  const year = ymd.slice(0, 4)
+  return `${QUARTER_LABELS[Math.ceil(month / 3) - 1]} ${year}`
+}
+
+/**
+ * Returns the numeric chronological key `year * 10 + quarterIndex` (0-based)
+ * for a `YYYY-MM-DD` date, used to sort quarter rows across year boundaries.
+ */
+export const quarterChronKeyEt = (ymd: string): number => {
+  const month = parsedMonth(ymd)
+  const year = parseInt(ymd.slice(0, 4), 10)
+  return year * 10 + (Math.ceil(month / 3) - 1)
 }
 
 /**

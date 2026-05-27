@@ -18,12 +18,11 @@ End-to-end coverage for JavaScript-disabled fallback behavior on the expense ent
 
 ### All-existing values submit directly; new values route through confirmation
 
-- Asserts combobox dropdown and chip picker surface do not mount (JS off).
-- Asserts category and tags inputs remain plain text inputs.
-- Fills form with all-existing values (`'food'`, `'groceries'`) and submits.
+- Asserts combobox dropdown does not mount (JS off); category input remains a plain text input.
+- Toggles the `'groceries'` chip (native checkbox, works without JS) and fills the rest of the form with existing category `'food'`.
 - Asserts direct redirect to `/expenses` with no confirmation page.
 - Asserts expense row appears with category and tags.
-- Fills form with brand-new category `'rent'` and new tags `'utilities, monthly'` and submits.
+- Fills form with brand-new category `'rent'` and types `'utilities, monthly'` into `new-tags-input`.
 - Asserts confirmation page appears.
 - Confirms and asserts expense row appears with new category and tags.
 
