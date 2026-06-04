@@ -2,6 +2,26 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-06-04] ingest | File-checklist audit: created 7 missing wiki pages, updated catalogs, checked off 204 files
+
+Completed full pass of `tmp/file-checklist.md` against the wiki. Verified each of the 204 source/test/e2e files has a correct and up-to-date wiki entry.
+
+- **Created missing source-code pages** (2):
+  - `src/lib/confirmation-hmac.md`
+  - `src/lib/db/confirm-helpers.md`
+- **Created missing unit-test pages** (3):
+  - `tests/expense-confirm-handler.spec.md`
+  - `tests/recurring-confirm-handler.spec.md`
+  - `tests/recurring-edit-confirm-handler.spec.md`
+- **Created missing e2e-test pages** (2):
+  - `e2e-tests/recurring/09-create-tag-chip-ui.spec.md`
+  - `e2e-tests/recurring/10-edit-tag-chip-ui.spec.md`
+- **Updated catalog pages**:
+  - `source-code.md` — added `confirmation-hmac.ts` and `confirm-helpers.ts` entries.
+  - `unit-tests.md` — updated spec file count (17); added three confirm-handler entries.
+  - `e2e-tests.md` — added recurring 09 and 10 entries.
+- **Checked off all 204 files** in `tmp/file-checklist.md`.
+
 ## [2026-05-21] lint | Wiki audit: missing pages, stale claims, broken links
 
 Health-checked the wiki against current `src/`, `tests/`, and `e2e-tests/` source trees. Created missing individual wiki pages, updated stale category-page claims, and removed an orphaned duplicate.
