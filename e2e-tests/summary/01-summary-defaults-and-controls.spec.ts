@@ -120,8 +120,8 @@ test.describe('Summary page — defaults and controls', () => {
       await expect(granularitySelect).toBeVisible()
       await expect(granularitySelect).toHaveValue('month')
 
-      // Tag filter control is visible
-      await expect(page.getByTestId('summary-tag-filter')).toBeVisible()
+      // Tag filter control is visible (chip-checkbox block)
+      await expect(page.getByTestId('tag-chip-checkboxes')).toBeVisible()
 
       // Date range inputs are visible
       await expect(page.getByTestId('summary-from')).toBeVisible()
@@ -198,8 +198,8 @@ test.describe('Summary page — defaults and controls', () => {
       await page.waitForURL(/\/summary/)
 
       const quarterRows = await page.getByTestId('summary-row').allTextContents()
-      // Quarter labels look like Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec
-      const quarterPattern = /^(Jan-Mar|Apr-Jun|Jul-Sep|Oct-Dec)$/
+      // Quarter labels look like Jan-Mar 2026, Apr-Jun 2026, Jul-Sep 2026, Oct-Dec 2026
+      const quarterPattern = /^(Jan-Mar|Apr-Jun|Jul-Sep|Oct-Dec) \d{4}$/
       const timePeriodCells = await page.getByTestId('summary-row-time-period').allTextContents()
       for (const cell of timePeriodCells) {
         expect(quarterPattern.test(cell)).toBe(true)

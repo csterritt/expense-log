@@ -14,21 +14,17 @@ const signInAndGoToSummary = async (page: any, qs = '') => {
 }
 
 /**
- * Select a tag in the summary tag filter by its visible label text.
- * Returns the option value (tag id) that was selected.
+ * Click a tag chip in the summary tag filter by its visible label text.
+ * Returns the checkbox value (tag id) that was clicked.
  */
-const selectSummaryTag = async (page: any, tagName: string): Promise<string> => {
-  const select = page.getByTestId('summary-tag-filter')
-  const options = await select.locator('option').all()
-  let tagId = ''
-  for (const opt of options) {
-    const text = await opt.textContent()
-    if (text && text.trim().toLowerCase() === tagName.toLowerCase()) {
-      tagId = (await opt.getAttribute('value')) ?? ''
-    }
-  }
+const clickSummaryTagChip = async (page: any, tagName: string): Promise<string> => {
+  const chipBlock = page.getByTestId('tag-chip-checkboxes')
+  const chip = chipBlock.getByTestId(`tag-chip-${tagName}`)
+  await expect(chip).toBeVisible()
+  const checkbox = chip.locator('input[type="checkbox"]')
+  const tagId = (await checkbox.getAttribute('value')) ?? ''
   expect(tagId).not.toBe('')
-  await select.selectOption(tagId)
+  await chip.click()
   return tagId
 }
 
@@ -63,7 +59,7 @@ test.describe('Summary page — tag-AND filter and recurring participation', () 
       await signInAndGoToSummary(page, `?from=${YEAR}-01-01&to=${YEAR}-12-31`)
 
       // Pick the 'work' tag from the filter
-      const tagId = await selectSummaryTag(page, 'work')
+      const tagId = await clickSummaryTagChip(page, 'work')
       await page.getByTestId('summary-submit').click()
       await page.waitForURL(/\/summary/)
 
@@ -116,25 +112,13 @@ test.describe('Summary page — tag-AND filter and recurring participation', () 
 
       await signInAndGoToSummary(page, `?from=${YEAR}-01-01&to=${YEAR}-12-31`)
 
-      // Select both tags via the tag filter select (multi-select or two separate tagId params)
-      // First get both tag ids by navigating to pick them individually
-      const tagSelect = page.getByTestId('summary-tag-filter')
-      const options = await tagSelect.locator('option').all()
-      const tagIds: Record<string, string> = {}
-      for (const opt of options) {
-        const text = (await opt.textContent())?.trim().toLowerCase() ?? ''
-        const val = (await opt.getAttribute('value')) ?? ''
-        if (text === 'work' || text === 'personal') {
-          tagIds[text] = val
-        }
-      }
-      expect(tagIds['work']).toBeTruthy()
-      expect(tagIds['personal']).toBeTruthy()
+      // Click both work and personal chips
+      const workId = await clickSummaryTagChip(page, 'work')
+      const personalId = await clickSummaryTagChip(page, 'personal')
 
-      // Submit with both tagIds in the URL (AND semantics)
-      await page.goto(
-        `${BASE_URLS.SUMMARY}?from=${YEAR}-01-01&to=${YEAR}-12-31&tagId=${tagIds['work']}&tagId=${tagIds['personal']}`,
-      )
+      // Submit the form
+      await page.getByTestId('summary-submit').click()
+      await page.waitForURL(/\/summary/)
 
       // Only "Both tags" expense contributes; total = 3000 cents = $30.00
       const rows = page.getByTestId('summary-row')

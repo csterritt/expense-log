@@ -215,7 +215,14 @@ const summarizeActual = async (
       }
     }
 
-    const mutableRows = Array.from(groupMap.values())
+    /** Map public sort-column names (from the query parser) to internal row-property names. */
+const SORT_COLUMN_TO_PROP: Record<string, string> = {
+  category: 'categoryName',
+  tag: 'tagName',
+  total: 'totalCents',
+}
+
+const mutableRows = Array.from(groupMap.values())
 
     if (sort && sort.length > 0) {
       mutableRows.sort((a, b) => {
@@ -225,8 +232,9 @@ const summarizeActual = async (
             if (cmp !== 0) return s.direction === 'desc' ? -cmp : cmp
             continue
           }
-          const av = (a as unknown as Record<string, unknown>)[s.column]
-          const bv = (b as unknown as Record<string, unknown>)[s.column]
+          const prop = SORT_COLUMN_TO_PROP[s.column] ?? s.column
+          const av = (a as unknown as Record<string, unknown>)[prop]
+          const bv = (b as unknown as Record<string, unknown>)[prop]
           if (av === bv) continue
           const cmp =
             typeof av === 'number' && typeof bv === 'number'

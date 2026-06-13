@@ -23,6 +23,7 @@ import type { SummaryRow } from '../lib/db/summary-access'
 import { listTags } from '../lib/db/tag-access'
 import type { TagRow } from '../lib/db/tag-access'
 import { formatCents } from '../lib/money'
+import { TagChipCheckboxes } from '../components/tag-chip-checkboxes'
 
 // ---------- helpers ----------
 
@@ -35,9 +36,10 @@ const sortUrl = (current: SummaryQueryResult, column: string): string => {
   if (current.to) params.set('to', current.to)
   for (const id of current.tagIds) params.append('tagId', id)
 
-  // Toggle: if already sorted by this column asc → desc, desc or none → asc
+  // Toggle: default sort is chronological asc (no explicit sort param), so
+  // clicking a header first goes to desc; subsequent clicks toggle asc ↔ desc.
   const existing = current.sort.find((s) => s.column === column)
-  const direction = existing?.direction === 'asc' ? 'desc' : 'asc'
+  const direction = existing?.direction === 'desc' ? 'asc' : 'desc'
   params.set('sort', `${column}:${direction}`)
 
   const qs = params.toString()
@@ -46,13 +48,13 @@ const sortUrl = (current: SummaryQueryResult, column: string): string => {
 
 const SORT_INDICATOR: Record<'asc' | 'desc', string> = { asc: ' ▲', desc: ' ▼' }
 
-/** Map from short testid/display key to the full sort-param column name. */
+/** Map from short testid/display key to the sort-param column name used by the parser and summary-access. */
 const COLUMN_MAP: Record<string, string> = {
-  category: 'categoryName',
-  tag: 'tagName',
+  category: 'category',
+  tag: 'tag',
   timePeriod: 'timePeriod',
   count: 'count',
-  total: 'totalCents',
+  total: 'total',
 }
 
 // ---------- sub-components ----------
@@ -83,7 +85,8 @@ const ControlsForm = ({
   parsed: SummaryQueryResult
   tags: TagRow[]
 }) => {
-  const activeTagSet = new Set(parsed.tagIds)
+  const tagIdSet = new Set(tags.map((t) => t.id))
+  const activeTagSet = new Set(parsed.tagIds.filter((id) => tagIdSet.has(id)))
   return (
     <form method='get' action={PATHS.SUMMARY} className='mb-6'>
       <div className='card bg-base-200 p-4'>
@@ -174,19 +177,11 @@ const ControlsForm = ({
             <label className='label' for='summary-tag-filter'>
               <span className='label-text'>Tag filter (AND — all selected must match)</span>
             </label>
-            <select
-              id='summary-tag-filter'
-              name='tagId'
-              multiple
-              className='select select-bordered'
-              data-testid='summary-tag-filter'
-            >
-              {tags.map((t) => (
-                <option value={t.id} selected={activeTagSet.has(t.id)}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+            <TagChipCheckboxes
+              tags={tags}
+              selectedTagIds={activeTagSet}
+              allowNewTags={false}
+            />
           </div>
         )}
 
