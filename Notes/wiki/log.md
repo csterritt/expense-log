@@ -454,3 +454,18 @@ Updated wiki catalog pages to reflect recently added source and test files.
 - `source-code.md` — added `src/components/tag-chip-checkboxes.tsx` entry.
 - `unit-tests.md` — added `tests/tag-chip-checkboxes.spec.ts` entry; updated spec file count 13 → 14.
 - `e2e-tests.md` — added four new `expenses/` entries (18–21).
+
+## [2026-06-13] ingest | Wiki update: removed duplicates, created missing pages, updated changed files
+
+- **Removed 6 duplicate wiki pages** with extension suffixes (`.ts.md`/`.tsx.md`) in `src/routes/expenses/`:
+  - `expense-post-handler.ts.md`, `build-expenses.tsx.md`, `expense-get-handler.ts.md`, `expense-list-renderer.tsx.md`, `expense-form-helpers.ts.md`, `expense-confirm-post-handler.ts.md`
+- **Created 3 missing wiki pages** for new e2e test files:
+  - `e2e-tests/expenses/22-edit-tag-chip-ui.spec.md`
+  - `e2e-tests/expenses/23-list-filter-chip-unification.spec.md`
+  - `e2e-tests/interest-sign-up/04-page-navigation-buttons.spec.md`
+- **Updated wiki pages for changed source files**:
+  - `src/lib/db/expense-access.md` — added `recurringId` to `ExpenseRow`, documented recurring template helpers and materialization helpers
+  - `src/components/tag-chip-checkboxes.md` — fixed prop name `allTags` → `tags`, added `newTagsValue` prop
+  - `src/routes/expenses/expense-get-handler.md` — added tag ID resolution step in flow
+  - `src/routes/expenses/expense-list-renderer.md` — updated `renderFilterBar` to document `TagChipCheckboxes` component usage, added cross-reference
+  - `src/lib/expense-validators.md` — added `groupBy` to `FieldErrors` type

@@ -13,6 +13,7 @@ import type { TagRow } from '../../lib/db/tag-access'
 import type { ExpenseRow } from '../../lib/db/expense-access'
 import { formatCents } from '../../lib/money'
 import type { FieldErrors, ParsedExpenseListFilters } from '../../lib/expense-validators'
+import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
 import {
   renderExpenseForm,
   type ExpenseFormPayloads,
@@ -145,21 +146,11 @@ export const renderFilterBar = (
                 </label>
               </span>
             </div>
-            <div className='flex flex-wrap gap-2' data-testid='filter-tags'>
-              {tags.map((t) => (
-                <label className='label cursor-pointer gap-1'>
-                  <input
-                    type='checkbox'
-                    name='tagId'
-                    value={t.id}
-                    className='checkbox checkbox-sm'
-                    checked={activeTagIds.has(t.id)}
-                    data-testid={`filter-tag-${t.name}`}
-                  />
-                  <span className='label-text'>{t.name}</span>
-                </label>
-              ))}
-            </div>
+            <TagChipCheckboxes
+              tags={tags}
+              selectedTagIds={activeTagIds}
+              allowNewTags={false}
+            />
             {filterErrors.tags && (
               <p className='text-error text-sm mt-1' data-testid='filter-tags-error'>
                 {filterErrors.tags}

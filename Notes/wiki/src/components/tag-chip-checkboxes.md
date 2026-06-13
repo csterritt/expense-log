@@ -8,9 +8,10 @@ Shared React/JSX component that renders a set of tag chip-checkboxes for use in 
 
 ## Props
 
-- `allTags` — array of `TagRecord` objects to render as chips
+- `tags` — array of `Tag` objects (`{ id: string; name: string }`) to render as chips
 - `selectedTagIds` — `Set<string>` of ULID tag IDs that should be pre-checked
 - `allowNewTags` — boolean; when `true`, renders an adjacent `newTags` text input for entering comma-separated new tag names
+- `newTagsValue` — optional string (default `''`); current value of the new-tags text input, used for sticky values after validation errors
 
 ## Behavior
 

@@ -14,7 +14,7 @@ Renders the filter bar form with:
 - **Description** text input (`filter-description`)
 - **From/To** date inputs (`filter-from`, `filter-to`) with shared date-error display
 - **Category** dropdown (`filter-category`) with "All categories" option
-- **Tags** checkbox grid (`filter-tags`) with OR/AND mode radio buttons (`filter-tag-mode-or`, `filter-tag-mode-and`), only shown when tags exist
+- **Tags** rendered via the shared `TagChipCheckboxes` component (`tag-chip-checkboxes` testid) with OR/AND mode radio buttons (`filter-tag-mode-or`, `filter-tag-mode-and`), only shown when tags exist
 - **Filter** submit button and **Clear filters** link (shown only when any filter is active)
 
 ### `renderExpenseTable`
@@ -34,6 +34,7 @@ Renders the complete expenses page combining:
 ## Cross-references
 
 - [expense-form.md](expense-form.md) — `renderExpenseForm` and form types.
+- [../../components/tag-chip-checkboxes.md](../../components/tag-chip-checkboxes.md) — `TagChipCheckboxes` component used for filter bar tags.
 - [../../lib/money.md](../../lib/money.md) — `formatCents`.
 
 ---

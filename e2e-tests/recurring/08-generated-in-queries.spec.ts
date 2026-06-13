@@ -113,8 +113,8 @@ test.describe('Generated rows appear in search / filter / summary (Issue 14)', (
 
       // Use filter bar to find and filter by the 'work' tag
       await page.goto(`${BASE}/expenses?from=${YEAR}-01-01&to=${YEAR}-12-31`)
-      const workCheckbox = page.getByTestId('filter-tag-work')
-      const tagId = await workCheckbox.inputValue()
+      const workChip = page.getByTestId('expense-filter-bar').getByTestId('tag-chip-work')
+      const tagId = await workChip.locator('input').inputValue()
       expect(tagId).not.toBe('')
 
       await page.goto(

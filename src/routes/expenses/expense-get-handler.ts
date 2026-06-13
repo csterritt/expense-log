@@ -72,6 +72,10 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
       'Failed to load expenses. Please try again.',
     )
   }
+  const allTagIds = new Set(tagsResult.value.map((row) => row.id))
+  const resolvedTagIds = activeFilters.tagIds.filter((id) => allTagIds.has(id))
+  const resolvedFilters = { ...activeFilters, tagIds: resolvedTagIds }
+
   const payloads: ExpenseFormPayloads = {
     categories: categoriesResult.value.map((row) => ({ name: row.name })),
     tags: tagsResult.value.map((row) => ({ id: row.id, name: row.name })),
@@ -100,7 +104,7 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
         payloads,
         categoriesResult.value,
         tagsResult.value,
-        activeFilters,
+        resolvedFilters,
         filterErrors,
       ),
     ),

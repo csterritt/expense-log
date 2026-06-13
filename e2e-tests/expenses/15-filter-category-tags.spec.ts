@@ -20,6 +20,7 @@ const signInAndGoToExpenses = async (page: any) => {
 }
 
 test.describe('Expense filter bar — category and tag filters', () => {
+  const filterBar = (page: any) => page.getByTestId('expense-filter-bar')
   test(
     'category dropdown filters results to matching category',
     testWithDatabase(async ({ page }) => {
@@ -91,8 +92,8 @@ test.describe('Expense filter bar — category and tag filters', () => {
       await seedTags([{ name: 'work' }, { name: 'personal' }])
       await signInAndGoToExpenses(page)
 
-      await expect(page.getByTestId('filter-tag-work')).toBeVisible()
-      await expect(page.getByTestId('filter-tag-personal')).toBeVisible()
+      await expect(filterBar(page).getByTestId('tag-chip-work')).toBeVisible()
+      await expect(filterBar(page).getByTestId('tag-chip-personal')).toBeVisible()
     }),
   )
 
@@ -125,9 +126,9 @@ test.describe('Expense filter bar — category and tag filters', () => {
 
       await signInAndGoToExpenses(page)
 
-      await page.getByTestId('filter-tag-work').check()
-      await page.getByTestId('filter-tag-personal').check()
-      await page.getByTestId('filter-tag-mode-or').check()
+      await filterBar(page).getByTestId('tag-chip-work').click()
+      await filterBar(page).getByTestId('tag-chip-personal').click()
+      await filterBar(page).getByTestId('filter-tag-mode-or').check()
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
 
@@ -168,9 +169,9 @@ test.describe('Expense filter bar — category and tag filters', () => {
 
       await signInAndGoToExpenses(page)
 
-      await page.getByTestId('filter-tag-work').check()
-      await page.getByTestId('filter-tag-personal').check()
-      await page.getByTestId('filter-tag-mode-and').check()
+      await filterBar(page).getByTestId('tag-chip-work').click()
+      await filterBar(page).getByTestId('tag-chip-personal').click()
+      await filterBar(page).getByTestId('filter-tag-mode-and').check()
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
 
@@ -203,7 +204,7 @@ test.describe('Expense filter bar — category and tag filters', () => {
 
       await signInAndGoToExpenses(page)
 
-      await page.getByTestId('filter-tag-work').check()
+      await filterBar(page).getByTestId('tag-chip-work').click()
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
 
@@ -219,11 +220,11 @@ test.describe('Expense filter bar — category and tag filters', () => {
       await seedTags([{ name: 'work' }])
       await signInAndGoToExpenses(page)
 
-      await page.getByTestId('filter-tag-work').check()
+      await filterBar(page).getByTestId('tag-chip-work').click()
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
 
-      await expect(page.getByTestId('filter-tag-work')).toBeChecked()
+      await expect(filterBar(page).getByTestId('tag-chip-work')).toBeChecked()
     }),
   )
 })

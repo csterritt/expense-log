@@ -11,9 +11,10 @@ GET handler for the expenses list page (`/expenses`). Fetches expenses, categori
 1. Creates a DB client.
 2. Parses query parameters for filters: `description`, `from`, `to`, `categoryId`, `tagId` (array), `tagMode`.
 3. If no filter params are present, uses the default 2-month ET date range.
-4. Fetches expenses, categories, and tags in parallel (sequenced for error handling).
-5. Reads and clears any flash form state (for sticky values after validation errors or confirmation cancel).
-6. Renders the page via `renderExpenses`, which includes the entry form, filter bar, and expense table.
+4. Fetches expenses, categories, and tags.
+5. Resolves tag IDs against the database: filters out stale/unknown `tagId` values so the filter bar only shows chips for tags that still exist.
+6. Reads and clears any flash form state (for sticky values after validation errors or confirmation cancel).
+7. Renders the page via `renderExpenses`, which includes the entry form, filter bar, and expense table.
 
 ## Key functions
 

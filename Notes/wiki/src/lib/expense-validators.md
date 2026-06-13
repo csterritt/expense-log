@@ -27,7 +27,7 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 
 ## Types
 
-- `FieldErrors` — `{ description?, amount?, date?, category?, tags?, name?, id?, sourceId?, targetId?, recurrence?, anchorDate? }`. A missing key means that field passed validation. Issue 09 added the category-management slots; Issue 13 added `recurrence` and `anchorDate`.
+- `FieldErrors` — `{ description?, amount?, date?, category?, tags?, name?, id?, sourceId?, targetId?, groupBy?, recurrence?, anchorDate? }`. A missing key means that field passed validation. Issue 09 added the category-management slots; Issue 13 added `recurrence` and `anchorDate`; Issue 17 added `groupBy` for dimension/granularity/sort validation errors.
 - `RawExpenseCreate` — the four raw string fields read from the form body (`description`, `amount`, `date`, `category`).
 - `ParsedExpenseCreate` — `{ description, amountCents, date, category }` (note the `amountCents`, not `amount`; and `category` is the trimmed typed name, not an id).
 - `ExpenseCreateInput` — `InferOutput<typeof ExpenseCreateSchema>`, exported for completeness.

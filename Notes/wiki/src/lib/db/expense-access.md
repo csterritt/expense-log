@@ -20,8 +20,11 @@ interface ExpenseRow {
   categoryName: string
   amountCents: number
   tagNames: string[]
+  recurringId: string | null
 }
 ```
+
+`recurringId` is non-null when the expense was generated from a recurring template. The recurring badge (`↻`) is rendered in the list when this field is set.
 
 ### `ListExpenseFilters`
 
@@ -193,6 +196,68 @@ interface CreateManyAndExpenseInput {
 - Added in Issue 08. Public wrapper: `withRetry('deleteExpense', () => deleteExpenseActual(db, id))`.
 - Verifies the row exists, then issues `delete from expense where id = ?`. The `ON DELETE CASCADE` on `expenseTag` cleans up link rows automatically; referenced `category` and `tag` rows are left intact.
 - Returns a friendly `Result.err` for an unknown id.
+
+## Recurring template helpers
+
+### `RecurringRow`
+
+```ts
+interface RecurringRow {
+  id: string
+  description: string
+  amountCents: number
+  categoryId: string
+  categoryName: string
+  recurrence: string
+  anchorDate: string
+  tagIds: string[]
+  tagNames: string[]
+}
+```
+
+### `listRecurring(db): Promise<Result<RecurringRow[], Error>>`
+
+Lists all recurring templates sorted by description ascending (case-insensitive). Each row includes the joined category name and alphabetized tag names/ids.
+
+### `getRecurringById(db, id): Promise<Result<RecurringRow | null, Error>>`
+
+Looks up a single recurring template by id. Returns `Result.ok(null)` for unknown ids.
+
+### `createRecurringWithTags(db, input): Promise<Result<{ id }, Error>>`
+
+Creates a recurring template row plus its `recurringTag` links in a single batch. Duplicate tag ids are silently de-duplicated.
+
+### `createManyAndRecurring(db, input): Promise<Result<{ categoryId, recurringId, createdTagIds }, Error>>`
+
+Atomically creates zero-or-one new category, zero-or-more new tags, the recurring template row, and the `recurringTag` links — all in a single D1 batch. Names are lower-cased after trim. Exactly one of `newCategoryName` / `existingCategoryId` must be supplied.
+
+### `updateRecurringWithTags(db, input): Promise<Result<{ id }, Error>>`
+
+Updates an existing recurring template's mutable fields and replaces its `recurringTag` link set. Does NOT modify any `expense` rows previously generated from this template.
+
+### `updateManyAndRecurring(db, input): Promise<Result<{ id, categoryId, createdTagIds }, Error>>`
+
+Atomically creates zero-or-one new category, zero-or-more new tags, updates the existing recurring template row, and replaces its `recurringTag` link set — all in a single D1 batch. Does NOT modify generated expense rows.
+
+### `deleteRecurring(db, id): Promise<Result<void, Error>>`
+
+Deletes a recurring template by id. `ON DELETE CASCADE` on `recurringTag` cleans up tag links. `ON DELETE SET NULL` on `expense.recurringId` nullifies the provenance link on past generated expense rows without deleting them.
+
+## Materialization helpers (Issue 14)
+
+### `MaterializeRecurringResult`
+
+```ts
+interface MaterializeRecurringResult {
+  generated: number
+  skipped: number
+  failed: Array<{ recurringId: string; error: string }>
+}
+```
+
+### `materializeRecurring(db, today): Promise<Result<MaterializeRecurringResult, Error>>`
+
+Materializes all pending recurring expense rows across every active template. Loads all templates with `withRetry`, then for each template calls `materializeOneRecurring`. Per-template errors are collected into `failed` rather than propagated. Each occurrence is inserted as an `expense` row with `recurringId` and `occurrenceDate` set, plus corresponding `expenseTag` links. Unique-index violations on `(recurringId, occurrenceDate)` are treated as no-ops (counted as `skipped`).
 
 ## Cross-references
 

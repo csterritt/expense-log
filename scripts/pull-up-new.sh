@@ -19,12 +19,17 @@ fi
 
 last_dir=$(basename "$(pwd)")
 
-ssh chris@utmtwo "cd ${last_dir} && ../tar-new.sh /tmp/new-files.tar"
+ssh chris@utmtwo "cd ${last_dir} && scripts/tar-new.sh /tmp/new-files.tar"
 
 scp chris@utmtwo:/tmp/new-files.tar /tmp/new-files.tar
+scp chris@utmtwo:/tmp/deleted-files.txt /tmp/deleted-files.txt
 
 tar xvf /tmp/new-files.tar
 
-rm /tmp/new-files.tar
+while IFS= read -r file; do
+  [ -n "$file" ] && rm -f "$file"
+done < /tmp/deleted-files.txt
 
-ssh chris@utmtwo 'rm /tmp/new-files.tar'
+rm -f /tmp/new-files.tar /tmp/deleted-files.txt
+
+ssh chris@utmtwo 'rm -f /tmp/new-files.tar /tmp/deleted-files.txt'

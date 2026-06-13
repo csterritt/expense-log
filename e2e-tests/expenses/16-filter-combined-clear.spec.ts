@@ -212,7 +212,7 @@ test.describe('Expense filter bar — combined filters and Clear', () => {
       await signInAndGoToExpenses(page)
 
       await page.getByTestId('filter-description').fill('Lunch')
-      await page.getByTestId('filter-tag-work').check()
+      await page.getByTestId('expense-filter-bar').getByTestId('tag-chip-work').click()
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
 
