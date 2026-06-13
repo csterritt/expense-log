@@ -1,18 +1,19 @@
 # Public JS — Progressive-enhancement modules
 
 These vanilla-JS modules under `public/js/` progressively enhance the
-expenses entry form when JavaScript is enabled. They are loaded only on
-the entry-form page (`/expenses`) via `<script defer>` tags emitted by
-`src/routes/expenses/build-expenses.tsx`. With JS off, the page falls
+expenses entry form, edit forms, recurring forms, and list filter when
+JavaScript is enabled. They are loaded via `<script defer>` tags emitted
+by the route pages. With JS off, the pages fall
 back to plain `<input type="text">` controls and the no-JS server flow
 established in Issues 5 / 6.
 
 ## Activation hooks
 
-The server emits two opt-in attributes on the inputs:
+The server emits opt-in attributes on the inputs:
 
 - `data-category-combobox` on `<input name="category">`.
-- `data-tag-chip-picker` on `<input name="tags">`.
+- `data-tag-chip-checkboxes` on the tag chip-checkbox container (via `data-testid="tag-chip-checkboxes"`).
+- `data-tag-chip-picker` on `<input name="tags">` (legacy, replaced by chip-checkboxes in Issue 18).
 
 A module that finds zero matching elements is a no-op.
 
@@ -48,7 +49,27 @@ ArrowDown, Enter, Escape, Tab. ARIA: `role="combobox"` on the input,
 `category-combobox-dropdown`, `category-combobox-option-<slug>`,
 `category-combobox-create`.
 
-### `public/js/tag-chip-picker.js`
+### `public/js/tag-chip-checkboxes.js` (Issue 18)
+
+Progressive-enhancement for the shared `TagChipCheckboxes` component.
+Self-contained vanilla JS — no frameworks, no build step, no imports.
+
+Responsibilities:
+- Reflects `:checked` state via a class hook (`CHIP_CLASS_BASE` / `CHIP_CLASS_SELECTED`) for browsers that need it.
+- Optimistically renders typed `newTags` tokens as already-selected chip previews next to the existing chip block using `textContent` and `setAttribute` only — never `innerHTML`.
+
+Security contract:
+- `setAttribute` is restricted to the safe allow-list: `class`, `aria-label`, `data-*`.
+- User-controlled values reach the DOM only via `textContent` (and `aria-label`).
+- Optimistic chips are `<span>` elements (never `<input>`/`<button>`/`<select>`).
+- Init failures are swallowed and logged via `console.error`.
+- Native checkbox toggling and form submission work even when this script throws.
+
+The `CHIP_CLASS_BASE` and `CHIP_CLASS_SELECTED` constants are duplicated as named module-level constants in both `src/components/tag-chip-checkboxes.tsx` and `public/js/tag-chip-checkboxes.js` (not extracted into a shared file, since this project has no JS build step). A parity test in the component test file asserts these constants match verbatim.
+
+Loaded on the entry form, edit form, recurring create/edit forms, and list filter page. Idempotent on re-init.
+
+### `public/js/tag-chip-picker.js` (legacy, replaced in Issue 18)
 
 Mounts a chip picker per `data-tag-chip-picker` input. On init it
 parses the input's existing value with a local copy of the server's
@@ -71,10 +92,12 @@ inserted via `textContent` only (never `innerHTML`). Test surface:
 
 ## Progressive-enhancement guarantee
 
-With JavaScript disabled neither module mounts: the category and tags
-inputs remain plain `<input type="text">` controls, the form posts the
-exact same fields, and the Issue 5 / Issue 6 server flow (direct
-create when everything matches; consolidated `confirm-create-new` page
-when anything is new) handles the submission unchanged. The
-`08-no-js-fallback.spec.ts` Playwright spec proves this end-to-end by
-running the same flows in a `javaScriptEnabled: false` context.
+With JavaScript disabled none of the enhancement modules mount: the
+category and tag inputs remain plain `<input type="text">` controls,
+the tag checkboxes remain native server-rendered checkboxes, the form
+posts the exact same fields, and the Issue 5 / Issue 6 server flow
+(direct create when everything matches; consolidated
+`confirm-create-new` page when anything is new) handles the submission
+unchanged. The `08-no-js-fallback.spec.ts` and `21-entry-no-js-and-broken-js.spec.ts`
+Playwright specs prove this end-to-end by running the same flows in a
+`javaScriptEnabled: false` context and with a throwing JS module.

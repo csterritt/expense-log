@@ -1,5 +1,7 @@
 # confirm-helpers.ts
 
+**Source:** `src/lib/db/confirm-helpers.ts`
+
 Race-tolerant create-or-reuse helpers for the confirmation handlers, plus a shared resolution pipeline for tags and categories across all confirm flows.
 
 ## Overview
@@ -28,17 +30,26 @@ Discriminated union returned by `resolveConfirmTagsAndCategory`:
 - `ok: true` — contains `existingTagIds`, `newTagNames`, `rawNewTagsPreserved`, `existingCategoryId`, `newCategoryName`, `existingCategoryName`
 - `ok: false` with `kind`: `'tag-list-error' | 'tag-input-error' | 'category-lookup-error' | 'new-category-name-error'`
 
-### `resolveConfirmTagsAndCategory(db, tagIds, newTagsRaw, categoryName)`
+The `tag-input-error` branch includes `fieldErrors` and `rawNewTagsPreserved` for round-tripping through `redirectWithFormErrors`.
 
-Shared resolution pipeline for all three confirmation handlers (expense create, expense edit, recurring create/edit).
+### `resolveConfirmTagsAndCategory(db, tagIds, newTagsRaw, categoryName)` (Issue 18)
+
+Shared resolution pipeline for all three confirmation handlers (expense create/edit, recurring create/edit).
 
 Steps:
 1. Fetches the full tag list via `listTags`.
-2. Parses submitted `tagId[]` + `newTags` inputs via `parseTagInputs`.
+2. Parses submitted `tagId[]` + `newTags` inputs via `parseTagInputs` (Issue 18 tag-input validator).
 3. Looks up the submitted category name via `findCategoryByName`.
 4. When the category is new, validates it via `parseNewCategoryName`.
 
 Returns a discriminated union so callers can handle each failure branch and propagate errors to the correct redirect target without duplicating logic across handlers.
+
+## Consumers
+
+- `expense-confirm-post-handler.ts` — expense create confirmation.
+- `build-edit-expense.tsx` — expense edit confirmation (`POST /expenses/:id/confirm-edit-new`).
+- `build-create-recurring.tsx` — recurring create confirmation.
+- `build-edit-recurring.tsx` — recurring edit confirmation.
 
 ## Cross-references
 

@@ -30,11 +30,11 @@ A filter bar with:
 - **Dimension selector** — `time`, `category`, `tag`, `category-tag`.
 - **Granularity selector** — always visible; `month`, `quarter`, `year`.
 - **Date range** — optional `from` and `to` inputs.
-- **Tag checkboxes** — list of existing tags; selecting multiple applies AND semantics.
+- **Tag checkboxes** — rendered via the shared `TagChipCheckboxes` component (with `allowNewTags=false`), preserving the `name="tagId"` query-string contract. Selecting multiple tags applies AND semantics.
 - **Apply button** — submits the form via GET.
 - **Clear link** — navigates to `/summary` with no query parameters, resetting all filters to defaults.
 
-When tags are present, a note explains that selecting multiple tags filters to expenses carrying **all** selected tags.
+When tags are present, a note explains that selecting multiple tags filters to expenses carrying **all** selected tags. Stale `tagId` selections (syntactically valid but no longer existing) are silently omitted from the rendered chip block after existence resolution.
 
 ### ResultsTable
 
@@ -45,13 +45,14 @@ Column shape is dimension-driven:
 - `tag`: Tag | Time Period | Count | Total
 - `category-tag`: Category | Tag | Time Period | Count | Total
 
-**Time period labels:**
+**Time period labels (Issue 18 chronological sort):**
 
-- `month` granularity → `Mmm` (e.g. `Jan`)
-- `quarter` granularity → `Mmm-Mmm` (e.g. `Jan-Mar`)
-- `year` granularity → `YYYY` (e.g. `2026`)
+- `month` granularity → `Mmm YYYY` (e.g. `Jan 2026`), sorted by internal key `year * 100 + monthIndex`
+- `quarter` granularity → `Mmm-Mmm YYYY` (e.g. `Jan-Mar 2026`), sorted by internal key `year * 10 + quarterIndex`
+- `year` granularity → `YYYY` (e.g. `2026`), sorted numerically
+- Cross-year distinctness: `Dec 2025` and `Jan 2026` produce two separate rows; the internal key ensures `Dec 2025` sorts before `Jan 2026` in default ascending order. The rendered label is never compared for sorting.
 
-**Sortable headers:** every non-numeric column header is a link that toggles ascending/descending sort. Sort state is persisted in the query string via `sort=column:direction` params. Numeric `Count` and `Total` columns are also sortable. Default sort is group columns ascending (case-insensitive) then `timePeriod` ascending.
+**Sortable headers (Issue 18 dimension-aware allow-list):** every non-numeric column header is a link that toggles ascending/descending sort. Sort state is persisted in the query string via `sort=column:direction` params. Valid columns vary by dimension — the allow-list is `timePeriod`, `count`, `total` plus dimension-specific columns (`category` for category/category-tag dimensions, `tag` for tag/category-tag dimensions). Invalid sort columns and directions are silently ignored, falling back to default sort. Numeric `Count` and `Total` columns are also sortable. Default sort is group columns ascending (case-insensitive) then chronological time-period ascending (via internal sort key, never the rendered label).
 
 **Empty state:** when no rows match, the table is replaced with a message: "No expenses match the selected filters."
 

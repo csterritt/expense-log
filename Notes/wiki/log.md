@@ -2,6 +2,32 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2026-06-13] ingest | Issue 18: Tag chip-checkbox UI everywhere + chronological time-period sort on Summary
+
+Updated wiki documentation for the Issue 18 implementation across all affected source files and routes.
+
+**Wiki pages updated:**
+
+- `src/components/tag-chip-checkboxes.md` — documented empty-tag-list behavior (mutation-form hint vs. filter-form silent empty).
+- `src/lib/expense-validators.md` — added `parseTagInputs` (Issue 18 tag-input validator), `parseCategoryInput` (Issue 18 category-input validator), shared `parseFilterTagIds`/`parseDateRange` helpers, module-level constants (`TAG_ID_RAW_CAP`, `NEW_TAGS_RAW_LENGTH_CAP`, `NEW_TAGS_TOKEN_COUNT_CAP`, `ULID_REGEX`, `NEW_TAG_TOKEN_REGEX`); updated `parseSummaryQuery` with dimension-aware sort allow-list and silent date-drop behavior; expanded cross-references.
+- `src/lib/db/summary-access.md` — documented chronological sort with internal `(year, monthIndex|quarterIndex)` keys, year-bearing labels (`Mmm YYYY` / `Mmm-Mmm YYYY` / `YYYY`), cross-year distinctness, and default/explicit sort behavior.
+- `src/lib/et-date.md` — documented `monthLabelEt`, `monthChronKeyEt`, `quarterLabelEt`, `quarterChronKeyEt` with Issue 18 annotations.
+- `src/lib/db/confirm-helpers.md` — documented `resolveConfirmTagsAndCategory` shared pipeline with Issue 18 tag-input integration, `tag-input-error` branch with `rawNewTagsPreserved`, and consumer list.
+- `src/lib/confirmation-hmac.md` — no changes needed (already documented).
+- `src/routes/expenses/expense-confirm-post-handler.md` — updated flow to reference `resolveConfirmTagsAndCategory` from `confirm-helpers.ts`.
+- `src/routes/expenses/expense-post-handler.md` — already documented.
+- `src/routes/expenses/build-edit-expense.md` — already documented.
+- `src/routes/expenses/expense-list-renderer.md` — already documented.
+- `src/routes/build-summary.md` — updated ControlsForm (TagChipCheckboxes component, stale tagId omission), ResultsTable (chronological labels), sortable headers (dimension-aware allow-list, internal sort key).
+- `src/routes/recurring/build-create-recurring.md` — updated to reference `parseTagInputs`, `resolveConfirmTagsAndCategory`, `tag-chip-checkboxes.js`.
+- `src/routes/recurring/build-edit-recurring.md` — updated to reference `parseTagInputs`, `resolveConfirmTagsAndCategory`, `createOrReuseCategory`/`createOrReuseTag`.
+- `public-js/index.md` — added `tag-chip-checkboxes.js` module documentation (responsibilities, security contract, constant parity, loading behavior), updated progressive-enhancement guarantee.
+
+**Catalog pages updated:**
+
+- `source-code.md` — updated entries for `expense-validators.ts` (Issue 18 validators), `et-date.ts` (chronological keys/labels), `summary-access.ts` (chronological sort), `build-summary.tsx` (chronological labels, dimension-aware sort), `tag-chip-checkboxes.tsx` (empty-tag-list behavior), `expense-list-renderer.tsx` (TagChipCheckboxes in filter bar), `expense-confirm-post-handler.ts` (resolveConfirmTagsAndCategory), `expense-post-handler.ts` (parseTagInputs), `expense-form.tsx` (TagChipCheckboxes), `build-edit-expense.tsx` (parseTagInputs), `recurring-form.tsx` (TagChipCheckboxes), `build-create-recurring.tsx` (parseTagInputs, confirm-helpers), `build-edit-recurring.tsx` (parseTagInputs, confirm-helpers).
+- `index.md` — updated public-js description to include tag chip checkboxes.
+
 ## [2026-06-04] ingest | File-checklist audit: created 7 missing wiki pages, updated catalogs, checked off 204 files
 
 Completed full pass of `tmp/file-checklist.md` against the wiki. Verified each of the 204 source/test/e2e files has a correct and up-to-date wiki entry.

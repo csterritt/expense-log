@@ -94,19 +94,32 @@ Replaces the old `parseTagCsv` approach for the entry/edit forms. Handles both s
 ### `parseCategoryInput(raw: RawCategoryInput, existingCategory: ExistingCategory | null): ParsedCategoryInput`
 
 - Validates `categoryId` as a ULID (sets `lookupCandidateCategoryId`).
-- Validates `newCategory` as a lowercase token matching the new-tag regex.
-- If `newCategory` matches an existing category name, resolves to that category's ID.
+- Validates `newCategory` as a lowercase token matching the new-tag regex (`NEW_TAG_TOKEN_REGEX`).
+- If `newCategory` matches an existing category name (case-insensitive), resolves to that category's ID.
 - Returns `{ lookupCandidateCategoryId, resolvedCategoryId, newCategory, fieldErrors }`.
 
-### `parseSummaryQuery(raw: RawSummaryQuery): SummaryQueryResult` (Issue 17)
+### Shared query-string helpers (Issue 18)
 
-Re-introduced in Issue 17 with a new signature reflecting the updated summary design.
+- **`parseFilterTagIds(raw)`** — shared by `parseExpenseListFilters` and `parseSummaryQuery`. Silently drops non-ULID values and truncates to `TAG_ID_RAW_CAP` without producing a field error (page still renders).
+- **`parseDateRange(rawFrom, rawTo)`** — shared by both parsers. Invalid dates are silently treated as absent. Only `from > to` produces an error string. Does not mutate the caller's errors object.
+
+### Module-level constants (Issue 18)
+
+- `TAG_ID_RAW_CAP = 64` — maximum raw `tagId` count on mutation forms; exceeded count is a recoverable validation error.
+- `NEW_TAGS_RAW_LENGTH_CAP = 500` — maximum raw `newTags` text length; exceeded length is a recoverable validation error.
+- `NEW_TAGS_TOKEN_COUNT_CAP = 32` — maximum post-split `newTags` token count; exceeded count is a recoverable validation error.
+- `ULID_REGEX = /^[0-9A-HJKMNP-TV-Z]{26}$/` — Crockford-base32 ULID syntax check. Lowercase input is rejected as invalid format (not silently uppercased).
+- `NEW_TAG_TOKEN_REGEX = /^[a-z0-9_-]{1,20}$/` — valid new-tag token pattern.
+
+### `parseSummaryQuery(raw: RawSummaryQuery): SummaryQueryResult` (Issue 17, updated Issue 18)
+
+Re-introduced in Issue 17 with a new signature reflecting the updated summary design. Updated in Issue 18 with dimension-aware sort allow-list and improved date/tag handling.
 
 - **Dimensions:** `time`, `category`, `tag`, `category-tag`. Defaults to `category`. Unknown values report a `groupBy` field error and fall back to `category`.
 - **Granularities:** `month`, `quarter`, `year`. Defaults to `month`. Always present in the UI selector; unknown values report a `groupBy` field error and fall back to `month`.
-- **Date range:** `from` and `to` are independently optional. Both are validated with `isValidYmd` and checked for ordering (`from <= to`). `from > to` sets `fieldErrors.date`.
-- **Tag filter:** `tagId` can be a single string or array; deduplicated preserving first-appearance order. Tag filtering is **AND-semantic**: only expenses carrying **all** listed tags are included.
-- **Sort:** `sort` can be a single string or array of `column:direction` strings. Valid columns vary by dimension; unknown columns or directions report a `groupBy` field error.
+- **Date range:** `from` and `to` are independently optional. Both are validated with `isValidYmd`. Invalid dates (wrong shape or impossible calendar dates like `2026-02-31`) are silently dropped — no error produced. Only `from > to` (both valid) produces a `fieldErrors.date` error. Issue 18: non-`YYYY-MM-DD` and impossible-calendar dates are treated as absent.
+- **Tag filter:** `tagId` can be a single string or array; deduplicated preserving first-appearance order. Tag filtering is **AND-semantic**: only expenses carrying **all** listed tags are included. Issue 18: syntactically invalid `tagId` values are silently dropped and raw count is truncated to `TAG_ID_RAW_CAP` without error (page still renders).
+- **Sort (Issue 18 dimension-aware allow-list):** `sort` can be a single string or array of `column:direction` strings. Valid columns vary by dimension — the allow-list is built from `VALID_SORT_COLUMNS_ALWAYS` (`timePeriod`, `count`, `total`) plus `DIMENSION_EXTRA_SORT_COLUMNS` per dimension (`category` adds `category`; `tag` adds `tag`; `category-tag` adds `category` and `tag`). Invalid (out-of-dimension or unknown) sort columns and invalid directions are silently ignored (no error), falling back to the default sort.
 - `hasFilterParams` is `true` when any key is present, distinguishing first load from explicit filter submission.
 - Returns `{ hasFilterParams, dimension, granularity, from?, to?, tagIds: string[], sort: SummarySortEntry[], fieldErrors }`.
 
@@ -115,10 +128,15 @@ Re-introduced in Issue 17 with a new signature reflecting the updated summary de
 - [money.md](money.md) — `parseAmount` is the underlying numeric validator.
 - [et-date.md](et-date.md) — `isValidYmd` enforces calendar dates.
 - [form-state.md](form-state.md) — the POST handler hands `FieldErrors` to `redirectWithFormErrors` for round-tripping.
+- [../routes/expenses/expense-post-handler.md](../routes/expenses/expense-post-handler.md) — entry-form POST handler consuming `parseTagInputs`.
+- [../routes/expenses/build-edit-expense.md](../routes/expenses/build-edit-expense.md) — edit-form POST handler consuming `parseTagInputs`.
 - [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — entry-form POST handler that consumes `parseExpenseCreate`.
 - [../routes/build-categories.md](../routes/build-categories.md) — category-management POST handlers consuming Issue 09 validators.
 - [../routes/build-tags.md](../routes/build-tags.md) — tag-management POST handlers consuming Issue 10 validators.
 - [../routes/build-summary.md](../routes/build-summary.md) — summary page route that consumes `parseSummaryQuery`.
+- [../routes/recurring/build-create-recurring.md](../routes/recurring/build-create-recurring.md) — recurring create POST handler consuming `parseTagInputs`.
+- [../routes/recurring/build-edit-recurring.md](../routes/recurring/build-edit-recurring.md) — recurring edit POST handler consuming `parseTagInputs`.
+- [db/confirm-helpers.md](db/confirm-helpers.md) — `resolveConfirmTagsAndCategory` consumes `parseTagInputs`.
 - [../../tests/expense-validators.spec.md](../../tests/expense-validators.spec.md) — unit coverage.
 
 ---
