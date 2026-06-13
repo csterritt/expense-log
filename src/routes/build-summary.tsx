@@ -27,8 +27,8 @@ import { TagChipCheckboxes } from '../components/tag-chip-checkboxes'
 
 // ---------- helpers ----------
 
-/** Build a URL to /summary preserving current params but overriding `sort`. */
-const sortUrl = (current: SummaryQueryResult, column: string): string => {
+/** Serialize the parsed summary query state into a URL, optionally toggling sort for `column`. */
+const summaryUrl = (current: SummaryQueryResult, overrideSort?: string): string => {
   const params = new URLSearchParams()
   if (current.dimension !== 'category') params.set('dimension', current.dimension)
   if (current.granularity !== 'month') params.set('granularity', current.granularity)
@@ -36,26 +36,17 @@ const sortUrl = (current: SummaryQueryResult, column: string): string => {
   if (current.to) params.set('to', current.to)
   for (const id of current.tagIds) params.append('tagId', id)
 
-  // Toggle: default sort is chronological asc (no explicit sort param), so
-  // clicking a header first goes to desc; subsequent clicks toggle asc ↔ desc.
-  const existing = current.sort.find((s) => s.column === column)
-  const direction = existing?.direction === 'desc' ? 'asc' : 'desc'
-  params.set('sort', `${column}:${direction}`)
+  if (overrideSort) {
+    const existing = current.sort.find((s) => s.column === overrideSort)
+    const direction = existing?.direction === 'desc' ? 'asc' : 'desc'
+    params.set('sort', `${overrideSort}:${direction}`)
+  }
 
   const qs = params.toString()
   return `${PATHS.SUMMARY}${qs ? `?${qs}` : ''}`
 }
 
 const SORT_INDICATOR: Record<'asc' | 'desc', string> = { asc: ' ▲', desc: ' ▼' }
-
-/** Map from short testid/display key to the sort-param column name used by the parser and summary-access. */
-const COLUMN_MAP: Record<string, string> = {
-  category: 'category',
-  tag: 'tag',
-  timePeriod: 'timePeriod',
-  count: 'count',
-  total: 'total',
-}
 
 // ---------- sub-components ----------
 
@@ -68,10 +59,9 @@ const SortLink = ({
   column: string
   label: string
 }) => {
-  const fullColumn = COLUMN_MAP[column] ?? column
-  const dir = parsed.sort.find((s) => s.column === fullColumn)?.direction
+  const dir = parsed.sort.find((s) => s.column === column)?.direction
   return (
-    <a href={sortUrl(parsed, fullColumn)} data-testid={`summary-sort-${column}`}>
+    <a href={summaryUrl(parsed, column)} data-testid={`summary-sort-${column}`}>
       {label}
       {dir ? SORT_INDICATOR[dir] : ''}
     </a>

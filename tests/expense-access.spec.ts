@@ -6,7 +6,7 @@
 // Playwright e2e suite because no in-memory D1 / SQLite test harness was
 // established in `tests/`. Issue 07 task 2 mirrors that decision: the
 // behavior of `listTags` is verified end-to-end via the entry-form's
-// embedded `tags-data` payload and the tag-chip-picker e2e spec
+// embedded `tags-data` payload and the tag-chip-checkbox e2e spec
 // (`e2e-tests/expenses/07-tag-chip-picker-js.spec.ts`).
 //
 // Issue 08 (edit + delete expense) adds `getExpenseById`,

@@ -957,38 +957,6 @@ export const parseExpenseListFilters = (raw: RawExpenseListFilters): ExpenseList
   }
 }
 
-// ---------- Tag CSV (Issue 6) ----------
-
-/**
- * Parse a comma-separated tag list. Splits on `,`, trims each entry, drops
- * empty-after-trim entries, lower-cases the survivors, and de-duplicates
- * silently (preserving first-appearance order). Enforces `length <=
- * tagNameMax` on every kept name. Returns the normalized list (possibly
- * empty) on success, or a single user-facing error string suitable to place
- * under the entry-form `tags` field on failure.
- */
-export const parseTagCsv = (input: string): Result<string[], string> => {
-  const raw = typeof input === 'string' ? input : ''
-  const seen = new Set<string>()
-  const result: string[] = []
-  for (const piece of raw.split(',')) {
-    const trimmed = piece.trim()
-    if (trimmed.length === 0) {
-      continue
-    }
-    if (trimmed.length > tagNameMax) {
-      return Result.err(`Tag names must be at most ${tagNameMax} characters.`)
-    }
-    const lowered = trimmed.toLowerCase()
-    if (seen.has(lowered)) {
-      continue
-    }
-    seen.add(lowered)
-    result.push(lowered)
-  }
-  return Result.ok(result)
-}
-
 // ---------- Recurring template validators (Issue 13) ----------
 
 /**
