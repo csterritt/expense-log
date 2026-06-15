@@ -1,284 +1,183 @@
-# Code Review — expense-log (Tag Chip-Checkboxes & Sort Fix)
+# Code Review — expense-log (Full Codebase)
 
-**Review date:** 2026-06-04  
-**Scope:** `src/`, `tests/`, `e2e-tests/`, `public/js/` — focusing on the tag chip-checkbox UI, chronological summary sort, and confirmation-handler hardening introduced in Tasks 10–33.
+## Critical Issues
 
----
+### C1. `Math.random()` used for security-sensitive token generation
+**File:** `src/lib/generate-code.ts:15`
+`Math.random()` is not cryptographically secure. An attacker who can observe a few tokens can predict future ones. Combined with the 6-digit code space (~900K values), this is trivially brute-forceable.
 
-## 1. Security Vulnerabilities & Data Validation
+**Fix:** Use `crypto.getRandomValues()` and increase entropy (e.g., 8+ alphanumeric characters).
 
-### CRITICAL: Missing HMAC Tamper Protection on Confirmation Flow
+### C6. `createTestDb` duplicated 7+ times across test files
+**Files:** `tests/expense-access.spec.ts`, `tests/expense-confirm-handler.spec.ts`, `tests/recurring-confirm-handler.spec.ts`, `tests/recurring-edit-confirm-handler.spec.ts`, `tests/summary-access.spec.ts`
+The same ~40-line in-memory SQLite setup is copy-pasted. Schema drift in one copy won't be caught.
 
-`@/Users/chris/hacks/expenses/expense-log/src/routes/expenses/expense-confirm-post-handler.ts:27-106`
+**Fix:** Extract to `tests/helpers/test-db.ts`.
 
-The confirmation handler re-validates form fields but **does not verify an HMAC signature** over the hidden round-trip payload before processing. Task 22 / Task 23 explicitly require HMAC verification *before* revalidation to detect tampered hidden inputs (modified amount, injected `tagId`, swapped `categoryId`, etc.).
+### C7. Test framework inconsistency: `node:test` vs `bun:test`
+**Files:** `tests/et-date.spec.ts`, `tests/money.spec.ts`, `tests/url-validation.spec.ts` use `node:test`; all others use `bun:test`. Different test runners have different APIs (mock APIs, `beforeEach` behavior).
 
-The referenced `src/lib/confirmation-hmac.ts` module is imported in tests but **does not exist in the codebase**. Without it, an attacker can mutate any hidden confirmation field and the server will silently accept it after revalidation.
-
-**Recommendation:** Implement `confirmation-hmac.ts` with a Worker-secret signing key, sign the canonical payload on the initial POST, and verify the signature at the top of `handleExpensesConfirmPost` (and recurring equivalents). Fail closed if the secret is absent.
-
-### Category Name Validation Regex Reuse
-
-`@/Users/chris/hacks/expenses/expense-log/src/lib/expense-validators.ts:779`
-
-`parseCategoryInput` reuses `NEW_TAG_TOKEN_REGEX` (`^[a-z0-9_-]{1,20}$`) to validate a new category name. While the character set happens to be the same today, the constant name communicates "tag token", not "category name". A future refactor that widens category names could inadvertently widen tag names or vice versa.
-
-**Recommendation:** Introduce a shared `NAME_TOKEN_REGEX` constant with a comment explaining both tags and categories share the same rule, or create separate named constants.
-
-### XSS: `safeJsonForScript` Is Regex-Based
-
-`@/Users/chris/hacks/expenses/expense-log/src/routes/expenses/expense-form.tsx:58-59`
-
-`safeJsonForScript` uses regex replacement to escape `<`, `>`, and `&`. This is generally adequate for JSON-in-script contexts, but a purpose-built serializer (e.g. `serialize-javascript` or a small explicit escaper) is more robust. The current implementation misses some edge cases like `\u2028` / `\u2029` line terminators that can break JavaScript string literals.
-
-**Recommendation:** Add `\u2028` and `\u2029` escapes, or switch to a well-tested JSON-for-script serializer.
-
-### Client-Side `className` String Manipulation Is Fragile
-
-`@/Users/chris/hacks/expenses/expense-log/public/js/tag-chip-checkboxes.js:51-66`
-
-`reflectCheckedState` does raw string splitting/filtering/joining on `label.className`. This is fragile:
-- Multiple spaces, tabs, or newline-separated classes will not be handled correctly by a simple `split(' ')`.
-- `className.includes('badge-outline')` can match unintended classes (e.g. `my-badge-outline`).
-
-**Recommendation:** Use `label.classList.contains(...)`, `classList.add(...)`, and `classList.remove(...)` for all class manipulation.
+**Fix:** Standardize all unit tests on `bun:test`.
 
 ---
 
-## 2. Logic Correctness & Edge Cases
+## Major Issues
 
-### `parseNewCategoryName` Does Not Lowercase, But `parseCategoryManagementName` Does
+### M1. `withRetry` retries all `Result.err` business-logic errors
+**File:** `src/lib/db-helpers.ts:14-16`
+Deterministic errors like "Category not found" or "Name already exists" are retried up to 5 times, wasting D1 request quota and adding latency.
 
-`@/Users/chris/hacks/expenses/expense-log/src/lib/expense-validators.ts:309-316` vs `@/Users/chris/hacks/expenses/expense-log/src/lib/expense-validators.ts:330-337`
+**Fix:** Only retry thrown exceptions (transient DB errors), not `Result.err` values. Or add a `retryable` flag to the Result error type.
 
-`parseNewCategoryName` returns the trimmed raw value (preserving case). `parseCategoryManagementName` (used by `parseCategoryCreate` / `parseCategoryRename`) returns a lowercased value. The caller in `expense-post-handler.ts:133` manually lowercases, but this split responsibility is a bug waiting to happen.
+### M2. Unsafe `as unknown` casts bypass type safety
+**File:** `src/index.ts:82,111`
+`(env as unknown as Record<string, string | undefined>)` and `(env as unknown as Bindings)` bypass TypeScript's type checking. Misspelled var names won't be caught.
 
-**Recommendation:** Make `parseNewCategoryName` call `parseCategoryManagementName` directly so normalization happens in one place.
+**Fix:** Access through typed `env` directly.
 
-### `createOrReuseTag` / `createOrReuseCategory` Race Window
+### M3. Duplicate global `Bindings` interface conflicts with local one
+**File:** `src/types.d.ts:12-17` vs `src/local-types.ts:28-50`
+Two `Bindings` interfaces are declared. TypeScript merges them, but the intent is unclear. The local `Bindings` has `PROJECT_DB: D1Database` plus all optional fields, while the ambient one only has `PROJECT_DB`. The `Session: Maybe<SignInSession>` field on Bindings is architecturally wrong (env bindings are static strings, not session objects).
 
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db/confirm-helpers.ts:48-96`
+**Fix:** Remove the duplicate; consolidate to a single authoritative type.
 
-Both helpers SELECT → then INSERT. A concurrent writer can slip between the two, causing the INSERT to fail and fall into the catch block. The catch block *does* retry the lookup, but this is optimistic. The defense-in-depth (DB unique index) is present, which is good, but the window exists.
+### M4. LIKE wildcard injection in description search
+**File:** `src/lib/db/expense-access.ts:141`
+`like lower(${'%' + descTrimmed + '%'})` doesn't escape `%` or `_` in user input. Searching for `"100%"` matches `"1000"`, `"1001"`, etc.
 
-**Recommendation:** Use `INSERT ... ON CONFLICT DO NOTHING` (or the SQLite/D1 equivalent) and then SELECT unconditionally, collapsing the race window to a single statement.
+**Fix:** Escape `%` → `%%` and `_` → `/_` before interpolation.
 
-### `filterSyntacticUlids` Is Missing a Cap
+### M6. Production email `fetch` doesn't check `response.ok`
+**File:** `src/lib/email-service.ts:107-121`
+A 4xx/5xx from the email API silently returns success — the caller believes the email was sent.
 
-`@/Users/chris/hacks/expenses/expense-log/src/lib/expense-validators.ts:652-662`
+**Fix:** Add `if (!response.ok) throw new Error(...)` after `fetch`.
 
-`filterSyntacticUlids` deduplicates but does not enforce `TAG_ID_RAW_CAP`. The cap is enforced upstream in `parseTagInputs` and `parseFilterTagIds`, which is correct for current callers, but the helper name implies it handles all syntactic concerns. A future caller might forget the cap.
+### M8. Session middleware fails open on errors
+**File:** `src/routes/auth/better-auth-handler.ts:68-74`
+`setupBetterAuthMiddleware` catches all errors from `auth.api.getSession` and sets user/session to null. Any session validation error silently fails open — the request continues without auth context.
 
-**Recommendation:** Either rename the helper to `dedupeValidUlids` (making the omission explicit) or add the cap as an optional parameter.
+**Fix:** At minimum, log the error. Consider re-throwing for critical paths.
 
-### `parseAmount` Accepts Leading Zeroes and Very Large Numbers
+### M10. Missing imports in `build-create-recurring.tsx`
+**File:** `src/routes/recurring/build-create-recurring.tsx:99,198`
+`listTags` and `findCategoryByName` are called but never imported. This will crash at runtime when creating a new recurring template.
 
-`@/Users/chris/hacks/expenses/expense-log/src/lib/money.ts:65-98`
+**Fix:** Add the missing imports from `tag-access` and `category-access`.
 
-`parseAmount` accepts `0001234.56` and extremely large numbers (e.g. `999999999999.99`). There is no upper bound on the amount. `Number.isFinite(cents)` is checked, but `parseInt` on a huge string can overflow `Number.MAX_SAFE_INTEGER` before that check.
+### M11. JSX `for` attribute instead of `htmlFor`
+**Files:** `src/routes/expenses/expense-list-renderer.tsx:53,68,81,103`, `src/routes/build-summary.tsx:85,110,132,146`
+`<label for='...'>` should be `<label htmlFor='...'>` in JSX. Causes browser warnings and may not bind labels correctly.
 
-**Recommendation:** Add a reasonable upper bound (e.g. 10^12 cents = $10 billion) and validate the whole string length before `parseInt`.
+**Fix:** Replace `for` with `htmlFor` in all JSX files.
 
-### `tag-chip-checkboxes.js` `initContainer` May Miss Chips in Unwrapped DOM
+### M13. Error message truncation in password change
+**File:** `src/routes/profile/handle-change-password.ts:50-57`
+Finds the first comma in the error message and truncates everything after it. If the first error message itself contains a comma, the user gets a truncated message.
 
-`@/Users/chris/hacks/expenses/expense-log/public/js/tag-chip-checkboxes.js:142-175`
+**Fix:** Use the structured error object from the validator.
 
-`init` uses `el.closest('div[class]') ?? el.parentElement` to find a container. If the chip block is nested deeper than one level inside a `div[class]`, `closest` will still find it, but if the markup changes to use a `<section>` or `<fieldset>` without a class, `parentElement` might group unrelated blocks together. This is a minor robustness concern.
+### M14. `verifyElementExists` anti-pattern loses diagnostic context
+**File:** `e2e-tests/support/page-verifiers.ts:5-6`
+Swallowing errors and returning booleans loses all context about *what* element was missing. Every failure shows "expected true, got false."
 
-**Recommendation:** Add a dedicated `data-chip-container` attribute to the parent wrapper and select on that.
+**Fix:** Use Playwright's `expect(element).toBeVisible()` directly.
 
----
+### M15. `sign-up-utils.spec.ts` and `db-access-retry.spec.ts` test local copies
+**Files:** `tests/sign-up-utils.spec.ts:21-24`, `tests/db-access-retry.spec.ts:16-32`
+These tests define local copies of production logic instead of importing the actual functions. If the production implementation diverges, these tests won't catch it.
 
-## 3. Code Quality & Best Practice Violations
+**Fix:** Import the real functions from the production module.
 
-### Redundant Error Checks in Merge/Rename Validators
+### M18. `/status` endpoint fetches full table contents to count rows
+**File:** `src/routes/test/database.ts`
+Should use `SELECT count(*)` instead of fetching all rows.
 
-`@/Users/chris/hacks/expenses/expense-log/src/lib/expense-validators.ts:373-392` (and similar in `parseTagRename`, `parseCategoryMergeConfirm`, `parseTagMergeConfirm`)
+**Fix:** Rewrite as a count query.
 
-```ts
-if (Object.keys(errors).length > 0) {
-  return Result.err(errors)
-}
-if (id.isErr || name.isErr) {
-  return Result.err(errors)
-}
-```
+### M19. `db-access-retry.spec.ts` tests a standalone copy of `withRetry`
+**File:** `tests/db-access-retry.spec.ts:16-32`
+The `withRetry` is defined locally in the test file — these tests verify the test helper, not the real module.
 
-The second `if` is dead code: if any parsed field is `Err`, `errors` already has an entry, so the first `if` already returned.
+**Fix:** Import the real `withRetry` from the production module.
 
-**Recommendation:** Remove the redundant second check in all four validators.
+### M20. Non-null assertions without proper narrowing
+**Files:** `src/routes/expenses/expense-post-handler.ts:108`, `src/routes/expenses/build-edit-expense.tsx:319`
+`lookup.value!.id` — relies on reasoning about boolean logic. A future refactor could break the invariant.
 
-### Duplicated `readRawBody` Across Route Modules
+**Fix:** Use explicit narrowing with an `else` branch.
 
-`@/Users/chris/hacks/expenses/expense-log/src/routes/expenses/expense-form-helpers.ts:31-49`  
-`@/Users/chris/hacks/expenses/expense-log/src/routes/recurring/build-create-recurring.tsx:66-83`  
-`@/Users/chris/hacks/expenses/expense-log/src/routes/expenses/build-edit-expense.tsx:62-78`
+### M21. Error redirects go to `PATHS.AUTH.SIGN_IN` instead of relevant pages
+**Files:** `src/routes/expenses/expense-get-handler.ts:53-73`, `src/routes/build-summary.tsx:311,314`
+On DB errors, the user is redirected to the sign-in page despite already being signed in. Confusing UX.
 
-The form body parsing logic (including `tagId` array coercion) is copy-pasted in at least three places. Per project rules: "prefer iteration and modularization over code duplication".
+**Fix:** Redirect to the page the user was on with the error message.
 
-**Recommendation:** Extract a shared `readTagInputsFromBody(body: Record<string, unknown>): { tagId: string[]; ... }` helper.
+### M22. `mergeTagActual` has 6 sequential queries before the batch
+**File:** `src/lib/db/tag-access.ts:235-339`
+A lot of DB work for a single merge operation.
 
-### Duplicated `safeJsonForScript`
+**Fix:** Combine queries where possible (e.g., fetch source and target rows in a single query).
 
-`@/Users/chris/hacks/expenses/expense-log/src/routes/expenses/expense-form.tsx:58-59`  
-`@/Users/chris/hacks/expenses/expense-log/src/routes/recurring/recurring-form.tsx:55-56`
+### M24. `db` context variable type inconsistency
+**File:** `src/types.d.ts:22-29` vs `src/local-types.ts:55`
+`ContextVariableMap` declares `db: DrizzleD1Database<typeof schema>`, but `DrizzleClient` is derived from `createDbClient` return type. If these differ, runtime type conflicts occur.
 
-Identical helper defined in two form renderer files.
-
-**Recommendation:** Move to a shared `src/lib/html-utils.ts` module.
-
-### `as never` Type Assertions for Drizzle Batch
-
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db/expense-access.ts:356` (and many similar lines)
-
-`await db.batch(statements as never)` bypasses TypeScript's type checker entirely. If Drizzle's API changes or a statement is mis-typed, this will fail at runtime with no compile-time warning.
-
-**Recommendation:** Define a proper typed wrapper for `db.batch` or cast to the known Drizzle batch type rather than `never`.
-
-### `withRetry` Logs to `console.log`
-
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db-helpers.ts:22`
-
-`console.log` is used for operational errors. This goes to stdout, lacks severity levels, and can't be suppressed or redirected in production.
-
-**Recommendation:** Use `console.error` at minimum, or introduce a minimal structured logger.
-
----
-
-## 4. Performance & Resource Usage
-
-### In-Memory Summary Aggregation
-
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db/summary-access.ts:182-216`
-
-`summarizeActual` fetches all matching expense rows into memory, then aggregates in JavaScript. For large date ranges this could be thousands of rows. The current dataset is small, but this pattern doesn't scale.
-
-**Mitigation:** The project scope is a personal expense tracker; this is acceptable for now. Document the O(n) memory characteristic in the module JSDoc so a future maintainer knows when to move aggregation to SQL.
-
-### Tag AND Filter Subquery Is Executed Twice
-
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db/expense-access.ts:155-166`  
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db/summary-access.ts:78-91`
-
-`resolveTagAndIds` (in summary-access) and the inline AND logic (in expense-access) both run a subquery to find expenses with all tags, then pass the IDs back into an `inArray`. D1/SQLite does not always optimize this well; a single correlated subquery or EXISTS approach might be more efficient.
-
-**Recommendation:** Benchmark both approaches with realistic tag counts. If the two-query approach is slower, collapse into a single query using `EXISTS` or `INNER JOIN` against a CTE.
+**Fix:** Consolidate to a single type definition.
 
 ---
 
-## 5. Code Style & Maintainability
+## Minor Issues
 
-### Mix of `crypto.randomUUID()` and `ulid()` for IDs
+### Database & Performance
 
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db/expense-access.ts:92` (randomUUID)  
-`@/Users/chris/hacks/expenses/expense-log/src/lib/db/confirm-helpers.ts:74` (ulid)
+- `src/lib/db/category-access.ts:110-119`: TOCTOU race in `createCategoryActual` — handled by unique constraint but wastes retries.
+- `src/lib/db/category-access.ts:77`, `src/lib/db/tag-access.ts:141`: Redundant `lower()` on already-lowercased parameters.
+- `src/lib/db/expense-access.ts:148-179`: Tag filtering materializes subquery results into JS arrays; could use SQL `EXISTS`.
+- `src/lib/db/summary-access.ts:219-223`: `SORT_COLUMN_TO_PROP` defined inside function body — recreated on every call.
+- `src/lib/db/summary-access.ts:236-243`: Dynamic property access via `as unknown as Record<string, unknown>`.
+- `src/lib/time-access.ts:36`: `parseInt(ds)` without radix — use `parseInt(ds, 10)`.
 
-`createExpense` and `createManyAndExpense` use `crypto.randomUUID()`, while tag/category creation uses `ulid()`. Both are valid, but mixing them makes reasoning about ID formats harder. The tag chip tests expect Crockford-base32 ULIDs (`/^[0-9A-HJKMNP-TV-Z]{26}$/`), so at least the DB is consistent, but the code that generates expense IDs diverges.
+### Forms & UX
 
-**Recommendation:** Standardize on one generator per entity type, or document why each was chosen.
+- `src/routes/expenses/expense-form.tsx:226,272-274`: Missing `key` prop on `<li>` and hidden `<input>` in `.map()`.
+- `src/routes/expenses/expense-list-renderer.tsx:207`: Missing `key` on `<tr>` in expense rows.
+- `src/routes/expenses/expense-form.tsx:83`: `maxLength={descriptionMax + 50}` — undocumented fudge factor.
+- `src/routes/expenses/build-edit-expense.tsx:150`, `src/routes/recurring/build-create-recurring.tsx`: `noValidate` on ALL forms — no client-side validation feedback.
+- `src/routes/build-layout.tsx:151`: Hardcoded copyright year 2025.
 
-### `CategoryManagementNameSchema` Is Just an Alias
+### Testing
 
-`@/Users/chris/hacks/expenses/expense-log/src/lib/expense-validators.ts:322`
+- `tests/expense-access.spec.ts:101-104`: Seed creates `Date` objects for columns stored as integers.
+- `tests/expense-access.spec.ts:186,328`: `>=` timestamp check can't detect "timestamp wasn't updated."
+- `tests/expense-confirm-handler.spec.ts:122-156`: Tests read filesystem (`drizzle/meta` snapshot) — coupled to snapshot format.
+- `tests/expense-confirm-handler.spec.ts:186-188`: Weak assertion `signature.length > 10` — HMAC-SHA256 is always 64 hex chars.
+- `tests/money.spec.ts:37`: No test for negative `formatCents`.
+- `tests/tag-chip-checkboxes.spec.ts:97-102`: XSS test accepts double-encoding as pass.
+- `e2e-tests/support/test-data.ts:112-125`: All `BASE_URLS` hardcode `http://localhost:3000`.
+- `e2e-tests/support/db-helpers.ts`: All endpoints hardcode `http://localhost:3000`.
+- `e2e-tests/support/page-verifiers.ts:36,40,44,48`: Several verifiers use `page: any` instead of `Page`.
+- `e2e-tests/support/finders.ts:16-24`: `verifyElementExists` swallows errors — assertion failures lost.
+- `e2e-tests/support/mode-helpers.ts:17-21`: On HTTP failure, silently defaults to `'OPEN_SIGN_UP'`.
+- `e2e-tests/support/test-helpers.ts:11-25`: `clearDatabase()` failure in `finally` swallows original test error.
 
-```ts
-export const CategoryManagementNameSchema = NewCategoryNameSchema
-```
+### Code Quality
 
-This alias adds no value and creates a second name for the same schema. If the schema changes, both names still point to the same object, which is fine, but it complicates the export surface.
-
-**Recommendation:** Either remove the alias and use `NewCategoryNameSchema` everywhere, or create a truly separate schema if the requirements diverge.
-
-### Test File Uses `eval("import('bun:sqlite')")`
-
-`@/Users/chris/hacks/expenses/expense-log/tests/summary-access.spec.ts:22` (and similar in `expense-confirm-handler.spec.ts`, `expense-access.spec.ts`)
-
-Using `eval` to dynamically import `bun:sqlite` is an awkward workaround for top-level await / conditional imports. It's functional but unusual.
-
-**Recommendation:** Use `await import('bun:sqlite')` directly inside the async helper, or mark the test file with the appropriate Bun loader pragma.
-
----
-
-## 6. Error Handling & Logging
-
-### Generic "Please try again" Errors Swallow Root Cause
-
-`@/Users/chris/hacks/expenses/expense-log/src/routes/expenses/expense-post-handler.ts:57-59` (and many similar)
-
-When `listTags` or `findCategoryByName` fails, the user sees a generic message. The actual error (DB timeout, network issue, constraint violation) is lost to `console.log` at best.
-
-**Recommendation:** Log the original error with route + class + stack (as required by Task 22), but still show the generic message to the user.
-
-### Confirmation Handler Error Branching Is Verbose
-
-`@/Users/chris/hacks/expenses/expense-log/src/routes/expenses/expense-confirm-post-handler.ts:70-83`
-
-Each error kind from `resolveConfirmTagsAndCategory` gets its own `if` block with slightly different redirect behavior. This is correct but verbose. The recurring confirmation handlers will duplicate this pattern.
-
-**Recommendation:** After Task 24 (REFACTOR), confirm that the extracted helpers collapse this duplication.
-
----
-
-## 7. Test Coverage & Quality
-
-### JS/TSX Constant Parity Test Is Brittle
-
-`@/Users/chris/hacks/expenses/expense-log/tests/tag-chip-checkboxes.spec.ts:159-177`
-
-The test searches for the exact text `const CHIP_CLASS_BASE = '...'` in the JS file. If whitespace changes (e.g. `const CHIP_CLASS_BASE='...'`), the test fails even though the constants are still in sync.
-
-**Recommendation:** Parse the AST or use a regex with whitespace tolerance instead of exact string matching.
-
-### E2E Tamper Test Does Not Assert Error Message
-
-`@/Users/chris/hacks/expenses/expense-log/e2e-tests/expenses/20-entry-tamper-and-error.spec.ts:76-114`
-
-The test injects a non-ULID `tagId` and asserts that values are preserved, but it does **not** assert that an error message is actually displayed. A silent redirect with no error would pass.
-
-**Recommendation:** Add an assertion for the presence of a `tags` field error or global error banner.
-
-### Missing E2E for Stale TagId Filter Drop
-
-Task 31 requires that "syntactically-valid-but-stale (no longer existing) `tagId` values are silently omitted from the rendered filter UI". No e2e spec currently asserts this for the list filter bar.
-
-**Recommendation:** Add an e2e test that seeds a tag, filters by it, deletes the tag, then reloads the list page and asserts the filter chip is absent.
-
----
-
-## 8. Documentation & Comments
-
-### JSDoc Duplicates Module Descriptions
-
-Many files have both a file-level module docblock and function-level docblocks. This is not a problem per se, but some function JSDoc repeats the obvious (e.g. `@param c - The Hono context`).
-
-**Minor issue:** The `Notes/tasks/18-tag-chipboxes-and-sort-fix.md` file is extremely detailed (444 lines of task breakdowns), which is excellent for tracking, but the inline code comments don't always reflect the *current* implementation state vs. the *planned* state. Future maintainers may confuse TODO task descriptions with implemented behavior.
-
-**Recommendation:** Add an `// IMPLEMENTED` or `// TODO` marker in task comments, or keep task tracking separate from code comments.
-
----
-
-## 9. Missing Implementations (Per PRD / Task File)
-
-The following tasks from `Notes/tasks/18-tag-chipboxes-and-sort-fix.md` appear **not yet implemented** in the reviewed code:
-
-| Task | Description | Evidence |
-|------|-------------|----------|
-| **23** | HMAC hardening for expense confirmation handler | `expense-confirm-post-handler.ts` has no HMAC imports or verification |
-| **26** | Harden recurring-create confirmation handler | Not yet visible in `build-create-recurring.tsx` |
-| **29** | Harden recurring-edit confirmation handler | Not yet visible |
-| **32** | Switch list-page tag filter to shared `TagChipCheckboxes` | `expense-list-renderer.tsx` still renders inline `<label>` chips |
-
----
-
-## Summary Table
-
-| Severity | Count | Categories |
-|----------|-------|------------|
-| **Critical** | 1 | Missing HMAC tamper protection on confirmation flow |
-| **High** | 2 | Race window in create-or-reuse helpers; redundant dead code in validators |
-| **Medium** | 6 | Fragile JS class manipulation; duplicated helpers; regex-based XSS guard; inconsistent lowercasing; missing amount upper bound; brittle parity test |
-| **Low** | 5 | Mixed UUID generators; verbose alias; `eval` in tests; missing e2e assertions; `as never` casts |
-
----
-
-*Review conducted against the codebase as of the current working tree. Findings reference absolute file paths and line numbers for traceability.*
+- `src/local-types.ts:31`: `db?: string` — unclear what this is for alongside `PROJECT_DB: D1Database`.
+- `src/renderer.tsx:18`: CSS file hardcoded as `/style-20250722184943.css` — breaks on rebuild.
+- `src/scheduled.ts:34`: Hardcoded log values instead of actual result counts.
+- `src/routes/expenses/expense-confirm-post-handler.ts:98`: `newCategoryName !== null` — should be `!= null` (handles undefined).
+- `src/routes/expenses/expense-form-helpers.ts:22`: `tags` property in values is vestigial and unused.
+- `src/routes/expenses/expense-form-helpers.ts`: `readRawBody` duplicated across 5+ files.
+- `src/routes/build-edit-expense.tsx:50-56` vs `build-edit-recurring.tsx:60`: Inconsistent `requireId` return type (`''` vs `null`).
+- `src/routes/auth/build-email-confirmation.tsx:119,182`: Hardcoded route paths instead of `PATHS.AUTH.*` constants.
+- `src/routes/auth/build-gated-interest-sign-up.tsx:110`: Unsafe type assertion `(c as unknown as { get: ... })` — repeated in 6+ files.
+- `src/lib/email-service.ts:51`: `parseInt` without radix.
+- `src/lib/form-state.ts:66`: No size guard for flash cookie payload — can exceed ~4KB cookie limit.
+- `src/lib/po-notify.ts:18-30`: `gatherResponse` redefined on every `post()` call.
+- `src/lib/sign-up-utils.ts:252`: Email not URL-encoded before cookie storage.
+- `src/lib/validators.ts:232`: Depends on Valibot's internal error message wording — fragile.
+- `src/lib/expense-validators.ts:388-390,558-560,417-419,587-589`: Dead code — unreachable `isErr` checks after early returns.
+- `src/routes/profile/handle-change-password.ts:77,85`: `console.log`/`console.error` with PII in production.
+- `src/routes/profile/handle-delete-account.ts:34,39,57,70`: Logging user email in production.
+- `src/routes/build-summary.tsx:295-298`: Mutating `parsed` object — side effect in data flow.

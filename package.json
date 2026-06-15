@@ -24,7 +24,6 @@
     "drizzle-orm": "0.45.2",
     "hono": "4.12.23",
     "nodemailer": "8.0.10",
-    "oxfmt": "0.53.0",
     "tailwindcss": "4.3.0",
     "true-myth": "9.4.0",
     "ulid": "3.0.2",
@@ -40,6 +39,7 @@
     "daisyui": "5.5.20",
     "drizzle-kit": "0.31.10",
     "globby": "16.2.0",
+    "oxfmt": "0.54.0",
     "typescript": "6.0.3",
     "wrangler": "4.98.0"
   }

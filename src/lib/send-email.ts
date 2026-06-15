@@ -109,6 +109,6 @@ const sendOtpToUserViaEmailActual = async (
     console.log(`Email with OTP code sent to ${email}`)
     return Result.ok(true)
   } catch (e) {
-    throw Result.err(e instanceof Error ? e : new Error(String(e)))
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
   }
 }
