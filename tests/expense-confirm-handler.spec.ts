@@ -16,83 +16,19 @@
 import { describe, it } from 'bun:test'
 import assert from 'node:assert'
 import { eq, sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/bun-sqlite'
 
 import { category, expense, tag, schema } from '../src/db/schema'
 import {
   createManyAndExpense,
 } from '../src/lib/db/expense-access'
 import type { DrizzleClient } from '../src/local-types'
-
-// NOTE: The following imports are intentionally deferred to inside tests so
-// that schema-level assertions can run as regression tests while the missing
-// modules cause the HMAC / helper tests to fail (RED phase).
-type ConfirmationPayload = {
-  description: string
-  amount: string
-  date: string
-  category: string
-  tagIds: string[]
-  newTags: string
-}
-
-// ---------------------------------------------------------------------------
-// In-memory test DB (mirrors the schema used in expense-access.spec.ts)
-// ---------------------------------------------------------------------------
-
-type RunnableQuery = { run: () => unknown }
-type TestDb = DrizzleClient
-
-const createTestDb = async (): Promise<TestDb> => {
-  const bunSqlite = (await eval("import('bun:sqlite')")) as {
-    Database: new (path: string) => {
-      run: (sql: string) => unknown
-      transaction: <T>(fn: () => T) => () => T
-    }
-  }
-  const { Database } = bunSqlite
-  const sqlite = new Database(':memory:')
-  sqlite.run('PRAGMA foreign_keys = ON')
-  sqlite.run(
-    'CREATE TABLE category (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run('CREATE UNIQUE INDEX category_name_lower_unique ON category (lower(name))')
-  sqlite.run(
-    'CREATE TABLE expense (id TEXT PRIMARY KEY, description TEXT NOT NULL, amountCents INTEGER NOT NULL, categoryId TEXT NOT NULL REFERENCES category(id) ON DELETE RESTRICT, date TEXT NOT NULL, recurringId TEXT, occurrenceDate TEXT, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run(
-    'CREATE TABLE tag (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run('CREATE UNIQUE INDEX tag_name_lower_unique ON tag (lower(name))')
-  sqlite.run(
-    'CREATE TABLE expenseTag (expenseId TEXT NOT NULL REFERENCES expense(id) ON DELETE CASCADE, tagId TEXT NOT NULL REFERENCES tag(id) ON DELETE RESTRICT, PRIMARY KEY (expenseId, tagId))',
-  )
-  sqlite.run(
-    'CREATE TABLE recurring (id TEXT PRIMARY KEY, description TEXT NOT NULL, amountCents INTEGER NOT NULL, categoryId TEXT NOT NULL REFERENCES category(id) ON DELETE RESTRICT, recurrence TEXT NOT NULL, anchorDate TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run(
-    'CREATE TABLE recurringTag (recurringId TEXT NOT NULL REFERENCES recurring(id) ON DELETE CASCADE, tagId TEXT NOT NULL REFERENCES tag(id) ON DELETE RESTRICT, PRIMARY KEY (recurringId, tagId))',
-  )
-  const db = drizzle(sqlite, { schema })
-  return Object.assign(db, {
-    batch: async (queries: readonly RunnableQuery[]): Promise<unknown[]> => {
-      const runBatch = sqlite.transaction(() => queries.map((query) => query.run()))
-      return runBatch()
-    },
-  }) as unknown as TestDb
-}
+import { createTestDb, seedCategory, seedTag } from './helpers/test-db'
 
 const seedCategory = async (db: TestDb, id: string, name: string): Promise<void> => {
   const now = new Date()
   await db.insert(category).values({ id, name, createdAt: now, updatedAt: now })
-}
-
-const seedTag = async (db: TestDb, id: string, name: string): Promise<void> => {
-  const now = new Date()
-  await db.insert(tag).values({ id, name, createdAt: now, updatedAt: now })
-}
-
 // ---------------------------------------------------------------------------
+}
 // 1. Schema assertions — tag.name and category.name have lowercase unique indexes
 // ---------------------------------------------------------------------------
 
@@ -399,3 +335,4 @@ describe('createManyAndExpense atomicity (Task 22)', () => {
     assert.strictEqual(Number(expAfter[0]?.count), Number(expBefore[0]?.count), 'expense count should be unchanged')
   })
 })
+

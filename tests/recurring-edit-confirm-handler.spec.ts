@@ -21,7 +21,6 @@
 import { describe, it } from 'bun:test'
 import assert from 'node:assert'
 import { sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/bun-sqlite'
 
 import { category, tag, recurring, recurringTag, schema } from '../src/db/schema'
 import {
@@ -29,78 +28,7 @@ import {
   updateRecurringWithTags,
 } from '../src/lib/db/expense-access'
 import type { DrizzleClient } from '../src/local-types'
-
-// ---------------------------------------------------------------------------
-// In-memory test DB
-// ---------------------------------------------------------------------------
-
-type RunnableQuery = { run: () => unknown }
-type TestDb = DrizzleClient
-
-const createTestDb = async (): Promise<TestDb> => {
-  const bunSqlite = (await eval("import('bun:sqlite')")) as {
-    Database: new (path: string) => {
-      run: (sql: string) => unknown
-      transaction: <T>(fn: () => T) => () => T
-    }
-  }
-  const { Database } = bunSqlite
-  const sqlite = new Database(':memory:')
-  sqlite.run('PRAGMA foreign_keys = ON')
-  sqlite.run(
-    'CREATE TABLE category (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run('CREATE UNIQUE INDEX category_name_lower_unique ON category (lower(name))')
-  sqlite.run(
-    'CREATE TABLE tag (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run('CREATE UNIQUE INDEX tag_name_lower_unique ON tag (lower(name))')
-  sqlite.run(
-    'CREATE TABLE recurring (id TEXT PRIMARY KEY, description TEXT NOT NULL, amountCents INTEGER NOT NULL, categoryId TEXT NOT NULL REFERENCES category(id) ON DELETE RESTRICT, recurrence TEXT NOT NULL, anchorDate TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run(
-    'CREATE TABLE recurringTag (recurringId TEXT NOT NULL REFERENCES recurring(id) ON DELETE CASCADE, tagId TEXT NOT NULL REFERENCES tag(id) ON DELETE RESTRICT, PRIMARY KEY (recurringId, tagId))',
-  )
-  const db = drizzle(sqlite, { schema })
-  return Object.assign(db, {
-    batch: async (queries: readonly RunnableQuery[]): Promise<unknown[]> => {
-      const runBatch = sqlite.transaction(() => queries.map((query) => query.run()))
-      return runBatch()
-    },
-  }) as unknown as TestDb
-}
-
-const seedCategory = async (db: TestDb, id: string, name: string): Promise<void> => {
-  const now = new Date()
-  await db.insert(category).values({ id, name, createdAt: now, updatedAt: now })
-}
-
-const seedTag = async (db: TestDb, id: string, name: string): Promise<void> => {
-  const now = new Date()
-  await db.insert(tag).values({ id, name, createdAt: now, updatedAt: now })
-}
-
-const seedRecurring = async (
-  db: TestDb,
-  id: string,
-  categoryId: string,
-  tagIds: string[],
-): Promise<void> => {
-  const now = new Date()
-  await db.insert(recurring).values({
-    id,
-    description: 'Monthly rent',
-    amountCents: 150000,
-    categoryId,
-    recurrence: 'monthly',
-    anchorDate: '2026-01-01',
-    createdAt: now,
-    updatedAt: now,
-  })
-  for (const tagId of tagIds) {
-    await db.insert(recurringTag).values({ recurringId: id, tagId })
-  }
-}
+import { createTestDb, seedCategory, seedTag, seedRecurring } from './helpers/test-db'
 
 // ---------------------------------------------------------------------------
 // 1. HMAC signing utilities — re-asserted for the recurring-edit confirm path

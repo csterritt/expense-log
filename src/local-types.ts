@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { Maybe } from 'true-myth'
 import { Context } from 'hono'
 import { createDbClient } from './db/client'
 
@@ -27,9 +26,6 @@ export type SignInSession = {
  */
 export interface Bindings {
   PROJECT_DB: D1Database
-  Session: Maybe<SignInSession>
-  db?: string
-  signUpType?: string
   SIGN_UP_MODE?: string
   EMAIL_SEND_URL?: string
   EMAIL_SEND_CODE?: string

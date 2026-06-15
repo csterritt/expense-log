@@ -5,111 +5,12 @@
 // ====================================
 
 import { describe, it } from 'bun:test'
-import { drizzle } from 'drizzle-orm/bun-sqlite'
 import assert from 'node:assert'
 
 import { category, expense, expenseTag, recurring, tag, schema } from '../src/db/schema'
 import { summarize } from '../src/lib/db/summary-access'
 import type { DrizzleClient } from '../src/local-types'
-
-type RunnableQuery = {
-  run: () => unknown
-}
-
-type TestDb = DrizzleClient
-
-const createTestDb = async (): Promise<TestDb> => {
-  const bunSqlite = (await eval("import('bun:sqlite')")) as {
-    Database: new (path: string) => {
-      run: (sql: string) => unknown
-      transaction: <T>(fn: () => T) => () => T
-    }
-  }
-  const { Database } = bunSqlite
-  const sqlite = new Database(':memory:')
-  sqlite.run('PRAGMA foreign_keys = ON')
-  sqlite.run(
-    'CREATE TABLE category (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run('CREATE UNIQUE INDEX category_name_lower_unique ON category (lower(name))')
-  sqlite.run(
-    'CREATE TABLE recurring (id TEXT PRIMARY KEY, description TEXT NOT NULL, amountCents INTEGER NOT NULL, categoryId TEXT NOT NULL REFERENCES category(id) ON DELETE RESTRICT, recurrence TEXT NOT NULL, anchorDate TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run(
-    'CREATE TABLE expense (id TEXT PRIMARY KEY, description TEXT NOT NULL, amountCents INTEGER NOT NULL, categoryId TEXT NOT NULL REFERENCES category(id) ON DELETE RESTRICT, date TEXT NOT NULL, recurringId TEXT REFERENCES recurring(id) ON DELETE SET NULL, occurrenceDate TEXT, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run(
-    'CREATE UNIQUE INDEX expense_recurring_occurrence_unique ON expense (recurringId, occurrenceDate) WHERE recurringId IS NOT NULL',
-  )
-  sqlite.run(
-    'CREATE TABLE tag (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
-  )
-  sqlite.run('CREATE UNIQUE INDEX tag_name_lower_unique ON tag (lower(name))')
-  sqlite.run(
-    'CREATE TABLE expenseTag (expenseId TEXT NOT NULL REFERENCES expense(id) ON DELETE CASCADE, tagId TEXT NOT NULL REFERENCES tag(id) ON DELETE RESTRICT, PRIMARY KEY (expenseId, tagId))',
-  )
-  sqlite.run(
-    'CREATE TABLE recurringTag (recurringId TEXT NOT NULL REFERENCES recurring(id) ON DELETE CASCADE, tagId TEXT NOT NULL REFERENCES tag(id) ON DELETE RESTRICT, PRIMARY KEY (recurringId, tagId))',
-  )
-  const db = drizzle(sqlite, { schema })
-  return Object.assign(db, {
-    batch: async (queries: readonly RunnableQuery[]): Promise<unknown[]> => {
-      const runBatch = sqlite.transaction(() => queries.map((query) => query.run()))
-      return runBatch()
-    },
-  }) as unknown as TestDb
-}
-
-const seedCat = async (db: TestDb, id: string, name: string): Promise<void> => {
-  const now = new Date()
-  await db.insert(category).values({ id, name, createdAt: now, updatedAt: now })
-}
-
-const seedTag = async (db: TestDb, id: string, name: string): Promise<void> => {
-  const now = new Date()
-  await db.insert(tag).values({ id, name, createdAt: now, updatedAt: now })
-}
-
-const seedExpense = async (
-  db: TestDb,
-  id: string,
-  categoryId: string,
-  date: string,
-  amountCents: number,
-  recurringId: string | null = null,
-  occurrenceDate: string | null = null,
-): Promise<void> => {
-  const now = new Date()
-  await db.insert(expense).values({
-    id,
-    description: id,
-    amountCents,
-    categoryId,
-    date,
-    recurringId,
-    occurrenceDate,
-    createdAt: now,
-    updatedAt: now,
-  })
-}
-
-const seedExpenseTag = async (db: TestDb, expenseId: string, tagId: string): Promise<void> => {
-  await db.insert(expenseTag).values({ expenseId, tagId })
-}
-
-const seedRecurring = async (db: TestDb, id: string, categoryId: string): Promise<void> => {
-  const now = new Date()
-  await db.insert(recurring).values({
-    id,
-    description: id,
-    amountCents: 500,
-    categoryId,
-    recurrence: 'Monthly',
-    anchorDate: '2024-01-01',
-    createdAt: now,
-    updatedAt: now,
-  })
-}
+import { createTestDb, seedCategory, seedTag, seedExpense, seedExpenseTag, seedRecurring } from './helpers/test-db'
 
 // ====================================
 // Dataset used across most tests:
@@ -126,9 +27,9 @@ const seedRecurring = async (db: TestDb, id: string, categoryId: string): Promis
 // ====================================
 
 const buildDataset = async (db: TestDb): Promise<void> => {
-  await seedCat(db, 'cat-food', 'food')
-  await seedCat(db, 'cat-trans', 'transport')
-  await seedCat(db, 'cat-utils', 'utilities')
+  await seedCategory(db, 'cat-food', 'food')
+  await seedCategory(db, 'cat-trans', 'transport')
+  await seedCategory(db, 'cat-utils', 'utilities')
 
   await seedTag(db, 'tag-travel', 'travel')
   await seedTag(db, 'tag-dining', 'dining')
@@ -615,7 +516,7 @@ describe('summarize — year-bearing labels', () => {
 describe('summarize — chronological sort by internal key', () => {
   it('Dec 2025 and Jan 2026 are distinct rows (no cross-year aggregation)', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-misc', 'misc')
+    await seedCategory(db, 'cat-misc', 'misc')
     await seedExpense(db, 'e-dec25', 'cat-misc', '2025-12-15', 500)
     await seedExpense(db, 'e-jan26', 'cat-misc', '2026-01-10', 600)
     const result = await summarize(db, {
@@ -634,7 +535,7 @@ describe('summarize — chronological sort by internal key', () => {
 
   it('default sort places Dec 2025 before Jan 2026 in ascending order', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-misc2', 'misc2')
+    await seedCategory(db, 'cat-misc2', 'misc2')
     await seedExpense(db, 'e-dec25b', 'cat-misc2', '2025-12-15', 500)
     await seedExpense(db, 'e-jan26b', 'cat-misc2', '2026-01-10', 600)
     const result = await summarize(db, {
@@ -652,7 +553,7 @@ describe('summarize — chronological sort by internal key', () => {
 
   it('Apr 2026 sorts after Jan/Feb/Mar 2026 (chronological, not alphabetical)', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-ord', 'ord')
+    await seedCategory(db, 'cat-ord', 'ord')
     await seedExpense(db, 'e-jan26-ord', 'cat-ord', '2026-01-05', 100)
     await seedExpense(db, 'e-feb26-ord', 'cat-ord', '2026-02-05', 200)
     await seedExpense(db, 'e-mar26-ord', 'cat-ord', '2026-03-05', 300)
@@ -671,7 +572,7 @@ describe('summarize — chronological sort by internal key', () => {
 
   it('quarters within a year sort chronologically: Jan-Mar before Apr-Jun before Jul-Sep before Oct-Dec', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-qtr', 'qtr')
+    await seedCategory(db, 'cat-qtr', 'qtr')
     await seedExpense(db, 'e-q1', 'cat-qtr', '2026-01-15', 100)
     await seedExpense(db, 'e-q2', 'cat-qtr', '2026-04-15', 200)
     await seedExpense(db, 'e-q3', 'cat-qtr', '2026-07-15', 300)
@@ -690,7 +591,7 @@ describe('summarize — chronological sort by internal key', () => {
 
   it('cross-year quarters sort chronologically: Oct-Dec 2025 before Jan-Mar 2026', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-cqtr', 'cqtr')
+    await seedCategory(db, 'cat-cqtr', 'cqtr')
     await seedExpense(db, 'e-q4-25', 'cat-cqtr', '2025-10-15', 100)
     await seedExpense(db, 'e-q1-26', 'cat-cqtr', '2026-01-15', 200)
     const result = await summarize(db, {
@@ -707,7 +608,7 @@ describe('summarize — chronological sort by internal key', () => {
 
   it('when sorting by count, ties retain chronological time-period ordering', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-tie', 'tie')
+    await seedCategory(db, 'cat-tie', 'tie')
     await seedExpense(db, 'e-jan26-t1', 'cat-tie', '2026-01-05', 100)
     await seedExpense(db, 'e-feb26-t1', 'cat-tie', '2026-02-05', 100)
     await seedExpense(db, 'e-mar26-t1', 'cat-tie', '2026-03-05', 100)
@@ -726,7 +627,7 @@ describe('summarize — chronological sort by internal key', () => {
 
   it('category dimension default sort: group asc then chronological timePeriod asc (cross-year)', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-alpha', 'alpha')
+    await seedCategory(db, 'cat-alpha', 'alpha')
     await seedExpense(db, 'e-alpha-dec25', 'cat-alpha', '2025-12-10', 100)
     await seedExpense(db, 'e-alpha-jan26', 'cat-alpha', '2026-01-10', 200)
     const result = await summarize(db, {
@@ -745,8 +646,8 @@ describe('summarize — chronological sort by internal key', () => {
 
   it('category-tag dimension: sort=category asc ties break on tag asc then timePeriod asc', async () => {
     const db = await createTestDb()
-    await seedCat(db, 'cat-ct1', 'aacat')
-    await seedCat(db, 'cat-ct2', 'zzcat')
+    await seedCategory(db, 'cat-ct1', 'aacat')
+    await seedCategory(db, 'cat-ct2', 'zzcat')
     await seedTag(db, 'tag-ct1', 'aatag')
     await seedTag(db, 'tag-ct2', 'zztag')
     await seedExpense(db, 'e-ct-1', 'cat-ct1', '2026-02-01', 100)

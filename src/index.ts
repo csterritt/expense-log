@@ -79,7 +79,7 @@ const validateEnvironmentVariables = (): boolean => {
   const missingVars: string[] = []
 
   for (const varName of requiredVars) {
-    const envValue = (env as unknown as Record<string, string | undefined>)[varName]
+    const envValue = String(env[varName as keyof typeof env] ?? '')
     if (!envValue || envValue.trim() === '') {
       missingVars.push(varName)
     }
@@ -108,8 +108,8 @@ const app = new Hono<{ Bindings: Bindings }>()
 
 const isTestRouteEnabledFlag = isTestRouteEnabled({
   nodeEnv: env.NODE_ENV,
-  enableTestRoutes: (env as unknown as Bindings).ENABLE_TEST_ROUTES,
-  playwright: (env as unknown as Bindings).PLAYWRIGHT,
+  enableTestRoutes: (env as Bindings).ENABLE_TEST_ROUTES,
+  playwright: (env as Bindings).PLAYWRIGHT,
 })
 
 let alternateOrigin = /http:\/\/localhost(:\d+)?$/ // PRODUCTION:REMOVE

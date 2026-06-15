@@ -3,18 +3,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 export const generateToken = async () => {
-  // Generate a random 6-digit code not starting with zero
-  let sessionToken: string = ''
-  // PRODUCTION:REMOVE-NEXT-LINE
-  while (
-    sessionToken === '' || // PRODUCTION:REMOVE
-    sessionToken === '123456' || // PRODUCTION:REMOVE
-    sessionToken === '999999' // PRODUCTION:REMOVE
-    // PRODUCTION:REMOVE-NEXT-LINE
-  ) {
-    sessionToken = String(Math.floor(100_000 + Math.random() * 900_000))
-    // PRODUCTION:REMOVE-NEXT-LINE
+  // Generate a cryptographically secure random token
+  // 8 alphanumeric characters = 62^8 ≈ 218 trillion possibilities
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = new Uint8Array(8)
+  crypto.getRandomValues(bytes)
+  let token = ''
+  for (const byte of bytes) {
+    token += chars[byte % chars.length]
   }
-
-  return sessionToken
+  return token
 }
