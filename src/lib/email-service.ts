@@ -10,7 +10,7 @@
 
 import nodemailer from 'nodemailer'
 
-import { getTestSmtpConfig } from '../routes/test/smtp-config'
+import { getTestSmtpConfig } from '../routes/test/smtp-config' // PRODUCTION:REMOVE
 import type { Bindings } from '../local-types'
 
 /**
@@ -38,12 +38,12 @@ interface EmailConfig {
 const getEmailConfig = (env: Bindings): EmailConfig => {
   // More robust test environment detection
   const isTestMode =
-    // false PROCESS:UNCOMMENT
+    // false // PRODUCTION:UNCOMMENT
     env.NODE_ENV === 'test' || // PRODUCTION:REMOVE
     env.NODE_ENV === 'development' || // PRODUCTION:REMOVE
-    env.PLAYWRIGHT === '1' || // Playwright sets this PROCESS:REMOVE
-    process.argv.includes('playwright') || // Running via playwright PROCESS:REMOVE
-    typeof (globalThis as any).test !== 'undefined' // Test environment PROCESS:REMOVE
+    env.PLAYWRIGHT === '1' || // Playwright sets this // PRODUCTION:REMOVE
+    process.argv.includes('playwright') || // Running via playwright // PRODUCTION:REMOVE
+    typeof (globalThis as any).test !== 'undefined' // Test environment // PRODUCTION:REMOVE
 
   return {
     isTestMode,
@@ -79,23 +79,25 @@ interface EmailTransporter {
 const createTransporter = (env: Bindings): EmailTransporter => {
   const config = getEmailConfig(env)
 
-  // Check if SMTP config has been overridden for testing
-  const testOverride = getTestSmtpConfig()
-  const smtpHost = testOverride?.host || config.smtpHost
-  const smtpPort = testOverride?.port || config.smtpPort
-
+  // Check if SMTP config has been overridden for testing // PRODUCTION:REMOVE
+  const testOverride = getTestSmtpConfig() // PRODUCTION:REMOVE
+  const smtpHost = testOverride?.host || config.smtpHost // PRODUCTION:REMOVE
+  const smtpPort = testOverride?.port || config.smtpPort // PRODUCTION:REMOVE
+  // PRODUCTION:REMOVE-NEXT-LINE
   if (config.isTestMode) {
-    // Use smtp-tester for testing (assumes server running on port 1025)
-    // But allow override via environment variables for failure testing
+    // Use smtp-tester for testing (assumes server running on port 1025) // PRODUCTION:REMOVE
+    // But allow override via environment variables for failure testing // PRODUCTION:REMOVE
+    // PRODUCTION:REMOVE-NEXT-LINE
     return nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: false,
+      host: smtpHost, // PRODUCTION:REMOVE
+      port: smtpPort, // PRODUCTION:REMOVE
+      secure: false, // PRODUCTION:REMOVE
+      // PRODUCTION:REMOVE-NEXT-LINE
       tls: {
-        rejectUnauthorized: false,
-      },
-    })
-  }
+        rejectUnauthorized: false, // PRODUCTION:REMOVE
+      }, // PRODUCTION:REMOVE
+    }) // PRODUCTION:REMOVE
+  } // PRODUCTION:REMOVE
 
   // Production POST configuration
   return {

@@ -220,6 +220,7 @@ buildDeleteConfirm(app)
 handleChangePassword(app)
 handleDeleteAccount(app)
 
+// PRODUCTION:REMOVE-NEXT-LINE
 if (isTestRouteEnabledFlag) {
   handleSetClock(app) // PRODUCTION:REMOVE
   handleResetClock(app) // PRODUCTION:REMOVE
@@ -230,7 +231,7 @@ if (isTestRouteEnabledFlag) {
   app.route('/test/sign-up-mode', testSignUpModeRouter) // PRODUCTION:REMOVE
   app.route('/test', testSmtpRouter) // PRODUCTION:REMOVE
   app.route('/test', testRunCronRouter) // PRODUCTION:REMOVE
-}
+} // PRODUCTION:REMOVE
 
 // this MUST be the last route declared!
 build404(app)

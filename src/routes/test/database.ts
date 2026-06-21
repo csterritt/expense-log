@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+// PRODUCTION:STOP
+
 import { Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
 
@@ -318,7 +320,6 @@ testDatabaseRouter.get('/code-exists/:code', secureHeaders(STANDARD_SECURE_HEADE
  * Seed the database with expenses for testing list rendering
  * POST /test/database/seed-expenses
  */
-// PRODUCTION:REMOVE
 interface SeedExpenseInput {
   date: string
   description: string
@@ -411,7 +412,6 @@ testDatabaseRouter.post('/seed-expenses', secureHeaders(STANDARD_SECURE_HEADERS)
  * Seed the database with categories for testing the entry form
  * POST /test/database/seed-categories
  */
-// PRODUCTION:REMOVE
 interface SeedCategoryInput {
   name: string
 }
@@ -467,7 +467,6 @@ testDatabaseRouter.post('/seed-categories', secureHeaders(STANDARD_SECURE_HEADER
  * Seed the database with tags for testing
  * POST /test/database/seed-tags
  */
-// PRODUCTION:REMOVE
 interface SeedTagInput {
   name: string
 }
@@ -519,155 +518,164 @@ testDatabaseRouter.post('/seed-tags', secureHeaders(STANDARD_SECURE_HEADERS), as
   }
 })
 
-// PRODUCTION:REMOVE
 /**
  * Seed recurring templates (plus any needed categories/tags).
  * POST /test/database/seed-recurring-templates
  */
-testDatabaseRouter.post('/seed-recurring-templates', secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
-  try {
-    const rows = (await c.req.json()) as Array<{
-      description: string
-      amountCents: number
-      categoryName: string
-      tagNames?: string[]
-      recurrence: 'Monthly' | 'Quarterly' | 'Yearly'
-      anchorDate: string
-      createdAtIso?: string
-    }>
-    const db = createDbClient(c.env.PROJECT_DB)
-    const now = new Date()
-    const ids: string[] = []
+testDatabaseRouter.post(
+  '/seed-recurring-templates',
+  secureHeaders(STANDARD_SECURE_HEADERS),
+  async (c) => {
+    try {
+      const rows = (await c.req.json()) as Array<{
+        description: string
+        amountCents: number
+        categoryName: string
+        tagNames?: string[]
+        recurrence: 'Monthly' | 'Quarterly' | 'Yearly'
+        anchorDate: string
+        createdAtIso?: string
+      }>
+      const db = createDbClient(c.env.PROJECT_DB)
+      const now = new Date()
+      const ids: string[] = []
 
-    for (const row of rows) {
-      // Upsert category
-      const existingCats = await runDb(() =>
-        db
-          .select({ id: category.id })
-          .from(category)
-          .where(eq(category.name, row.categoryName.toLowerCase()))
-          .limit(1),
-      )
-      let categoryId: string
-      if (existingCats.length > 0) {
-        categoryId = existingCats[0].id
-      } else {
-        categoryId = crypto.randomUUID()
+      for (const row of rows) {
+        // Upsert category
+        const existingCats = await runDb(() =>
+          db
+            .select({ id: category.id })
+            .from(category)
+            .where(eq(category.name, row.categoryName.toLowerCase()))
+            .limit(1),
+        )
+        let categoryId: string
+        if (existingCats.length > 0) {
+          categoryId = existingCats[0].id
+        } else {
+          categoryId = crypto.randomUUID()
+          await runDb(() =>
+            db.insert(category).values({
+              id: categoryId,
+              name: row.categoryName.toLowerCase(),
+              createdAt: now,
+              updatedAt: now,
+            }),
+          )
+        }
+
+        // Upsert tags and collect tag ids
+        const tagIds: string[] = []
+        for (const tagName of row.tagNames ?? []) {
+          const lowerName = tagName.toLowerCase()
+          const existingTags = await runDb(() =>
+            db.select({ id: tag.id }).from(tag).where(eq(tag.name, lowerName)).limit(1),
+          )
+          let tagId: string
+          if (existingTags.length > 0) {
+            tagId = existingTags[0].id
+          } else {
+            tagId = ulid()
+            await runDb(() =>
+              db.insert(tag).values({ id: tagId, name: lowerName, createdAt: now, updatedAt: now }),
+            )
+          }
+          tagIds.push(tagId)
+        }
+
+        // Insert recurring template
+        const id = crypto.randomUUID()
+        const createdAt = row.createdAtIso ? new Date(row.createdAtIso) : now
         await runDb(() =>
-          db.insert(category).values({
-            id: categoryId,
-            name: row.categoryName.toLowerCase(),
-            createdAt: now,
+          db.insert(recurring).values({
+            id,
+            description: row.description,
+            amountCents: row.amountCents,
+            categoryId,
+            recurrence: row.recurrence,
+            anchorDate: row.anchorDate,
+            createdAt,
             updatedAt: now,
           }),
         )
-      }
-
-      // Upsert tags and collect tag ids
-      const tagIds: string[] = []
-      for (const tagName of row.tagNames ?? []) {
-        const lowerName = tagName.toLowerCase()
-        const existingTags = await runDb(() =>
-          db.select({ id: tag.id }).from(tag).where(eq(tag.name, lowerName)).limit(1),
-        )
-        let tagId: string
-        if (existingTags.length > 0) {
-          tagId = existingTags[0].id
-        } else {
-          tagId = ulid()
-          await runDb(() =>
-            db.insert(tag).values({ id: tagId, name: lowerName, createdAt: now, updatedAt: now }),
-          )
+        for (const tagId of tagIds) {
+          await runDb(() => db.insert(recurringTag).values({ recurringId: id, tagId }))
         }
-        tagIds.push(tagId)
+        ids.push(id)
       }
 
-      // Insert recurring template
-      const id = crypto.randomUUID()
-      const createdAt = row.createdAtIso ? new Date(row.createdAtIso) : now
-      await runDb(() =>
-        db.insert(recurring).values({
-          id,
-          description: row.description,
-          amountCents: row.amountCents,
-          categoryId,
-          recurrence: row.recurrence,
-          anchorDate: row.anchorDate,
-          createdAt,
-          updatedAt: now,
-        }),
+      return c.json({ success: true, ids })
+    } catch (error) {
+      console.error('Failed to seed recurring templates:', error)
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to seed recurring templates',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500,
       )
-      for (const tagId of tagIds) {
-        await runDb(() => db.insert(recurringTag).values({ recurringId: id, tagId }))
-      }
-      ids.push(id)
     }
+  },
+)
 
-    return c.json({ success: true, ids })
-  } catch (error) {
-    console.error('Failed to seed recurring templates:', error)
-    return c.json(
-      {
-        success: false,
-        error: 'Failed to seed recurring templates',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      500,
-    )
-  }
-})
-
-// PRODUCTION:REMOVE
 /**
  * Seed a generated expense row linked to a recurring template.
  * POST /test/database/seed-generated-expense
  */
-testDatabaseRouter.post('/seed-generated-expense', secureHeaders(STANDARD_SECURE_HEADERS), async (c) => {
-  try {
-    const body = (await c.req.json()) as {
-      recurringId: string
-      date: string
-      occurrenceDate: string
-      description?: string
-      amountCents?: number
-      categoryId?: string
+testDatabaseRouter.post(
+  '/seed-generated-expense',
+  secureHeaders(STANDARD_SECURE_HEADERS),
+  async (c) => {
+    try {
+      const body = (await c.req.json()) as {
+        recurringId: string
+        date: string
+        occurrenceDate: string
+        description?: string
+        amountCents?: number
+        categoryId?: string
+      }
+      if (!body.recurringId || !body.date || !body.occurrenceDate) {
+        return c.json(
+          { success: false, error: 'recurringId, date, and occurrenceDate are required' },
+          400,
+        )
+      }
+      const db = createDbClient(c.env.PROJECT_DB)
+      const templateResult = await getRecurringById(db, body.recurringId)
+      if (templateResult.isErr || templateResult.value === null) {
+        return c.json({ success: false, error: 'Recurring template not found' }, 404)
+      }
+      const template = templateResult.value
+      const now = new Date()
+      const id = crypto.randomUUID()
+      await runDb(() =>
+        db.insert(expense).values({
+          id,
+          description: body.description ?? template.description,
+          amountCents: body.amountCents ?? template.amountCents,
+          date: body.date,
+          categoryId: body.categoryId ?? template.categoryId,
+          recurringId: body.recurringId,
+          occurrenceDate: body.occurrenceDate,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      )
+      return c.json({ success: true, id })
+    } catch (error) {
+      console.error('Failed to seed generated expense:', error)
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to seed generated expense',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        },
+        500,
+      )
     }
-    if (!body.recurringId || !body.date || !body.occurrenceDate) {
-      return c.json({ success: false, error: 'recurringId, date, and occurrenceDate are required' }, 400)
-    }
-    const db = createDbClient(c.env.PROJECT_DB)
-    const templateResult = await getRecurringById(db, body.recurringId)
-    if (templateResult.isErr || templateResult.value === null) {
-      return c.json({ success: false, error: 'Recurring template not found' }, 404)
-    }
-    const template = templateResult.value
-    const now = new Date()
-    const id = crypto.randomUUID()
-    await runDb(() =>
-      db.insert(expense).values({
-        id,
-        description: body.description ?? template.description,
-        amountCents: body.amountCents ?? template.amountCents,
-        date: body.date,
-        categoryId: body.categoryId ?? template.categoryId,
-        recurringId: body.recurringId,
-        occurrenceDate: body.occurrenceDate,
-        createdAt: now,
-        updatedAt: now,
-      }),
-    )
-    return c.json({ success: true, id })
-  } catch (error) {
-    console.error('Failed to seed generated expense:', error)
-    return c.json(
-      {
-        success: false,
-        error: 'Failed to seed generated expense',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      500,
-    )
-  }
-})
+  },
+)
 
 export { testDatabaseRouter }

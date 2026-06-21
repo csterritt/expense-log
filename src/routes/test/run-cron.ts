@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-// PRODUCTION:REMOVE
+// PRODUCTION:STOP
 
 /**
  * Development-only cron trigger route.
@@ -20,10 +20,8 @@ import { getCurrentTime } from '../../lib/time-access'
 import { signedInAccess } from '../../middleware/signed-in-access'
 import { STANDARD_SECURE_HEADERS } from '../../constants'
 
-// PRODUCTION:REMOVE
 export const testRunCronRouter = new Hono<{ Bindings: { PROJECT_DB: D1Database } }>()
 
-// PRODUCTION:REMOVE
 testRunCronRouter.post(
   '/run-cron',
   secureHeaders(STANDARD_SECURE_HEADERS),
