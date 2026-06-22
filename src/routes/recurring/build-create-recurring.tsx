@@ -25,10 +25,16 @@ import {
 } from '../../lib/db/confirm-helpers'
 import {
   listCategories,
+  findCategoryByName,
 } from '../../lib/db/category-access'
+import {
+  listTags,
+} from '../../lib/db/tag-access'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseRecurringCreate,
+  parseTagInputs,
+  parseNewCategoryName,
   type FieldErrors,
 } from '../../lib/expense-validators'
 import {
