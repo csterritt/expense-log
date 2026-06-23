@@ -34,15 +34,15 @@ export interface Bindings {
   CLOUDFLARE_D1_TOKEN?: string
   PO_APP_ID?: string
   PO_USER_ID?: string
-  ALTERNATE_ORIGIN?: string
+  ALTERNATE_ORIGIN?: string // PRODUCTION:REMOVE
   BETTER_AUTH_SECRET?: string
   NODE_ENV?: string
-  PLAYWRIGHT?: string
+  PLAYWRIGHT?: string // PRODUCTION:REMOVE
   SMTP_SERVER_HOST?: string
   SMTP_SERVER_PORT?: string
   SMTP_SERVER_USER?: string
   SMTP_SERVER_PASSWORD?: string
-  ENABLE_TEST_ROUTES?: string
+  ENABLE_TEST_ROUTES?: string // PRODUCTION:REMOVE
 }
 
 /**

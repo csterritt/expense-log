@@ -33,23 +33,23 @@ import {
 import { isValidYmd } from './et-date'
 import { parseAmount } from './money'
 
-// Maximum description length. Matches the PRODUCTION:UNCOMMENT convention used
+// Maximum description length. Matches the production uncomment convention used
 // elsewhere so tests can use a slightly-larger value while production enforces
 // the user-facing 200-char limit.
 // export const descriptionMax = 200 // PRODUCTION:UNCOMMENT
-export const descriptionMax = 202
+export const descriptionMax = 202 // PRODUCTION:REMOVE
 
 // Maximum length for a newly-typed category name (Issue 5). Production
 // enforces 20; tests use a slightly-larger value so the browser does not
 // auto-truncate over-long inputs before they reach the server.
 // export const categoryNameMax = 20 // PRODUCTION:UNCOMMENT
-export const categoryNameMax = 22
+export const categoryNameMax = 22 // PRODUCTION:REMOVE
 
 // Maximum length for a single tag name (Issue 6). Production enforces 20;
 // tests use a slightly-larger value so the browser does not auto-truncate
 // over-long inputs before they reach the server.
 // export const tagNameMax = 20 // PRODUCTION:UNCOMMENT
-export const tagNameMax = 22
+export const tagNameMax = 22 // PRODUCTION:REMOVE
 
 /**
  * Per-field error messages produced by `parseExpenseCreate`. Any missing key

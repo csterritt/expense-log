@@ -9,7 +9,7 @@ A line with a "// PRODUCTION:REMOVE" comment will be removed entirely. For examp
 
 A line with a "// PRODUCTION:UNCOMMENT" comment, on the other hand, will be uncommented, and thus go into production. This is usually paired with a "// PRODUCTION:REMOVE" comment line that sets some paremeter to a testing value, and the uncomment version sets it to the production value.
 
-Due to automatic typescript/javascript formatting, no lines ending in an open-brace (`{`) can get through the automatic formatter with a comment at the end, for example 'if' statements. Accordingly, there is the "// PRODUCTION:REMOVE-NEXT-LINE" comment, which directs the cleanup program to remove the line following the one with the comment. Do not ever use this comment on a line that is not immediately followed by another line that ends in an open brace.
+Due to automatic typescript/javascript formatting, no lines ending in an open-brace (`{`) can get through the automatic formatter with a comment at the end, for example 'if' statements. Nor can a line ending in 'return ('. Accordingly, there is the "// PRODUCTION:REMOVE-NEXT-LINE" comment, which directs the cleanup program to remove the line following the one with the comment.
 
 Finally, a line with a "// PRODUCTION:STOP" comment directs the cleanup program to stop processing lines entirely for the current file. This is to allow a function to remain, and be defined, but to have no behavior. So for example we might have the following function:
 

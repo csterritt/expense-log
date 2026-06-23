@@ -58,7 +58,7 @@ import { testDatabaseRouter } from './routes/test/database' // PRODUCTION:REMOVE
 import { testSignUpModeRouter } from './routes/test/sign-up-mode' // PRODUCTION:REMOVE
 import { testSmtpRouter } from './routes/test/smtp-config' // PRODUCTION:REMOVE
 import { testRunCronRouter } from './routes/test/run-cron' // PRODUCTION:REMOVE
-import { isTestRouteEnabled } from './lib/test-routes'
+import { isTestRouteEnabled } from './lib/test-routes' // PRODUCTION:REMOVE
 import { scheduled } from './scheduled'
 
 /**
@@ -106,11 +106,12 @@ if (!validateEnvironmentVariables()) {
 
 const app = new Hono<{ Bindings: Bindings }>()
 
+// PRODUCTION:REMOVE-NEXT-LINE
 const isTestRouteEnabledFlag = isTestRouteEnabled({
-  nodeEnv: env.NODE_ENV,
-  enableTestRoutes: (env as Bindings).ENABLE_TEST_ROUTES,
-  playwright: (env as Bindings).PLAYWRIGHT,
-})
+  nodeEnv: env.NODE_ENV, // PRODUCTION:REMOVE
+  enableTestRoutes: (env as Bindings).ENABLE_TEST_ROUTES, // PRODUCTION:REMOVE
+  playwright: (env as Bindings).PLAYWRIGHT, // PRODUCTION:REMOVE
+}) // PRODUCTION:REMOVE
 
 let alternateOrigin = /http:\/\/localhost(:\d+)?$/ // PRODUCTION:REMOVE
 // PRODUCTION:REMOVE-NEXT-LINE

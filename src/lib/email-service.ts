@@ -4,11 +4,11 @@
 
 /**
  * Email service for sending confirmation emails
- * Uses smtp-tester in test environment, nodemailer in production
+ * Uses SMTP transport in test environment and POST delivery in production
  * @module lib/email-service
  */
 
-import nodemailer from 'nodemailer'
+import nodemailer from 'nodemailer' // PRODUCTION:REMOVE
 
 import { getTestSmtpConfig } from '../routes/test/smtp-config' // PRODUCTION:REMOVE
 import type { Bindings } from '../local-types'
@@ -23,11 +23,11 @@ const escapeHtml = (str: string): string =>
  * Configuration for email service
  */
 interface EmailConfig {
-  isTestMode: boolean
-  smtpHost?: string
-  smtpPort?: number
-  smtpUser?: string
-  smtpPass?: string
+  isTestMode: boolean // PRODUCTION:REMOVE
+  smtpHost?: string // PRODUCTION:REMOVE
+  smtpPort?: number // PRODUCTION:REMOVE
+  smtpUser?: string // PRODUCTION:REMOVE
+  smtpPass?: string // PRODUCTION:REMOVE
   emailUrl?: string
   emailCode?: string
 }
@@ -36,21 +36,22 @@ interface EmailConfig {
  * Get email configuration based on environment
  */
 const getEmailConfig = (env: Bindings): EmailConfig => {
+  // return { emailUrl: env.EMAIL_SEND_URL, emailCode: env.EMAIL_SEND_CODE } // PRODUCTION:UNCOMMENT
   // More robust test environment detection
-  const isTestMode =
-    // false // PRODUCTION:UNCOMMENT
+  const isTestMode = Boolean( // PRODUCTION:REMOVE
     env.NODE_ENV === 'test' || // PRODUCTION:REMOVE
-    env.NODE_ENV === 'development' || // PRODUCTION:REMOVE
-    env.PLAYWRIGHT === '1' || // Playwright sets this // PRODUCTION:REMOVE
-    process.argv.includes('playwright') || // Running via playwright // PRODUCTION:REMOVE
-    typeof (globalThis as any).test !== 'undefined' // Test environment // PRODUCTION:REMOVE
+      env.NODE_ENV === 'development' || // PRODUCTION:REMOVE
+      env.PLAYWRIGHT === '1' || // Playwright sets this // PRODUCTION:REMOVE
+      process.argv.includes('playwright') || // Running via playwright // PRODUCTION:REMOVE
+      typeof (globalThis as any).test !== 'undefined', // Test environment // PRODUCTION:REMOVE
+  ) // PRODUCTION:REMOVE
 
   return {
-    isTestMode,
-    smtpHost: isTestMode ? '127.0.0.1' : env.SMTP_SERVER_HOST || '127.0.0.1',
-    smtpPort: isTestMode ? 1025 : parseInt(env.SMTP_SERVER_PORT || '587'),
-    smtpUser: env.SMTP_SERVER_USER,
-    smtpPass: env.SMTP_SERVER_PASSWORD,
+    isTestMode, // PRODUCTION:REMOVE
+    smtpHost: isTestMode ? '127.0.0.1' : env.SMTP_SERVER_HOST || '127.0.0.1', // PRODUCTION:REMOVE
+    smtpPort: isTestMode ? 1025 : parseInt(env.SMTP_SERVER_PORT || '587'), // PRODUCTION:REMOVE
+    smtpUser: env.SMTP_SERVER_USER, // PRODUCTION:REMOVE
+    smtpPass: env.SMTP_SERVER_PASSWORD, // PRODUCTION:REMOVE
     emailUrl: env.EMAIL_SEND_URL,
     emailCode: env.EMAIL_SEND_CODE,
   }
@@ -102,11 +103,11 @@ const createTransporter = (env: Bindings): EmailTransporter => {
   // Production POST configuration
   return {
     sendMail: async (mailOptions: MailOptions) => {
-      if (!env.EMAIL_SEND_URL) {
+      if (!config.emailUrl) {
         throw new Error('EMAIL_SEND_URL is not configured')
       }
 
-      return fetch(env.EMAIL_SEND_URL, {
+      return fetch(config.emailUrl, {
         body: JSON.stringify({
           email_to: mailOptions.to,
           subject: mailOptions.subject,
@@ -116,7 +117,7 @@ const createTransporter = (env: Bindings): EmailTransporter => {
         }),
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${env.EMAIL_SEND_CODE}`,
+          Authorization: `Bearer ${config.emailCode}`,
           'content-type': 'application/json;charset=UTF-8',
         },
       })

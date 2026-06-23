@@ -4,7 +4,7 @@
 
 import { Context } from 'hono'
 
-import { addCookie, removeCookie, retrieveCookie } from './cookie-support'
+import { addCookie, removeCookie, retrieveCookie } from './cookie-support' // PRODUCTION:REMOVE
 import type { Bindings } from '../local-types'
 
 /**
@@ -27,8 +27,7 @@ export const getCurrentTime = (c: Context, ...args: (string | number | Date)[]):
   //   return new Date() // PRODUCTION:UNCOMMENT
   // } // PRODUCTION:UNCOMMENT
 
-  // // @ts-ignore // PRODUCTION:UNCOMMENT
-  // return new Date(...args) // PRODUCTION:UNCOMMENT
+  // return new Date(...(args as ConstructorParameters<typeof Date>)) // PRODUCTION:UNCOMMENT
   // } // PRODUCTION:UNCOMMENT
   // PRODUCTION:STOP
 
