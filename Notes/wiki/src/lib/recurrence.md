@@ -11,7 +11,7 @@ done with integer year/month/day decomposition.
 
 ## Key functions
 
-### `nextOccurrenceAfter(after, recurrence, anchorDate)`
+### `nextOccurrenceAfter({ recurrence, anchorDate, after })`
 
 Returns the next occurrence date string strictly after `after`, using
 the **28th-shift rule** for day clamping in short months (if the
@@ -42,7 +42,7 @@ template on a given materialization run. Parameters:
 **First-occurrence rule**: an occurrence is only emitted when it is
 *strictly after* the template's `createdAt` ET date.
 
-**Lower bound**: `max(createdAt, lastOccurrence)` — when
+**Lower bound**: `lastOccurrence ?? createdAt` — when
 `lastOccurrence` is provided it becomes the exclusive lower bound,
 effectively making re-runs idempotent once `lastOccurrence = today`.
 

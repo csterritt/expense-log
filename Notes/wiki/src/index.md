@@ -56,6 +56,8 @@ Always registered regardless of mode:
 - `buildTags` — `/tags` (signed-in only)
 - `buildSummary` — `/summary` (signed-in only)
 - `buildRecurring` — `/recurring` (signed-in only)
+- `buildCreateRecurring` — `/recurring/create` (signed-in only)
+- `buildEditRecurring` — `/recurring/:id/edit` and `/recurring/:id/delete` (signed-in only)
 - `buildSignIn` — `/auth/sign-in`
 - `buildForgotPassword` — `/auth/forgot-password`
 - `buildWaitingForReset` — `/auth/waiting-for-reset`
@@ -80,6 +82,7 @@ When `isTestRouteEnabledFlag` is true:
 - `testDatabaseRouter` — mounted at `/test/database`
 - `testSignUpModeRouter` — mounted at `/test/sign-up-mode`
 - `testSmtpRouter` — mounted at `/test`
+- `testRunCronRouter` — mounted at `/test`
 
 ## 404
 
@@ -90,7 +93,7 @@ When `isTestRouteEnabledFlag` is true:
 - `✅ All required environment variables are set`
 - `❌ ERROR: Missing required environment variables: ...`
 - `==============> Environment variables are not valid!` (repeated 5x on failure)
-- `Already signed in` — when redirecting authenticated users from sign-in/up pages
+- `Body limit exceeded` — when a POST body exceeds the configured size limit
 
 ## Cross-references
 

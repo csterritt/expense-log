@@ -15,34 +15,42 @@ Unit coverage for the `TagChipCheckboxes` component (`src/components/tag-chip-ch
 
 ### Basic rendering
 
-- Renders one checkbox per tag when `allTags` has entries.
-- Renders nothing when `allTags` is empty.
+- Renders one checkbox per tag when `tags` has entries (asserts `name="tagId"`, each tag's `value`).
+- Renders tag label text.
+- Wraps chips with `flex-wrap` and `gap-2` classes.
 
 ### Alphabetical ordering
 
-- Tags are sorted case-insensitively: `['Zebra', 'apple', 'Banana']` → `apple`, `Banana`, `Zebra`.
+- Tags are sorted case-insensitively: `['Lego', 'food', 'Gift']` → `food`, `Gift`, `Lego`.
 
 ### Selected vs unselected styling
 
-- Tags in `selectedTagIds` receive `CHIP_CLASS_SELECTED` classes.
-- Tags not in `selectedTagIds` receive `CHIP_CLASS_BASE` classes.
+- Tags in `selectedTagIds` receive `checked` attribute and `CHIP_CLASS_SELECTED` class.
+- Tags not in `selectedTagIds` do not have `checked`.
+- HTML differs when a chip is selected vs none selected.
 
 ### XSS safety
 
-- Tag names containing HTML metacharacters (e.g., `<script>alert(1)</script>`) are rendered as escaped text, not executed markup.
+- Tag names containing HTML metacharacters (e.g., `<script>alert(1)</script>`) are rendered as escaped text (`&lt;script&gt;`), not executed markup.
 
 ### `allowNewTags` prop
 
-- When `true`, a `newTags` text input is rendered with `name='newTags'`.
-- When `false` (or omitted), no `newTags` input is rendered.
+- When `true`, a `newTags` text input is rendered with `name='newTags'` and `type='text'`.
+- When `false`, no `newTags` input is rendered.
+- When `newTagsValue` is provided (e.g., `'coffee, tea'`), the input is pre-populated.
 
 ### Empty tag list
 
-- Renders an appropriate empty-state message or no chips when `allTags` is an empty array.
+- With `allowNewTags=false`: renders no checkboxes and no `newTags` input.
+- With `allowNewTags=true`: renders `newTags` input and a `'No tags yet'` empty-state hint.
+
+### No-JS and dropdown-free
+
+- Uses native `type="checkbox"` inputs, not `<select>` or `role="listbox"`.
 
 ### Constant parity
 
-- Asserts that `CHIP_CLASS_BASE` and `CHIP_CLASS_SELECTED` exported from the TSX component match the corresponding values in `public/js/tag-chip-checkboxes.js`, preventing drift between server-rendered and client-enhanced styling.
+- Asserts that `CHIP_CLASS_BASE` and `CHIP_CLASS_SELECTED` exported from the TSX component match the corresponding `const` declarations in `public/js/tag-chip-checkboxes.js`, preventing drift between server-rendered and client-enhanced styling.
 
 ## Cross-references
 

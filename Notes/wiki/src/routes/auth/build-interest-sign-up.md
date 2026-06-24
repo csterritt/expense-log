@@ -14,12 +14,14 @@ Route: `GET /auth/interest-sign-up`
 
 ### Behavior
 
-1. Authenticated users are redirected to `/expenses` with `'You are already signed in.'`
-2. Renders the interest sign-up form
+1. Authenticated users are redirected to `/expenses` with `MESSAGES.ALREADY_SIGNED_IN`.
+2. Reads `EMAIL_ENTERED` cookie via `retrieveCookie` for pre-populating the email field.
+3. Sets no-cache headers via `setupNoCacheHeaders`.
+4. Renders the interest sign-up form.
 
 ### Form fields
 
-- **Email** — `type='email'`, `data-testid='interest-email-input'`
+- **Email** — `type='email'`, `data-testid='interest-email-input'` (`autoFocus`, pre-populated from cookie)
 - **Submit** — `data-testid='interest-action'`
 
 ### Navigation
@@ -29,6 +31,11 @@ Route: `GET /auth/interest-sign-up`
 ## Cross-references
 
 - [handle-interest-sign-up.md](handle-interest-sign-up.md) — POST handler
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `retrieveCookie`.
+- [../../lib/setup-no-cache-headers.md](../../lib/setup-no-cache-headers.md) — `setupNoCacheHeaders`.
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`.
+- [../../constants.md](../../constants.md) — `PATHS.AUTH`, `COOKIES.EMAIL_ENTERED`, `MESSAGES.ALREADY_SIGNED_IN`, `STANDARD_SECURE_HEADERS`.
 
 ---
 

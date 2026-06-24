@@ -13,12 +13,13 @@ Factory that creates and configures the better-auth instance. Called once per re
 Builds a better-auth instance with the following configuration:
 
 - **Database** — `drizzleAdapter(dbClient, { schema })` from `../db/client.ts` and `../db/schema.ts`
-- **Email & Password** — enabled, `requireEmailVerification: true`
+- **Email & Password** — enabled, `requireEmailVerification: true`, `minPasswordLength: 8`, `maxPasswordLength: 128`
 - **Email Verification** — `sendVerificationEmail` callback sends a confirmation email via `sendConfirmationEmail()` from `email-service.ts`
 - **Password Reset** — `sendResetPassword` callback sends a reset email via `sendPasswordResetEmail()` from `email-service.ts`
 - **Session** — expires in `THIRTY_DAYS_IN_SECONDS`, updates every `ONE_DAY_IN_SECONDS`, cookie cache enabled with `FIVE_MINUTES_IN_SECONDS` max age
 - **Trusted Origins** — `['http://localhost:3000', 'http://127.0.0.1:3000', alternateOrigin]` (dev only; production origins are commented out)
 - **Redirect after sign-in** — `redirectTo: '/expenses'`
+- **Base URL** — `http://localhost:3000` (dev only; production URL commented out)
 - **Secret** — `env.BETTER_AUTH_SECRET`
 
 ## Cross-references

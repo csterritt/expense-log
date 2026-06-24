@@ -17,6 +17,7 @@ Shared helper functions for expense form handling: creating empty form state and
 ## Cross-references
 
 - [expense-form.md](expense-form.md) — `ExpenseFormState` type definition.
+- [../../local-types.md](../../local-types.md) — `Bindings` type.
 - [expense-post-handler.md](expense-post-handler.md) — Uses `readRawBody`.
 - [expense-confirm-post-handler.md](expense-confirm-post-handler.md) — Uses `readRawBody`.
 

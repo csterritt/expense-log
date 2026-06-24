@@ -31,7 +31,11 @@ Registers five routes, all gated by `signedInAccess` and wrapped in `secureHeade
 
 - [expense-form.md](expense-form.md) — `renderExpenseForm({ mode: 'edit' })` and `renderConfirmNewItems({ mode: 'edit' })`.
 - [build-expenses.md](build-expenses.md) — sister route file (create + list); the Edit button in `renderExpenseTable` links here.
-- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `getExpenseById`, `updateExpenseWithTags`, `updateManyAndExpense`, `deleteExpense`, `findCategoryByName`, `findTagsByNames`, `listCategories`, `listTags`.
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../db/client.md](../../db/client.md) — `createDbClient`.
+- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `getExpenseById`, `updateExpenseWithTags`, `updateManyAndExpense`, `deleteExpense`.
+- [../../lib/db/category-access.md](../../lib/db/category-access.md) — `listCategories`, `findCategoryByName`.
+- [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `listTags`.
 - [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseExpenseCreate`, `parseNewCategoryName`, `parseTagInputs`, `FieldErrors`.
 - [../../lib/form-state.md](../../lib/form-state.md) — `redirectWithFormErrors`, `readAndClearFormState`, `ExpenseFormValues`.
 - [../../lib/money.md](../../lib/money.md) — `formatCents` (delete page), `formatCentsPlain` (edit-form seed).

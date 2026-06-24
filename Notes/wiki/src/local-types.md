@@ -17,8 +17,7 @@ Legacy session shape with `id`, `token`, `userId`, `signedIn`, `attemptCount`, `
 Hono environment bindings. Includes:
 
 - `PROJECT_DB` — D1Database
-- `Session` — `Maybe<SignInSession>`
-- Optional: `db`, `signUpType`, `SIGN_UP_MODE`, `EMAIL_SEND_URL`, `EMAIL_SEND_CODE`, `CLOUDFLARE_*`, `PO_APP_ID`, `PO_USER_ID`, `ALTERNATE_ORIGIN`, `BETTER_AUTH_SECRET`, `NODE_ENV`, `PLAYWRIGHT`, `SMTP_SERVER_*`, `ENABLE_TEST_ROUTES`
+- Optional: `SIGN_UP_MODE`, `EMAIL_SEND_URL`, `EMAIL_SEND_CODE`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `CLOUDFLARE_D1_TOKEN`, `PO_APP_ID`, `PO_USER_ID`, `ALTERNATE_ORIGIN`, `BETTER_AUTH_SECRET`, `NODE_ENV`, `PLAYWRIGHT`, `SMTP_SERVER_HOST`, `SMTP_SERVER_PORT`, `SMTP_SERVER_USER`, `SMTP_SERVER_PASSWORD`, `ENABLE_TEST_ROUTES`
 
 ### `DrizzleClient`
 

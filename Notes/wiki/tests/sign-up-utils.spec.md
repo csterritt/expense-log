@@ -32,4 +32,4 @@ Pattern-matches lowercase strings against: `'already exists'`, `'duplicate'`, `'
 
 ---
 
-See [tests.md](../tests.md) for the full catalog.
+See [unit-tests.md](../unit-tests.md) for the full catalog.

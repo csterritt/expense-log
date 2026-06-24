@@ -20,8 +20,9 @@ Middleware chain:
 ### GET handler
 
 1. Parses query string via `parseSummaryQuery`. On validation errors, the route still renders (with error indicators) rather than short-circuiting.
-2. Calls `summarize(db, parsed)` and `listTags(db)` in parallel.
-3. Renders `ControlsForm` (filters) and `ResultsTable` (aggregated rows) inside `useLayout`.
+2. If no filter params are present (`parsed.hasFilterParams` is false), applies `defaultRangeEt()` to set the from/to date range.
+3. Calls `summarize(db, { dimension, granularity, filters: activeFilters, sort })` and `listTags(db)` in parallel via `Promise.all`.
+4. Renders `ControlsForm` (filters) and `ResultsTable` (aggregated rows) inside `useLayout`.
 
 ### ControlsForm
 
@@ -62,7 +63,11 @@ Column shape is dimension-driven:
 - [middleware/signed-in-access.md](../middleware/signed-in-access.md) — auth gate
 - [constants.md](../constants.md) — `PATHS.SUMMARY`, `STANDARD_SECURE_HEADERS`
 - [../lib/db/summary-access.md](../lib/db/summary-access.md) — `summarize` aggregation logic
+- [../lib/db/tag-access.md](../lib/db/tag-access.md) — `listTags` for tag filter checkboxes
 - [../lib/expense-validators.md](../lib/expense-validators.md) — `parseSummaryQuery` validator
+- [../lib/et-date.md](../lib/et-date.md) — `defaultRangeEt` for default date range
+- [../lib/money.md](../lib/money.md) — `formatCents` for total display
+- [../components/tag-chip-checkboxes.md](../components/tag-chip-checkboxes.md) — `TagChipCheckboxes` component for tag filter UI
 - [../../e2e-tests/summary/01-summary-defaults-and-controls.spec.md](../../e2e-tests/summary/01-summary-defaults-and-controls.spec.md) — E2E coverage for defaults, controls, sorting
 - [../../e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.md](../../e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.md) — E2E coverage for tag filtering and recurring rows
 

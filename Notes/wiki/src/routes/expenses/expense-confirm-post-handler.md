@@ -26,11 +26,12 @@ POST handler for the expense creation confirmation page (`/expenses/confirm-crea
 ## Cross-references
 
 - [expense-form-helpers.md](expense-form-helpers.md) — `readRawBody` helper.
+- [../../db/client.md](../../db/client.md) — `createDbClient`.
 - [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseExpenseCreate`, `parseTagInputs`.
 - [../../lib/db/confirm-helpers.md](../../lib/db/confirm-helpers.md) — `resolveConfirmTagsAndCategory` (Issue 18 shared pipeline).
 - [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `createManyAndExpense`.
 - [../../lib/form-state.md](../../lib/form-state.md) — `redirectWithFormErrors`.
-- [../../lib/confirmation-hmac.md](../../lib/confirmation-hmac.md) — HMAC signing utilities for confirmation payload integrity.
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`, `redirectWithError`.
 
 ---
 

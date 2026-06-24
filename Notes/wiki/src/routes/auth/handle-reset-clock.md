@@ -12,11 +12,16 @@ Dev-only test route that clears the clock manipulation `delta` cookie, restoring
 
 Route: `GET /auth/reset-clock`
 
-Calls `clearCurrentDelta` and returns JSON: `{ ok: true }`
+Calls `clearCurrentDelta(c)` and redirects to `/` with `'Clock reset!'`.
+
+Contains `PRODUCTION:STOP` / `PRODUCTION:REMOVE` / `PRODUCTION:UNCOMMENT` markers for build-time stripping.
 
 ## Cross-references
 
-- [lib/time-access.md](../../lib/time-access.md) — `clearCurrentDelta`
+- [../../lib/time-access.md](../../lib/time-access.md) — `clearCurrentDelta`.
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`.
+- [../../constants.md](../../constants.md) — `PATHS.AUTH.RESET_CLOCK`, `PATHS.ROOT`, `STANDARD_SECURE_HEADERS`.
+- [../../local-types.md](../../local-types.md) — `Bindings` type.
 
 ---
 

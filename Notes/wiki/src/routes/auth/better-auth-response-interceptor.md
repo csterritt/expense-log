@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Intercepts POST requests to `/api/auth/sign-in/email` and `/api/auth/sign-up/email` to convert Better Auth's JSON API responses into user-friendly redirects with flash messages.
+Intercepts POST requests to `PATHS.AUTH.SIGN_IN_EMAIL_API` to convert Better Auth's JSON API responses into user-friendly redirects with flash messages.
 
 ## Exports
 
@@ -25,7 +25,7 @@ Registers two handlers on `PATHS.AUTH.SIGN_IN_EMAIL_API`:
 | **200**   | Response is JSON with `user.emailVerified === false` and URL contains `/sign-up` | Sets `EMAIL_ENTERED` cookie, redirects to `/auth/email-sent` with `'Account created! Please check your email to verify your account.'` |
 | **200**   | Response is JSON with `user.emailVerified === false` (sign-in)                   | Redirects to `/auth/sign-in` with `'Please verify your email address before signing in.'`                                              |
 | **200**   | Response is JSON with `user.emailVerified === true`                              | Copies Set-Cookie headers from Better Auth response, redirects to `/expenses` with `'Welcome! You have been signed in successfully.'`  |
-| **401**   | —                                                                                | Redirects to `/auth/sign-in` with `'Invalid email or password.'`                                                                       |
+| **401**   | —                                                                                | Redirects to `/auth/sign-in` with `'Invalid email or password. Please check your credentials and try again.'`                          |
 | **403**   | Error code is `EMAIL_NOT_VERIFIED` and email was captured                        | Sets `EMAIL_ENTERED` cookie, redirects to `/auth/await-verification`                                                                   |
 | **403**   | Any other 403                                                                    | Redirects to `/auth/sign-in` with verify-email message                                                                                 |
 | **400**   | —                                                                                | Redirects to `/auth/sign-in` with `'Please check your email and password and try again.'`                                              |
@@ -52,10 +52,11 @@ Registers two handlers on `PATHS.AUTH.SIGN_IN_EMAIL_API`:
 
 ## Cross-references
 
-- [lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`, `redirectWithError`
-- [constants.md](../../constants.md) — `PATHS`, `COOKIES`, `MESSAGES`
-- [lib/cookie-support.md](../../lib/cookie-support.md) — `addCookie`
-- [lib/auth.md](../../lib/auth.md) — `createAuth`
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`, `redirectWithError`
+- [../../constants.md](../../constants.md) — `PATHS`, `COOKIES`, `MESSAGES`
+- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `addCookie`
+- [../../lib/auth.md](../../lib/auth.md) — `createAuth`
+- [../../local-types.md](../../local-types.md) — `Bindings` type
 
 ---
 

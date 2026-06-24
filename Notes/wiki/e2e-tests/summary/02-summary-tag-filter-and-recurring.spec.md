@@ -6,23 +6,20 @@
 
 End-to-end coverage for the Issue 17 summary page tag-AND filtering and recurring expense participation.
 
-## Test cases (5 total)
+## Test cases (4 total)
 
-### `single tag filter narrows results`
+### `single-tag filter narrows aggregation to expenses carrying that tag; column shape unchanged`
 
-- Selects one tag checkbox, clicks Apply.
-- Table includes only expenses carrying that tag.
-- Expenses with multiple matching tags still appear once per applicable group.
+- Seeds expenses with `work` and `personal` tags across Food and Transport categories.
+- Clicks the `work` chip, submits.
+- Only Food and Transport categories appear (both have work-tagged expenses).
+- Tag ID is preserved in the URL.
 
-### `multi-tag AND filter narrows further`
+### `two-tag filter applies AND semantics — only expenses carrying both tags contribute`
 
-- Selects two tag checkboxes, clicks Apply.
-- Table includes only expenses carrying **both** selected tags.
-
-### `three-tag AND filter can return empty`
-
-- Selects three tags that no single expense carries simultaneously.
-- Empty state message is shown.
+- Seeds expenses with `work`, `personal`, and both tags.
+- Clicks both `work` and `personal` chips, submits.
+- Only the expense carrying both tags appears (1 row, total $30.00).
 
 ### `recurring template does not appear until materialized`
 

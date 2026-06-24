@@ -1,5 +1,7 @@
 # recurring-edit-confirm-handler.spec.ts
 
+**Source:** `tests/recurring-edit-confirm-handler.spec.ts`
+
 Tests for recurring-edit confirmation handler hardening (Task 28 RED).
 
 ## Coverage
@@ -36,6 +38,11 @@ Uses `bun:sqlite` with recurring and `recurringTag` tables. Includes `seedRecurr
 
 ## Cross-references
 
-- See [confirmation-hmac.ts](../src/lib/confirmation-hmac.md) for the signing utilities under test.
-- See [expense-access.ts](../src/lib/db/expense-access.md) for `updateManyAndRecurring` and `updateRecurringWithTags`.
-- See [recurring-confirm-handler.spec.ts](recurring-confirm-handler.spec.md) for the create-path equivalent tests.
+- [../src/lib/confirmation-hmac.md](../src/lib/confirmation-hmac.md) — signing utilities under test.
+- [../src/lib/db/expense-access.md](../src/lib/db/expense-access.md) — `updateManyAndRecurring` and `updateRecurringWithTags`.
+- [../src/db/schema.md](../src/db/schema.md) — schema constraints mirrored by the in-memory harness.
+- [recurring-confirm-handler.spec.md](recurring-confirm-handler.spec.md) — create-path equivalent tests.
+
+---
+
+See [unit-tests.md](../unit-tests.md) for the full catalog.

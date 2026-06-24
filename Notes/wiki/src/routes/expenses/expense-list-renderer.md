@@ -36,6 +36,11 @@ Renders the complete expenses page combining:
 - [expense-form.md](expense-form.md) — `renderExpenseForm` and form types.
 - [../../components/tag-chip-checkboxes.md](../../components/tag-chip-checkboxes.md) — `TagChipCheckboxes` component used for filter bar tags.
 - [../../lib/money.md](../../lib/money.md) — `formatCents`.
+- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `ExpenseRow` type.
+- [../../lib/db/category-access.md](../../lib/db/category-access.md) — `CategoryRow` type.
+- [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `TagRow` type.
+- [../../lib/expense-validators.md](../../lib/expense-validators.md) — `FieldErrors`, `ParsedExpenseListFilters` types.
+- [../../constants.md](../../constants.md) — `PATHS.EXPENSES`.
 
 ---
 

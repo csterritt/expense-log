@@ -100,14 +100,18 @@ Unique indexes:
 
 ### `tag`
 
-Expense tags. Names are unique.
+Expense tags. Names are unique case-insensitively through the `tag_name_lower_unique` unique index on `lower(name)`.
 
 | Column      | Type                | Constraints     |
 | ----------- | ------------------- | --------------- |
 | `id`        | text                | primaryKey      |
-| `name`      | text                | notNull, unique |
+| `name`      | text                | notNull         |
 | `createdAt` | integer (timestamp) | notNull         |
 | `updatedAt` | integer (timestamp) | notNull         |
+
+Unique indexes:
+
+- `tag_name_lower_unique` on `lower(name)` — enforces lowercase-normalized tag uniqueness while preserving the original `name` column and existing foreign-key relationships.
 
 ### `recurring`
 

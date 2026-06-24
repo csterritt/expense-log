@@ -19,16 +19,18 @@ Registers three routes, all gated by `signedInAccess` and wrapped in `secureHead
 ### Internal helpers
 
 - `emptyRecurringState(today)` — builds a default `RecurringFormState` with all fields blank and `anchorDate` defaulted to today.
-- `readRawBody(c)` — parses the request body into `{ description, amount, category, tags, recurrence, anchorDate, action }` with string defaults.
-- `computeNewItemsDiff(categoryLookup, tagLookup, loweredTagNames)` — splits tags into existing IDs and new names; flags whether the category is new.
+- `readRawBody(c)` — parses the request body into `{ description, amount, category, tagId: string[], newTags, recurrence, anchorDate, action }` with string defaults. Parses `tagId` from checkbox array or single string.
 
 ## Cross-references
 
 - [recurring-form.md](recurring-form.md) — shared form renderer.
 - [../expenses/expense-form.md](../expenses/expense-form.md) — `renderConfirmNewItems` shared with expense flows.
-- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `createRecurringWithTags`, `createManyAndRecurring`, `findCategoryByName`, `findTagsByNames`.
-- [../../lib/db/category-access.md](../../lib/db/category-access.md) — `listCategories`.
+- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `createRecurringWithTags`, `createManyAndRecurring`.
+- [../../lib/db/category-access.md](../../lib/db/category-access.md) — `listCategories`, `findCategoryByName`.
 - [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `listTags`.
+- [../../db/client.md](../../db/client.md) — `createDbClient`.
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../lib/et-date.md](../../lib/et-date.md) — `todayEt`.
 - [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseRecurringCreate`, `parseNewCategoryName`, `parseTagInputs`.
 - [../../lib/db/confirm-helpers.md](../../lib/db/confirm-helpers.md) — `resolveConfirmTagsAndCategory` (Issue 18 shared pipeline).
 - [../../lib/form-state.md](../../lib/form-state.md) — `redirectWithFormErrors`, `readAndClearFormState`.

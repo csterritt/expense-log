@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended again in Issue 06 with `parseTagCsv` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 14 with `parseSummaryQuery` (removed 2026-05-22), Issue 16 with reversed-date-range cases for `parseExpenseListFilters`, Issue 17 re-introduced `parseSummaryQuery` with new dimension, granularity, sort, and tag-AND filter tests. Tag chip-checkbox refactor added `parseTagInputs` (Task 1a) and `parseCategoryInput` tests. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
+Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validators.md) — added in Issue 04, extended in Issue 05 with `parseNewCategoryName` cases, extended in Issue 09 with category-management validators, extended in Issue 10 with tag-management validators, Issue 11 with `parseExpenseListFilters`, Issue 13 with `parseRecurringCreate`, Issue 16 with reversed-date-range cases for `parseExpenseListFilters`, Issue 17 re-introduced `parseSummaryQuery` with new dimension, granularity, sort, and tag-AND filter tests. Tag chip-checkbox refactor added `parseTagInputs` (Task 1a) and `parseCategoryInput` tests. Task 4 added ULID drop + cap truncation tests for `parseExpenseListFilters` and `parseSummaryQuery`, plus dimension-aware sort allow-list tests. Pins the contract that validators normalize/trim successful values and return field-level errors for invalid payloads.
 
 ## Setup
 
@@ -12,7 +12,7 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - Local `expectOk(input, expected)` — asserts `Result.isOk` and that the parsed `amountCents`, trimmed `description`, `date`, and `category` match.
 - Local `expectFieldErr(partial, expectedFields)` — overlays `partial` onto a known-valid base, asserts `Result.isErr`, and that each listed field has a non-empty error string.
 
-## Test cases (218 total; was 156 before tag chip-checkbox refactor added `parseTagInputs` and `parseCategoryInput` tests)
+## Test cases (210 total)
 
 ### `description`
 
@@ -40,15 +40,13 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 
 - `accepts a single character`, `accepts exactly categoryNameMax characters`, `rejects categoryNameMax + 1 characters`, `rejects empty input`, `rejects whitespace-only input`, `trims surrounding whitespace and returns the trimmed value`, `preserves case in the trimmed value`.
 
-### `parseTagCsv` (Issue 06, 8 cases)
+### `parseRecurringCreate` (Issue 13, ~30 cases)
 
-- `returns ok([]) for empty string`.
-- `parses a simple two-tag CSV` — `'food, groceries'` → `['food','groceries']`.
-- `case-insensitively de-duplicates` — `'Food, food, FOOD'` collapses to `['food']`.
-- `trims whitespace per entry` — surrounding spaces stripped before lower-casing.
-- `rejects a single tagNameMax + 1 char name`, `rejects when any tag in a longer list exceeds the limit`.
-- `returns ok([]) for an all-empty CSV` — `', ,  ,'` → `[]` (zero tags is valid).
-- `accepts exactly tagNameMax characters`.
+- **Happy paths:** accepts Monthly, Quarterly, and Yearly recurrence with valid description, amount, date, category, and anchorDate.
+- **Recurrence validation:** rejects unknown recurrence values with a `recurrence` field error.
+- **AnchorDate validation:** rejects invalid dates, impossible dates (Feb 30), and malformed shapes.
+- **Field errors:** rejects empty/whitespace description, zero/negative amounts, invalid dates, empty category.
+- **Multiple errors:** returns errors for all invalid fields simultaneously.
 
 ### `multi-field failure`
 
@@ -106,6 +104,25 @@ Unit coverage for [`src/lib/expense-validators.ts`](../src/lib/expense-validator
 - **New tag token validation:** accepts lowercase alphanumeric, hyphens, underscores (1–20 chars); rejects invalid characters, empty tokens, tokens over 20 chars.
 - **Existing-tag resolution:** new tag tokens matching an existing tag name (case-insensitive) are resolved to that tag's ID; deduplication applies across both resolved IDs and unresolved tokens.
 - **Edge cases:** empty `tagId` and empty `newTags` returns empty arrays with no errors; whitespace-only `newTags` returns empty arrays with no errors; preserves raw `newTags` value in `rawNewTagsPreserved`.
+
+### `parseExpenseListFilters` — Task 4: ULID drop + cap truncation
+
+- Silently drops non-ULID `tagId` values, keeping only syntactically valid ones.
+- Enforces `TAG_ID_RAW_CAP` on raw `tagId` array length.
+
+### `parseSummaryQuery` — Task 4: ULID drop + cap truncation
+
+- Silently drops non-ULID `tagId` values, keeping only syntactically valid ones.
+- Enforces `TAG_ID_RAW_CAP` on raw `tagId` array length.
+
+### `parseSummaryQuery` — Task 4: dimension-aware sort allow-list
+
+- `sort=tag` with `dimension=category` falls back to default (no sort entry, no error).
+- `sort=category` with `dimension=tag` falls back to default.
+- `sort=tag` with `dimension=tag` is accepted.
+- `sort=category` with `dimension=category` is accepted.
+- `sort=category` with `dimension=category-tag` is accepted.
+- `sort=tag` with `dimension=category-tag` is accepted.
 
 ### `parseCategoryInput` (Task 1a — pure parser, 14 cases)
 

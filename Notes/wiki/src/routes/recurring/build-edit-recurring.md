@@ -28,9 +28,11 @@ Registers five routes, all gated by `signedInAccess` and wrapped in `secureHeade
 
 - [recurring-form.md](recurring-form.md) — `renderRecurringForm({ mode: 'edit' })`.
 - [../expenses/expense-form.md](../expenses/expense-form.md) — `renderConfirmNewItems` shared renderer.
-- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `getRecurringById`, `updateRecurringWithTags`, `updateManyAndRecurring`, `deleteRecurring`.
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../db/client.md](../../db/client.md) — `createDbClient`.
+- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `getRecurringById`, `updateRecurringWithTags`, `deleteRecurring`.
 - [../../lib/db/category-access.md](../../lib/db/category-access.md) — `listCategories`, `findCategoryByName`.
-- [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `listTags`, `findTagsByNames`.
+- [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `listTags`.
 - [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseRecurringCreate`, `parseNewCategoryName`, `parseTagInputs`.
 - [../../lib/db/confirm-helpers.md](../../lib/db/confirm-helpers.md) — `resolveConfirmTagsAndCategory`, `createOrReuseCategory`, `createOrReuseTag`.
 - [../../lib/form-state.md](../../lib/form-state.md) — `redirectWithFormErrors`, `readAndClearFormState`.

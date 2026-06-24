@@ -75,7 +75,7 @@ Rendered when a rename target already exists case-insensitively. Shows:
 - [middleware/signed-in-access.md](../middleware/signed-in-access.md) — auth gate.
 - [constants.md](../constants.md) — `PATHS.TAGS`, `STANDARD_SECURE_HEADERS`.
 - [../lib/expense-validators.md](../lib/expense-validators.md) — tag-management validators.
-- [../lib/db/expense-access.md](../lib/db/expense-access.md) — tag repository helpers.
+- [../lib/db/tag-access.md](../lib/db/tag-access.md) — tag repository helpers.
 - [../lib/form-state.md](../lib/form-state.md) — field-error/sticky-value redirect flow.
 - [../../e2e-tests/expenses/13-tag-management.spec.md](../../e2e-tests/expenses/13-tag-management.spec.md) — Playwright coverage.
 

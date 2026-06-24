@@ -132,6 +132,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/`, organized by feat
 
 - [e2e-tests/summary/01-summary-defaults-and-controls.spec.ts](./e2e-tests/summary/01-summary-defaults-and-controls.spec.md) — Issue 17. Default state (month granularity, category dimension), dimension switching (time, tag, category-tag), granularity switching (quarter, year), sortable column headers, tag AND-semantic note, clear-reset flow, and empty state.
 - [e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.ts](./e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.md) — Issue 17. Single-tag filter, multi-tag AND filter, three-tag AND empty result, recurring template exclusion until materialized, and materialized recurring row counting like a manual expense.
+- [e2e-tests/summary/03-summary-chip-and-sort.spec.ts](./e2e-tests/summary/03-summary-chip-and-sort.spec.md) — Issue 18. Tag filter uses chip-checkbox block (no `<select multiple>`, no new-tag input); AND semantics across two selected tags; month-granularity `Mmm YYYY` labels in chronological order; quarter-granularity `Mmm-Mmm YYYY` labels; descending sort toggle on time-period header; cross-year ordering (Dec 2025 before Jan 2026); malformed query params fall back to defaults without 500; dimension-aware sort allow-list (category + sort=tag falls back); untagged expenses excluded from tag and category-tag dimensions; stale-but-valid ULID tagId silently omitted from checked chips.
 
 ## Notes
 

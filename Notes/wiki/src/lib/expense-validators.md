@@ -47,12 +47,6 @@ Each is a `pipe(string(...), custom<string>(...), ...)` composition:
 - Introduced in Issue 05. Runs the trimmed input through `NewCategoryNameSchema` and, on success, returns the trimmed value *case-preserved*. Lowercasing is deferred to `createCategoryAndExpense` so the UI can echo the user's casing back on the confirmation page.
 - On failure returns a single user-facing string suitable to place under the entry form's `category` field via `redirectWithFormErrors(c, PATHS.EXPENSES, { category: err }, values)`.
 
-### `parseTagCsv(input: string): Result<string[], string>`
-
-- Introduced in Issue 06. Splits the raw CSV on `,`, trims each entry, drops empty-after-trim entries, lower-cases the survivors, and de-duplicates silently (preserving first-appearance order). Enforces `length <= tagNameMax` on every kept name.
-- Returns `Result.ok([])` for an empty / all-whitespace CSV (zero tags is a valid submission).
-- Returns `Result.err(\`Tag names must be at most ${tagNameMax} characters.\`)` when any kept entry exceeds the limit. The POST handler surfaces that string under the `tags` field via `redirectWithFormErrors(c, PATHS.EXPENSES, { tags: err }, values)`.
-
 ### Category-management validators (Issue 09)
 
 - `CategoryManagementNameSchema` aliases `NewCategoryNameSchema`, but `parseCategoryManagementName` lowercases the valid trimmed name before returning it.
@@ -72,7 +66,6 @@ Tag validators mirror the category-management pattern exactly, with the parallel
 - `parseTagMergeConfirm(raw)` validates `sourceId` and `targetId`, and rejects equal ids with `targetId: 'Choose two different tags.'`.
 - `parseTagDelete(raw)` validates a required `id` and returns a trimmed id.
 
-Note: `parseTagCsv` (Issue 06) is also exported from this module; it serves the entry/edit form tag CSV field and is distinct from the tag management validators above.
 
 ### `parseExpenseListFilters(raw: RawExpenseListFilters): ExpenseListFilterResult` (Issue 11, updated Issue 16)
 
@@ -119,7 +112,7 @@ Re-introduced in Issue 17 with a new signature reflecting the updated summary de
 - **Granularities:** `month`, `quarter`, `year`. Defaults to `month`. Always present in the UI selector; unknown values report a `groupBy` field error and fall back to `month`.
 - **Date range:** `from` and `to` are independently optional. Both are validated with `isValidYmd`. Invalid dates (wrong shape or impossible calendar dates like `2026-02-31`) are silently dropped — no error produced. Only `from > to` (both valid) produces a `fieldErrors.date` error. Issue 18: non-`YYYY-MM-DD` and impossible-calendar dates are treated as absent.
 - **Tag filter:** `tagId` can be a single string or array; deduplicated preserving first-appearance order. Tag filtering is **AND-semantic**: only expenses carrying **all** listed tags are included. Issue 18: syntactically invalid `tagId` values are silently dropped and raw count is truncated to `TAG_ID_RAW_CAP` without error (page still renders).
-- **Sort (Issue 18 dimension-aware allow-list):** `sort` can be a single string or array of `column:direction` strings. Valid columns vary by dimension — the allow-list is built from `VALID_SORT_COLUMNS_ALWAYS` (`timePeriod`, `count`, `total`) plus `DIMENSION_EXTRA_SORT_COLUMNS` per dimension (`category` adds `category`; `tag` adds `tag`; `category-tag` adds `category` and `tag`). Invalid (out-of-dimension or unknown) sort columns and invalid directions are silently ignored (no error), falling back to the default sort.
+- **Sort (Issue 18 dimension-aware allow-list):** `sort` can be a single string or array of `column:direction` strings. Valid columns vary by dimension — the allow-list is built from `VALID_SORT_COLUMNS_ALWAYS` (`timePeriod`, `count`, `total`) plus `DIMENSION_EXTRA_SORT_COLUMNS` per dimension (`category` adds `category`; `tag` adds `tag`; `category-tag` adds `category` and `tag`). Invalid (out-of-dimension or unknown) sort columns and invalid directions are silently ignored (no error produced), falling back to the default sort.
 - `hasFilterParams` is `true` when any key is present, distinguishing first load from explicit filter submission.
 - Returns `{ hasFilterParams, dimension, granularity, from?, to?, tagIds: string[], sort: SummarySortEntry[], fieldErrors }`.
 

@@ -28,4 +28,4 @@ Local `expectOk(input, cents)` and `expectErr(input)` helpers assert the `Result
 - Rejects non-numeric: `abc`, `12abc`, `$1.00`, `1.2.3`.
 - Rejects empty: `''`, `'   '`.
 
-Run with `bun test tests/money.spec.ts` (uses `node:test` + `node:assert`). All 20 tests pass.
+Run with `bun test tests/money.spec.ts` (uses `bun:test` + `node:assert`). All 20 tests pass.

@@ -1,6 +1,6 @@
 # src/routes/test/run-cron.ts
 
-Dev-only (`// PRODUCTION:REMOVE`) cron trigger route.
+Dev-only (`// PRODUCTION:STOP`) cron trigger route.
 
 ## Purpose
 
@@ -21,8 +21,9 @@ cookie.
 
 ## Guards
 
-- Registered only inside the `isTestRouteEnabled` block in `src/index.ts`.
+- Guarded by `// PRODUCTION:STOP` / `// PRODUCTION:UNCOMMENT` markers so the route body is stripped in production builds.
 - Requires an active session via `signedInAccess` middleware.
+- Uses `secureHeaders(STANDARD_SECURE_HEADERS)`.
 
 ## Registration
 
@@ -32,7 +33,12 @@ app.route('/test', testRunCronRouter)  // PRODUCTION:REMOVE
 
 ## Cross-references
 
-- [src/lib/recurrence.md](../../lib/recurrence.md) — `occurrencesToGenerate` algorithm
-- [src/lib/db/expense-access.md](../../lib/db/expense-access.md) — `materializeRecurring`
-- [e2e-tests/recurring/05-cron-28th-shift.spec.md](../../../e2e-tests/recurring/05-cron-28th-shift.spec.md)
-- [e2e-tests/recurring/06-cron-idempotency.spec.md](../../../e2e-tests/recurring/06-cron-idempotency.spec.md)
+- [../../lib/recurrence.md](../../lib/recurrence.md) — `occurrencesToGenerate` algorithm
+- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `materializeRecurring`
+- [../../lib/et-date.md](../../lib/et-date.md) — `todayEt`
+- [../../lib/time-access.md](../../lib/time-access.md) — `getCurrentTime`
+- [../../middleware/signed-in-access.md](../../middleware/signed-in-access.md) — auth gate
+- [../../constants.md](../../constants.md) — `STANDARD_SECURE_HEADERS`
+- [../../db/client.md](../../db/client.md) — `createDbClient`
+- [../../../e2e-tests/recurring/05-cron-28th-shift.spec.md](../../../e2e-tests/recurring/05-cron-28th-shift.spec.md)
+- [../../../e2e-tests/recurring/06-cron-idempotency.spec.md](../../../e2e-tests/recurring/06-cron-idempotency.spec.md)

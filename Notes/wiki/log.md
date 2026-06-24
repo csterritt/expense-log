@@ -495,3 +495,18 @@ Updated wiki catalog pages to reflect recently added source and test files.
   - `src/routes/expenses/expense-get-handler.md` — added tag ID resolution step in flow
   - `src/routes/expenses/expense-list-renderer.md` — updated `renderFilterBar` to document `TagChipCheckboxes` component usage, added cross-reference
   - `src/lib/expense-validators.md` — added `groupBy` to `FieldErrors` type
+
+## [2026-06-24] lint | source-code.md catalog discrepancies
+
+Fixed three descriptions in `source-code.md` that were inaccurate after reviewing all `src/` files:
+
+- **`src/routes/test/sign-up-mode.ts`** — removed false "override" claim; the endpoint is inspection-only (returns current `SIGN_UP_MODE` as plain text).
+- **`src/routes/auth/build-email-confirmation.tsx`** — expanded from "Email confirmation success page" to document both routes: `GET /auth/verify-email` (token verification via Better Auth) and `GET /auth/email-sent` (email-sent confirmation page).
+- **`src/routes/profile/build-profile.tsx`** — expanded from "change password, delete account" to also mention user info display (name/email) and the humorous "question of the day" feature.
+
+## [2026-06-24] lint | unit-tests.md and e2e-tests.md missing entries
+
+Found and fixed two missing catalog entries during test-file verification:
+
+- **`tests/helpers/test-db.ts`** — was missing from `unit-tests.md`. Added entry documenting the shared in-memory SQLite setup (`createTestDb`) and seed helpers (`seedCategory`, `seedTag`, `seedExpense`, `seedExpenseTag`, `seedRecurring`). Updated header count from "17 spec files plus `tsconfig.json`" to "17 spec files, 1 shared helper, plus `tsconfig.json`".
+- **`e2e-tests/summary/03-summary-chip-and-sort.spec.ts`** — was missing from `e2e-tests.md`. Added entry documenting Issue 18 coverage: chip-checkbox tag filter UI, chronological sort labels (`Mmm YYYY` / `Mmm-Mmm YYYY`), descending sort toggle, cross-year ordering, malformed query fallback, dimension-aware sort allow-list, untagged expense exclusion, and stale tagId handling.

@@ -4,13 +4,13 @@
 
 ## Purpose
 
-Generates random 6-digit numeric codes for single-use sign-up (or similar token use). Never starts with zero.
+Generates cryptographically secure random 8-character alphanumeric tokens for single-use sign-up codes (or similar token use).
 
 ## Export
 
 ### `generateToken(): Promise<string>`
 
-Generates `Math.floor(100_000 + Math.random() * 900_000)` in a loop. In test mode, skips `'123456'` and `'999999'`.
+Generates 8 random alphanumeric characters (A-Z, a-z, 0-9) using `crypto.getRandomValues`. Each byte is mapped to the 62-character alphabet via modulo. Yields ~218 trillion possible tokens.
 
 ---
 

@@ -24,10 +24,17 @@ GET handler for the expenses list page (`/expenses`). Fetches expenses, categori
 
 - [expense-list-renderer.md](expense-list-renderer.md) — `renderExpenses`, `renderFilterBar`, `renderExpenseTable`.
 - [expense-form.md](expense-form.md) — `renderExpenseForm` and form types.
+- [expense-form-helpers.md](expense-form-helpers.md) — `emptyState` helper.
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../db/client.md](../../db/client.md) — `createDbClient`.
 - [../../lib/et-date.md](../../lib/et-date.md) — `defaultRangeEt`, `todayEt`.
 - [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseExpenseListFilters`.
 - [../../lib/form-state.md](../../lib/form-state.md) — `readAndClearFormState`.
 - [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `listExpenses`.
+- [../../lib/db/category-access.md](../../lib/db/category-access.md) — `listCategories`.
+- [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `listTags`.
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithError`.
+- [../../constants.md](../../constants.md) — `PATHS`.
 
 ---
 

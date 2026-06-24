@@ -51,7 +51,7 @@ Verifies a recurring confirmation payload signature. Returns `false` on missing 
 
 - Canonicalisation sorts `tagIds` before serialisation so tag ordering is stable.
 - Verification uses a constant-time string comparison to avoid timing attacks.
-- Uses `crypto.subtle.importKey`, `crypto.subtle.sign`, and `crypto.subtle.verify` via the Web Crypto API.
+- Uses `crypto.subtle.importKey` and `crypto.subtle.sign` via the Web Crypto API. Verification re-signs the canonical payload and compares hex strings with a constant-time comparison (does not use `crypto.subtle.verify`).
 
 ## Cross-references
 

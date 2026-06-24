@@ -1,5 +1,7 @@
 # expense-confirm-handler.spec.ts
 
+**Source:** `tests/expense-confirm-handler.spec.ts`
+
 Tests for expense confirmation handler hardening (Task 22 RED).
 
 ## Coverage
@@ -40,6 +42,11 @@ Mirrors the schema used in `expense-access.spec.ts` with `bun:sqlite`, including
 
 ## Cross-references
 
-- See [confirmation-hmac.ts](../src/lib/confirmation-hmac.md) for the signing utilities under test.
-- See [confirm-helpers.ts](../src/lib/db/confirm-helpers.md) for the race-tolerant helpers under test.
-- See [expense-access.ts](../src/lib/db/expense-access.md) for `createManyAndExpense`.
+- [../src/lib/confirmation-hmac.md](../src/lib/confirmation-hmac.md) — signing utilities under test.
+- [../src/lib/db/confirm-helpers.md](../src/lib/db/confirm-helpers.md) — race-tolerant helpers under test.
+- [../src/lib/db/expense-access.md](../src/lib/db/expense-access.md) — `createManyAndExpense`.
+- [../src/db/schema.md](../src/db/schema.md) — schema constraints mirrored by the in-memory harness.
+
+---
+
+See [unit-tests.md](../unit-tests.md) for the full catalog.

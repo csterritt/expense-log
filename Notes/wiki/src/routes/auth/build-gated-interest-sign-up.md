@@ -14,15 +14,18 @@ Route: `GET /auth/sign-up`
 
 ### Behavior
 
-1. Authenticated users are redirected to `/expenses` with `'You are already signed in.'`
-2. Renders the combined form
+1. Authenticated users are redirected to `/expenses` with `MESSAGES.ALREADY_SIGNED_IN`.
+2. Reads `EMAIL_ENTERED` cookie via `retrieveCookie` for pre-populating form fields.
+3. Sets no-cache headers via `setupNoCacheHeaders`.
+4. Renders the combined form.
 
 ### Page layout
 
-- **Gated sign-up** section with `<GatedSignUpForm />` — `data-testid='gated-signup-section'`
+- `data-testid='sign-up-page-banner'` wrapper
+- **Gated sign-up** section with `<GatedSignUpForm emailEntered={emailEntered} />` component
 - **Divider** (`OR`)
 - **Interest/waitlist** section:
-  - Email field — `data-testid='interest-email-input'`
+  - Email field — `data-testid='interest-email-input'` (`type='email'`, pre-populated from cookie)
   - Submit button — `data-testid='interest-action'`
 
 ### Navigation
@@ -31,8 +34,14 @@ Route: `GET /auth/sign-up`
 
 ## Cross-references
 
-- [components/gated-sign-up-form.md](../../components/gated-sign-up-form.md)
-- [handle-gated-interest-sign-up.md](handle-gated-interest-sign-up.md) — POST handler
+- [../../components/gated-sign-up-form.md](../../components/gated-sign-up-form.md) — `GatedSignUpForm` component.
+- [handle-gated-sign-up.md](handle-gated-sign-up.md) — POST handler for gated sign-up.
+- [handle-interest-sign-up.md](handle-interest-sign-up.md) — POST handler for interest/waitlist.
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `retrieveCookie`.
+- [../../lib/setup-no-cache-headers.md](../../lib/setup-no-cache-headers.md) — `setupNoCacheHeaders`.
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`.
+- [../../constants.md](../../constants.md) — `PATHS.AUTH`, `COOKIES.EMAIL_ENTERED`, `MESSAGES.ALREADY_SIGNED_IN`, `STANDARD_SECURE_HEADERS`.
 
 ---
 

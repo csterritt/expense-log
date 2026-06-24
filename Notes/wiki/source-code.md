@@ -91,7 +91,7 @@ All routes are signed-in-only via the `signedInAccess` middleware. `/summary` wa
 ### Auth pages (JSX builders)
 
 - [src/routes/auth/build-await-verification.tsx](./src/routes/auth/build-await-verification.md) — "Await email verification" page.
-- [src/routes/auth/build-email-confirmation.tsx](./src/routes/auth/build-email-confirmation.md) — Email confirmation success page.
+- [src/routes/auth/build-email-confirmation.tsx](./src/routes/auth/build-email-confirmation.md) — Email verification and sent-confirmation pages. Registers `GET /auth/verify-email` (token verification via Better Auth `verifyEmail` API) and `GET /auth/email-sent` (email-sent confirmation page with 24-hour expiry notice).
 - [src/routes/auth/build-forgot-password.tsx](./src/routes/auth/build-forgot-password.md) — "Forgot password" request page.
 - [src/routes/auth/build-gated-interest-sign-up.tsx](./src/routes/auth/build-gated-interest-sign-up.md) — Combined gated + interest sign-up page.
 - [src/routes/auth/build-gated-sign-up.tsx](./src/routes/auth/build-gated-sign-up.md) — Gated sign-up page (requires single-use code).
@@ -120,7 +120,7 @@ All routes are signed-in-only via the `signedInAccess` middleware. `/summary` wa
 ### Profile routes
 
 - [src/routes/profile/build-delete-confirm.tsx](./src/routes/profile/build-delete-confirm.md) — Account deletion confirmation page.
-- [src/routes/profile/build-profile.tsx](./src/routes/profile/build-profile.md) — Profile page builder (change password, delete account).
+- [src/routes/profile/build-profile.tsx](./src/routes/profile/build-profile.md) — Profile page builder. Displays user name and email, includes a change-password form, a humorous "question of the day" (deterministic by day of year), and a link to the delete-account confirmation page.
 - [src/routes/profile/handle-change-password.ts](./src/routes/profile/handle-change-password.md) — POST handler for changing password.
 - [src/routes/profile/handle-delete-account.ts](./src/routes/profile/handle-delete-account.md) — POST handler for account deletion.
 
@@ -128,7 +128,7 @@ All routes are signed-in-only via the `signedInAccess` middleware. `/summary` wa
 
 - [src/routes/test/database.ts](./src/routes/test/database.md) — Test database manipulation endpoints (PRODUCTION:REMOVE). Issue 14: `POST /test/database/seed-recurring-templates` accepts optional `createdAtIso` per-row to override the default `new Date()` creation timestamp, enabling clock-controlled e2e tests.
 - [src/routes/test/run-cron.ts](./src/routes/test/run-cron.md) — Issue 14: Dev-only `POST /test/run-cron` that invokes `materializeRecurring` with `todayEt(getCurrentTime(c))` and returns a JSON summary. Guarded by `signedInAccess` and `isTestRouteEnabled` (PRODUCTION:REMOVE).
-- [src/routes/test/sign-up-mode.ts](./src/routes/test/sign-up-mode.md) — Test sign-up mode inspection/override (PRODUCTION:REMOVE).
+- [src/routes/test/sign-up-mode.ts](./src/routes/test/sign-up-mode.md) — Test-only sign-up mode inspection endpoint; returns current `SIGN_UP_MODE` as plain text (PRODUCTION:REMOVE).
 - [src/routes/test/smtp-config.ts](./src/routes/test/smtp-config.md) — Test SMTP configuration endpoint (PRODUCTION:REMOVE).
 
 ### Other handlers

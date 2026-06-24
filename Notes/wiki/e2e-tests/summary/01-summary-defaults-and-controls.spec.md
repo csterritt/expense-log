@@ -6,55 +6,53 @@
 
 End-to-end coverage for the Issue 17 summary page default state, dimension switching, granularity switching, sorting, and the clear/reset flow.
 
-## Test cases (10 total)
+## Test cases (8 total)
 
-### `defaults to month granularity, category dimension`
+### `(a) first visit shows Category dimension, Month granularity, controls visible, no grand-total row, no percent column`
 
-- On first load with no query params, table shows `Category`, `Month`, `Count`, `Total` columns.
-- Granularity selector defaults to `Month`.
+- On first load with no query params, dimension defaults to `category`, granularity defaults to `month`.
+- All controls visible: dimension selector, granularity selector, tag chip block, date range inputs, submit and clear buttons.
+- Column headers: `Category`, `Time Period`, `Count`, `Total` present; no `Tag` column.
+- No grand-total row (`summary-total` absent) and no percent column.
 
-### `switches to quarter granularity`
+### `(b) switching dimension to Time only drops category/tag columns; switching to Tag adds tag column; switching to Category+Tag adds both`
 
-- Selects `Quarter` from granularity selector, clicks Apply.
-- Table shows `Mmm-Mmm` time period labels.
+- Switches dimension to `time` → category and tag columns disappear, time-period column remains.
+- Switches dimension to `tag` → tag column appears, category column absent.
+- Switches dimension to `category-tag` → both category and tag columns appear.
 
-### `switches to year granularity`
+### `(c) switching granularity to Quarter shows Mmm-Mmm labels; Year shows YYYY labels`
 
-- Selects `Year` from granularity selector, clicks Apply.
-- Table shows `YYYY` time period labels.
+- Switches granularity to `quarter` → time period labels match `^(Jan-Mar|Apr-Jun|Jul-Sep|Oct-Dec) \d{4}$`.
+- Switches granularity to `year` → time period labels match `^\d{4}$`.
 
-### `switches to time dimension`
+### `(d) clicking a column header toggles the sort indicator and re-orders rows`
 
-- Selects `Time` from dimension selector, clicks Apply.
-- Table shows only `Time Period`, `Count`, `Total` columns.
+- Clicks `summary-sort-category` header; URL contains `sort=` param.
+- Clicks again; URL changes (direction toggled).
 
-### `switches to tag dimension`
+### `(e) tag-related inline note appears for Tag and Category+Tag dimensions, absent otherwise`
 
-- Selects `Tag` from dimension selector, clicks Apply.
-- Table shows `Tag`, `Time Period`, `Count`, `Total` columns.
+- Default Category dimension — no `summary-tag-note`.
+- Switch to Tag — note appears.
+- Switch to Category+Tag — note still appears.
+- Switch to Time only — note gone.
 
-### `switches to category-tag dimension`
+### `(f) Clear link resets controls to first-load defaults`
 
-- Selects `Category + Tag` from dimension selector, clicks Apply.
-- Table shows `Category`, `Tag`, `Time Period`, `Count`, `Total` columns.
+- Changes dimension to `time` and granularity to `year`, submits.
+- Clicks Clear; dimension back to `category`, granularity back to `month`.
+- URL is plain `/summary` with no query params.
 
-### `sortable column headers toggle direction`
+### `(g) date range that yields no rows shows empty-state message`
 
-- Clicking a column header once sorts ascending; clicking again sorts descending.
-- Sort state is reflected in the query string.
+- Sets date range to 2000-01-01 through 2000-01-31, submits.
+- `summary-empty` is visible; no `summary-row` elements.
 
-### `tag note explains AND semantics`
+### `default sort is category ascending then time-period ascending (no percent column)`
 
-- When tags exist, a note is visible explaining that multiple selected tags filter to expenses carrying **all** selected tags.
-
-### `clear link resets to defaults`
-
-- After applying filters, the Clear link navigates to `/summary` with no query params.
-- Page returns to default dimension, granularity, and date range.
-
-### `empty state message`
-
-- When filters match no expenses, the table is hidden and a "No expenses match the selected filters." message appears.
+- Category column values are sorted ascending (case-insensitive).
+- No `summary-sort-percent` element present.
 
 ## Cross-references
 

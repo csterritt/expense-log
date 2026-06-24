@@ -33,7 +33,7 @@ Unit tests for [src/lib/et-date.md](../src/lib/et-date.md). All tests inject fix
 - Maps each month of a non-leap year to its `Mmm` abbreviation (`Jan` through `Dec`).
 - Rejects invalid dates (`2024-13-01`), empty string, and non-leap-year Feb 29.
 
-### `quarterKeyEt` (Issue 17, 11 cases)
+### `quarterKeyEt` (Issue 17, 12 cases)
 
 - Maps each quarter: `Jan-Mar`, `Apr-Jun`, `Jul-Sep`, `Oct-Dec`.
 - Rejects invalid dates (`2024-04-31`) and missing dashes (`20240101`).

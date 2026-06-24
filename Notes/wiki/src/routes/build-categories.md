@@ -65,7 +65,7 @@ Rendered when a rename target already exists case-insensitively. Shows:
 - [middleware/signed-in-access.md](../middleware/signed-in-access.md) — auth gate.
 - [constants.md](../constants.md) — `PATHS.CATEGORIES`, `STANDARD_SECURE_HEADERS`.
 - [../lib/expense-validators.md](../lib/expense-validators.md) — category-management validators.
-- [../lib/db/expense-access.md](../lib/db/expense-access.md) — category repository helpers.
+- [../lib/db/category-access.md](../lib/db/category-access.md) — category repository helpers.
 - [../lib/form-state.md](../lib/form-state.md) — field-error/sticky-value redirect flow.
 - [../../e2e-tests/expenses/12-category-management.spec.md](../../e2e-tests/expenses/12-category-management.spec.md) — Playwright coverage.
 

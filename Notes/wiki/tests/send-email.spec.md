@@ -22,4 +22,4 @@ Unit tests for `sendOtpToUserViaEmail` from `src/lib/send-email.ts`. Uses mock e
 
 ---
 
-See [tests.md](../tests.md) for the full catalog.
+See [unit-tests.md](../unit-tests.md) for the full catalog.

@@ -10,16 +10,16 @@ Unit coverage for [`src/lib/db/summary-access.ts`](../src/lib/db/summary-access.
 
 - In-memory SQLite database with `PRAGMA foreign_keys = ON`.
 - Manual `CREATE TABLE` for `category`, `recurring`, `expense`, `tag`, `expenseTag`, `recurringTag` plus indexes.
-- Local seed helpers: `seedCat`, `seedTag`, `seedExpense`, `seedExpenseTag`, `seedRecurring`.
+- Local seed helpers: `seedCategory`, `seedTag`, `seedExpense`, `seedExpenseTag`, `seedRecurring` (from `./helpers/test-db`).
 - Shared dataset: `food`, `transport`, `utilities` categories; `travel`, `dining`, `work` tags; five expenses plus one materialized recurring row.
 
-## Test cases (18 total)
+## Test cases (32 total)
 
-### `summarize — dimension: time` (4 cases)
+### `summarize — dimension: time` (5 cases)
 
 - Returns `timePeriod` but no `categoryName` or `tagName`.
-- `month` granularity produces `Mmm` labels.
-- `quarter` granularity produces `Mmm-Mmm` labels.
+- `month` granularity produces `Mmm YYYY` labels.
+- `quarter` granularity produces `Mmm-Mmm YYYY` labels.
 - `year` granularity produces `YYYY` labels.
 - Aggregates `count` and `totalCents` within each time period.
 
@@ -62,6 +62,19 @@ Unit coverage for [`src/lib/db/summary-access.ts`](../src/lib/db/summary-access.
 ### `summarize — explicit sort override` (1 case)
 
 - Sort by `totalCents` desc overrides the default.
+
+### `summarize — year-bearing labels` (Task 7, 3 cases)
+
+- `month` granularity produces `Mmm YYYY` labels (not bare `Mmm`).
+- `quarter` granularity produces `Mmm-Mmm YYYY` labels.
+- `year` granularity still produces `YYYY` labels (unchanged).
+
+### `summarize — chronological sort by internal key` (Task 7, 4 cases)
+
+- Dec 2025 and Jan 2026 are distinct rows (no cross-year aggregation).
+- Default sort places Dec 2025 before Jan 2026 in ascending order.
+- Apr 2026 sorts after Jan/Feb/Mar 2026 (chronological, not alphabetical).
+- Quarters within a year sort chronologically: Jan-Mar before Apr-Jun before Jul-Sep before Oct-Dec.
 
 ## Cross-references
 

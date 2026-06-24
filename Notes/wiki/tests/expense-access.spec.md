@@ -42,6 +42,8 @@ Unit-level coverage for selected helpers in [`src/lib/db/expense-access.ts`](../
 ## Cross-references
 
 - [../src/lib/db/expense-access.md](../src/lib/db/expense-access.md) — helpers under test.
+- [../src/lib/db/category-access.md](../src/lib/db/category-access.md) — category helpers under test (`createCategory`, `renameCategory`, `mergeCategory`, `deleteCategory`, `findCategoryByName`).
+- [../src/lib/db/tag-access.md](../src/lib/db/tag-access.md) — tag helpers under test (`createTag`, `renameTag`, `mergeTag`, `deleteTag`).
 - [../src/db/schema.md](../src/db/schema.md) — schema constraints mirrored by the in-memory harness.
 - [expense-validators.spec.md](expense-validators.spec.md) — companion unit coverage for category and tag management validators.
 

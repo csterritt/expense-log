@@ -39,6 +39,8 @@ Escapes `<`, `>`, and `&` to `\uXXXX` so a stray `</script>` in the JSON cannot 
 - [../../lib/expense-validators.md](../../lib/expense-validators.md) — `descriptionMax`, `categoryNameMax`, `tagNameMax`, `FieldErrors`.
 - [../../lib/form-state.md](../../lib/form-state.md) — `ExpenseFormValues` shape rendered by both helpers.
 - [../../public-js/index.md](../../public-js/index.md) — consumer of `categories-data` and the `data-category-combobox` hook.
+- [expense-list-renderer.md](expense-list-renderer.md) — imports `renderExpenseForm`, `ExpenseFormPayloads`, `ExpenseFormState` types.
+- [expense-form-helpers.md](expense-form-helpers.md) — imports `ExpenseFormState` type.
 
 ---
 

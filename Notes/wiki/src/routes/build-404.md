@@ -10,13 +10,14 @@ Catch-all 404 handler registered via `app.notFound()` in `index.ts`.
 
 ### `build404(app): void`
 
-Renders a simple JSX page with `data-testid='not-found-page'`:
+Renders a JSX page with `data-testid='404-page-banner'`:
 
+- "404" in large error text
 - "Page Not Found" heading
-- Message: "The page you are looking for does not exist."
-- Home button (`/`) with `data-testid='go-home-action'`
+- Message: "That page does not exist." (`data-testid='404-message'`)
+- Home button (`/`) with `data-testid='home-action'`
 
-Returns HTTP 200 (SPA convention) with the rendered page inside the layout.
+Registered via `app.notFound()`, which returns HTTP 404 by default. The rendered page is wrapped inside the layout.
 
 ## Cross-references
 

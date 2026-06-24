@@ -27,6 +27,8 @@ POST handler for creating a new expense. Validates the form, resolves category a
 - [expense-form-helpers.md](expense-form-helpers.md) — `readRawBody` helper.
 - [expense-form.md](expense-form.md) — `renderConfirmNewItems` and form types.
 - [expense-confirm-post-handler.md](expense-confirm-post-handler.md) — Handles the confirmation POST.
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../db/client.md](../../db/client.md) — `createDbClient`.
 - [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseExpenseCreate`, `parseNewCategoryName`, `parseTagInputs`.
 - [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `createExpenseWithTags`.
 - [../../lib/db/category-access.md](../../lib/db/category-access.md) — `findCategoryByName`.

@@ -4,7 +4,7 @@
 
 ## Purpose
 
-End-to-end coverage for the tag chip-checkbox + inline creation flow on the entry form (no-JS path). Tests: toggling an existing chip + typing a new tag name routes through confirmation; brand-new category + new tags; cancel preserves chip selections and `newTags` text; over-max tag names in `newTags` short-circuit with a `tags` field error; whitespace-only `newTags` creates the expense with no tags attached.
+End-to-end coverage for the tag chip-checkbox + inline creation flow on the entry form (no-JS path). Tests: toggling an existing chip + typing a new tag name routes through confirmation; brand-new category + new tags; cancel preserves `newTags` text; over-max tag names in `newTags` short-circuit with a `tags` field error; whitespace-only `newTags` creates the expense with no tags attached.
 
 ## Setup
 
@@ -31,11 +31,11 @@ End-to-end coverage for the tag chip-checkbox + inline creation flow on the entr
 - Confirms; asserts the new row has category `groceries` and `expense-row-tags='rent, utilities'`.
 - Second submission: toggles the now-existing `'rent'` chip, uses `category='GROCERIES'` (any case), and leaves `newTags` empty. Asserts no confirmation page is rendered and the new row has `expense-row-tags='rent'`. Demonstrates case-insensitive matching and the all-existing direct path.
 
-### `cancel preserves new-tags input value and chip selections and creates nothing`
+### `cancel preserves new-tags input value and creates nothing`
 
-- Toggles `'groceries'` chip and fills `newTags='mynewtag'`.
+- Fills `newTags='mynewtag'` (no chip toggled).
 - Submits to trigger the confirmation page.
-- Clicks `confirm-create-new-cancel`. Asserts the entry form is restored with every typed value preserved — including the `newTags` input text and the chip selection state. No `expense-row` exists.
+- Clicks `confirm-create-new-cancel`. Asserts the entry form is restored with every typed value preserved — including the `newTags` input text. No `expense-row` exists.
 
 ### `over-max tag name in new-tags shows tags field error and skips the confirmation page`
 

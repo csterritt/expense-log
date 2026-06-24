@@ -12,15 +12,12 @@ Dev-only test route to simulate database failures for resilience testing. Uses c
 
 Route: `GET /auth/set-db-failures/:name/:times`
 
-- `:name` — operation name to simulate failures for
-- `:times` — number of consecutive failures before success
+- `:name` — cookie name to set; must be one of `COOKIES.DB_FAIL_COUNT` or `COOKIES.DB_FAIL_INCR` (validated against an allowlist)
+- `:times` — value to store in the cookie (e.g. number of consecutive failures before success)
 
-Sets cookies:
+Sets the specified cookie to the given `:times` value, then redirects to `/` with `redirectWithMessage`.
 
-- `DB_FAIL_COUNT_{name}` — current failure count
-- `DB_FAIL_INCR_{name}` — max failures allowed
-
-Returns JSON: `{ ok: true, name, times }`
+Guarded by `PRODUCTION:STOP` / `PRODUCTION:UNCOMMENT` markers so the route body is stripped in production builds.
 
 Used by E2E tests to verify retry logic in `db-helpers.ts` and `db/auth-access.ts`.
 
@@ -28,7 +25,7 @@ Used by E2E tests to verify retry logic in `db-helpers.ts` and `db/auth-access.t
 
 - [lib/db-helpers.md](../lib/db-helpers.md) — `withRetry` reads failure cookies
 - [lib/db/auth-access.md](../lib/db/auth-access.md) — reads these cookies to simulate failures
-- [lib/test-routes.md](../lib/test-routes.md) — enabled only in test/dev mode
+- [constants.md](../constants.md) — `COOKIES.DB_FAIL_COUNT`, `COOKIES.DB_FAIL_INCR`, `PATHS.AUTH.SET_DB_FAILURES`, `STANDARD_SECURE_HEADERS`
 
 ---
 
