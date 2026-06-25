@@ -27,6 +27,7 @@ import {
 import { getRecurringById } from '../../lib/db/expense-access'
 import { STANDARD_SECURE_HEADERS } from '../../constants'
 import { toResult } from '../../lib/db-helpers'
+import { emailRateLimitCache } from '../auth/handle-forgot-password'
 
 /**
  * Run a database operation through `toResult` and throw on error so the
@@ -675,6 +676,19 @@ testDatabaseRouter.post(
         500,
       )
     }
+  },
+)
+
+/**
+ * Clear the in-memory password-reset rate-limit cache
+ * DELETE /test/database/clear-rate-limit-cache
+ */
+testDatabaseRouter.delete(
+  '/clear-rate-limit-cache',
+  secureHeaders(STANDARD_SECURE_HEADERS),
+  async (c) => {
+    emailRateLimitCache.clear()
+    return c.json({ success: true, message: 'Rate limit cache cleared' })
   },
 )
 

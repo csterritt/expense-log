@@ -134,6 +134,39 @@ const claimSingleUseCodeActual = async (
 }
 
 /**
+ * Release a previously claimed single-use code so it can be used again.
+ * Only releases the code if it is still claimed by the given email, preventing
+ * one request from releasing a code another request legitimately claimed.
+ * @param db - Database instance
+ * @param code - The code to release
+ * @param email - The email the code was claimed by
+ * @returns Promise<Result<boolean, Error>> - true if the code was released
+ */
+export const releaseSingleUseCode = (
+  db: DrizzleClient,
+  code: string,
+  email: string,
+): Promise<Result<boolean, Error>> =>
+  withRetry('releaseSingleUseCode', () => releaseSingleUseCodeActual(db, code, email))
+
+const releaseSingleUseCodeActual = async (
+  db: DrizzleClient,
+  code: string,
+  email: string,
+): Promise<Result<boolean, Error>> => {
+  try {
+    const result = await db
+      .update(singleUseCode)
+      .set({ email: null })
+      .where(and(eq(singleUseCode.code, code), eq(singleUseCode.email, email)))
+    const rowsUpdated = result.meta?.changes || 0
+    return Result.ok(rowsUpdated === 1)
+  } catch (e) {
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
+  }
+}
+
+/**
  * Add an email to the interested emails list
  * @param db - Database instance
  * @param email - Email address to add

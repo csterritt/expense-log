@@ -10,8 +10,14 @@ import { Context } from 'hono'
 
 import { redirectWithError, redirectWithMessage } from './redirects'
 import { addCookie } from './cookie-support'
-import { getUserIdByEmail, updateAccountTimestamp, claimSingleUseCode } from './db/auth-access'
+import {
+  getUserIdByEmail,
+  updateAccountTimestamp,
+  claimSingleUseCode,
+  releaseSingleUseCode,
+} from './db/auth-access'
 import { createAuth } from './auth'
+import { normalizeEmail } from './email-utils'
 import { createDbClient } from '../db/client'
 import { PATHS, COOKIES, MESSAGES, LOG_MESSAGES } from '../constants'
 import type { Bindings, DrizzleClient } from '../local-types'
@@ -264,7 +270,8 @@ export const processGatedSignUp = async (
   c: Context<{ Bindings: Bindings }>,
   data: GatedSignUpData,
 ): Promise<Response> => {
-  const { code, name, email, password } = data
+  const { code, name, password } = data
+  const email = normalizeEmail(data.email)
   const trimmedCode = code.trim()
   const dbClient = createDbClient(c.env.PROJECT_DB)
 
@@ -284,6 +291,19 @@ export const processGatedSignUp = async (
     )
   }
 
+  // The code is now claimed. If account creation fails for any reason, release
+  // it so a legitimate user doesn't permanently lose their one-time invite.
+  const releaseClaimedCode = async (): Promise<void> => {
+    const releaseResult = await releaseSingleUseCode(dbClient, trimmedCode, email)
+    if (releaseResult.isErr) {
+      console.error('Failed to release sign-up code after failed sign-up:', releaseResult.error)
+    }
+  }
+
+  // Check if user already exists before attempting sign-up
+  const existingUserResult = await getUserIdByEmail(dbClient, email)
+  const userAlreadyExists = existingUserResult.isOk && existingUserResult.value.length > 0
+
   // Code claimed successfully - proceed with account creation
   const auth = createAuth(c.env)
 
@@ -298,25 +318,37 @@ export const processGatedSignUp = async (
     })
 
     if (!signUpResponse) {
+      await releaseClaimedCode()
       return redirectWithError(c, PATHS.AUTH.SIGN_UP, 'Failed to create account. Please try again.')
     }
 
     const errorResponse = handleSignUpResponseError(c, signUpResponse, email, PATHS.AUTH.SIGN_UP)
 
     if (errorResponse) {
+      await releaseClaimedCode()
       return errorResponse
     }
 
     if (isSyntheticDuplicateResponse(signUpResponse)) {
       addCookie(c, COOKIES.EMAIL_ENTERED, email)
-      return redirectWithMessage(c, PATHS.AUTH.AWAIT_VERIFICATION, MESSAGES.ACCOUNT_ALREADY_EXISTS)
+      if (userAlreadyExists) {
+        await releaseClaimedCode()
+        return redirectWithMessage(
+          c,
+          PATHS.AUTH.AWAIT_VERIFICATION,
+          MESSAGES.ACCOUNT_ALREADY_EXISTS,
+        )
+      }
+      return redirectToAwaitVerification(c, email)
     }
 
     const responseStatus = getResponseStatus(signUpResponse)
     if (responseStatus !== null && responseStatus !== 200) {
+      await releaseClaimedCode()
       return redirectWithError(c, PATHS.AUTH.SIGN_UP, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
     }
   } catch (apiError: unknown) {
+    await releaseClaimedCode()
     return handleSignUpApiError(c, apiError, email, PATHS.AUTH.SIGN_UP)
   }
 

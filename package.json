@@ -13,7 +13,8 @@
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface Bindings",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "fmt:check": "oxfmt --check",
+    "test:e2e": "npx playwright test"
   },
   "engines": {
     "node": ">=22"

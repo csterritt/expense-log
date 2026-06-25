@@ -130,6 +130,7 @@ export const VALIDATION = {
   EMAIL_INVALID: 'Please enter a valid email address.',
   NAME_REQUIRED: 'Name is required',
   PASSWORD_MIN_LENGTH: 'Password must be at least 8 characters long.',
+  PASSWORD_MAX_LENGTH: 'Password must be at most 128 characters long.',
 } as const
 
 /**

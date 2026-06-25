@@ -5,31 +5,10 @@
 
 import { describe, it } from 'bun:test'
 import assert from 'node:assert'
-import retry from 'async-retry'
 import Result from 'true-myth/result'
 
-const STANDARD_RETRY_OPTIONS = {
-  minTimeout: 1,
-  retries: 3,
-}
-
-const withRetry = async <T>(
-  operationName: string,
-  operation: () => Promise<Result<T, Error>>,
-): Promise<Result<T, Error>> => {
-  try {
-    return await retry(async () => {
-      const result = await operation()
-      if (result.isErr) {
-        throw result.error
-      }
-      return result
-    }, STANDARD_RETRY_OPTIONS)
-  } catch (err) {
-    console.log(`${operationName} final error:`, err)
-    return Result.err(err instanceof Error ? err : new Error(String(err)))
-  }
-}
+import { withRetry } from '../src/lib/db-helpers'
+import { STANDARD_RETRY_OPTIONS } from '../src/constants'
 
 describe('withRetry function', () => {
   it('should return success on first try when operation succeeds', async () => {
@@ -74,7 +53,7 @@ describe('withRetry function', () => {
 
     assert.strictEqual(result.isErr, true)
     assert.strictEqual(result.isErr && result.error.message, 'persistent failure')
-    assert.strictEqual(callCount, 4) // 1 initial + 3 retries
+    assert.strictEqual(callCount, STANDARD_RETRY_OPTIONS.retries + 1) // 1 initial + N retries
   })
 
   it('should retry on thrown exceptions', async () => {

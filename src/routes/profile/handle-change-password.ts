@@ -15,6 +15,7 @@ import { MESSAGES, PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import type { AuthUser, Bindings } from '../../local-types'
 import { signedInAccess } from '../../middleware/signed-in-access'
 import { validateRequest, ChangePasswordFormSchema } from '../../lib/validators'
+import { logError, logInfo, sanitizeError } from '../../lib/logger'
 
 interface ChangePasswordData {
   currentPassword: string
@@ -74,7 +75,7 @@ export const handleChangePassword = (app: Hono<{ Bindings: Bindings }>): void =>
             headers: c.req.raw.headers,
           })
 
-          console.log('Password changed successfully for user:', user.email)
+          logInfo('Password changed successfully', { userId: user.id })
 
           return redirectWithMessage(
             c,
@@ -82,7 +83,7 @@ export const handleChangePassword = (app: Hono<{ Bindings: Bindings }>): void =>
             'Your password has been successfully changed.',
           )
         } catch (error) {
-          console.error('Password change error:', error)
+          logError('Password change error', { userId: user.id, error: sanitizeError(error) })
 
           // Check if it's a current password verification error
           if (isErrorWithMessage(error)) {
@@ -107,7 +108,7 @@ export const handleChangePassword = (app: Hono<{ Bindings: Bindings }>): void =>
           )
         }
       } catch (error) {
-        console.error('Change password handler error:', error)
+        logError('Change password handler error', { error: sanitizeError(error) })
         return redirectWithError(c, PATHS.PROFILE, 'An error occurred. Please try again.')
       }
     },
