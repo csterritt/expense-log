@@ -151,7 +151,7 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
           />
           {fieldError('tags', fieldErrors.tags)}
         </div>
-        <div className='self-end'>
+        <div className='self-center'>
           <button type='submit' className='btn btn-primary' data-testid={submitTestId}>
             {submitLabel}
           </button>

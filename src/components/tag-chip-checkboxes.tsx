@@ -7,8 +7,8 @@
  * @module components/tag-chip-checkboxes
  */
 
-export const CHIP_CLASS_BASE = 'badge badge-outline cursor-pointer'
-export const CHIP_CLASS_SELECTED = 'badge badge-primary cursor-pointer'
+export const CHIP_CLASS_BASE = 'badge cursor-pointer'
+export const CHIP_CLASS_SELECTED = 'badge badge-soft badge-primary cursor-pointer'
 
 interface Tag {
   id: string

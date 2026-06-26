@@ -211,7 +211,7 @@ export const renderExpenseTable = (rows: ExpenseRow[]) => {
                   <span>
                     <span className='underline'>{row.description}</span>
                     <span
-                      className='ml-1 badge badge-sm badge-outline'
+                      className='ml-1 badge badge-sm badge-soft badge-primary'
                       aria-label='Recurring'
                       title='Recurring'
                       data-testid='expense-row-recurring-badge'

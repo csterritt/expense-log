@@ -23,8 +23,8 @@
   'use strict'
 
   // Must stay in sync with src/components/tag-chip-checkboxes.tsx.
-  const CHIP_CLASS_BASE = 'badge badge-outline cursor-pointer'
-  const CHIP_CLASS_SELECTED = 'badge badge-primary cursor-pointer'
+ const CHIP_CLASS_BASE = 'badge cursor-pointer'
+ const CHIP_CLASS_SELECTED = 'badge badge-soft badge-primary cursor-pointer'
 
   /**
    * Safe setAttribute: only allows class, aria-label, and data-* attributes.
