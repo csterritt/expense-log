@@ -101,7 +101,7 @@ const sendOtpToUserViaEmailActual = async (
       env,
       'noreply@cls.cloud',
       email,
-      'Your Mini-Auth Verification Code',
+      'Your Expense Log Verification Code',
       `<h1>Verification Code</h1>
          <p>Your verification code is: <strong>${otp}</strong></p>
          <p>This code will expire in 15 minutes.</p>`,

@@ -98,9 +98,9 @@ export const createAuth = (env: Bindings) => {
       'http://localhost:3000', // PRODUCTION:REMOVE
       'http://127.0.0.1:3000', // PRODUCTION:REMOVE
       alternateOrigin, // PRODUCTION:REMOVE
-      // 'https://mini-auth.example.com', 'https://mini-auth.workers.dev' // PRODUCTION:UNCOMMENT
+      // 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev' // PRODUCTION:UNCOMMENT
     ],
-    // baseURL: 'https://mini-auth.example.com', // PRODUCTION:UNCOMMENT
+    // baseURL: 'https://expenses.cls.cloud', // PRODUCTION:UNCOMMENT
     baseURL: 'http://localhost:3000', // PRODUCTION:REMOVE
     redirectTo: '/expenses', // Redirect to protected page after successful sign-in
     secret: env.BETTER_AUTH_SECRET,

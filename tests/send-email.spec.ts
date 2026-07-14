@@ -45,7 +45,7 @@ describe('sendOtpToUserViaEmail', () => {
     assert.strictEqual(capturedArgs?.env, mockEnv)
     assert.strictEqual(capturedArgs?.fromAddress, 'noreply@cls.cloud')
     assert.strictEqual(capturedArgs?.toAddress, testEmail)
-    assert.strictEqual(capturedArgs?.subject, 'Your Mini-Auth Verification Code')
+    assert.strictEqual(capturedArgs?.subject, 'Your Expense Log Verification Code')
 
     // Verify email content contains the OTP
     assert.ok(capturedArgs?.content.includes(`<strong>${testOtp}</strong>`))

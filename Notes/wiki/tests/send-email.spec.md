@@ -8,7 +8,7 @@ Unit tests for `sendOtpToUserViaEmail` from `src/lib/send-email.ts`. Uses mock e
 
 ## Test cases
 
-- `sends email with correct content and OTP code` — mock agent (with `env` parameter) captures `env`/`fromAddress`/`toAddress`/`subject`/`content`; verifies result is Ok; asserts `env` is the passed `mockEnv`, `noreply@cls.cloud`, correct recipient, subject `'Your Mini-Auth Verification Code'`; checks HTML contains `<strong>123456</strong>`, `<h1>Verification Code</h1>`, and expiration notice
+- `sends email with correct content and OTP code` — mock agent (with `env` parameter) captures `env`/`fromAddress`/`toAddress`/`subject`/`content`; verifies result is Ok; asserts `env` is the passed `mockEnv`, `noreply@cls.cloud`, correct recipient, subject `'Your Expense Log Verification Code'`; checks HTML contains `<strong>123456</strong>`, `<h1>Verification Code</h1>`, and expiration notice
 - `handles email sending failure` — mock agent throws `'Email sending failed'`; verifies result is Err with matching message
 
 ## Test setup

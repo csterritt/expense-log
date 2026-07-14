@@ -102,7 +102,7 @@ export const COOKIES = {
     httpOnly: true,
     sameSite: 'Strict',
     // secure: true, // PRODUCTION:UNCOMMENT
-    // domain: 'mini-auth.example.com', // PRODUCTION:UNCOMMENT
+    // domain: 'expenses.cls.cloud', // PRODUCTION:UNCOMMENT
   },
 } as const
 
@@ -204,13 +204,13 @@ interface SecureHeadersConfig {
 export const STANDARD_SECURE_HEADERS: SecureHeadersConfig = {
   referrerPolicy: 'strict-origin-when-cross-origin',
   contentSecurityPolicy: {
-    // defaultSrc: ["'self'", 'https://mini-auth.example.com', 'https://mini-auth.workers.dev'], // PRODUCTION:UNCOMMENT
+    // defaultSrc: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
     defaultSrc: ["'self'"], // PRODUCTION:REMOVE
     baseUri: ["'self'"],
     childSrc: ["'self'"],
     connectSrc: ["'self'"],
     fontSrc: ["'self'", 'data:'],
-    // formAction: ["'self'", 'https://mini-auth.example.com', 'https://mini-auth.workers.dev'], // PRODUCTION:UNCOMMENT
+    // formAction: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
     formAction: ["'self'"], // PRODUCTION:REMOVE
     frameAncestors: ["'self'"],
     frameSrc: ["'self'"],

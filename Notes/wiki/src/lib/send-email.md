@@ -14,7 +14,7 @@ Validates that `SMTP_SERVER_PORT`, `SMTP_SERVER_HOST`, `SMTP_SERVER_USER`, and `
 
 ### `sendOtpToUserViaEmail(env, email, otp, emailAgent = sendEmail): Promise<Result<boolean, Error>>`
 
-Wraps `sendOtpToUserViaEmailActual` in `async-retry` with `STANDARD_RETRY_OPTIONS`. Sends an HTML email with the OTP code and a 15-minute expiration note from `noreply@cls.cloud` with subject `'Your Mini-Auth Verification Code'`. Returns `Result.ok(true)` on success, `Result.err(Error)` on final failure.
+Wraps `sendOtpToUserViaEmailActual` in `async-retry` with `STANDARD_RETRY_OPTIONS`. Sends an HTML email with the OTP code and a 15-minute expiration note from `noreply@cls.cloud` with subject `'Your Expense Log Verification Code'`. Returns `Result.ok(true)` on success, `Result.err(Error)` on final failure.
 
 ## Cross-references
 
