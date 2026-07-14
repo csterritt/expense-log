@@ -40,9 +40,9 @@ Goes to `/auth/await-verification` and verifies await-verification page.
 
 Goes to `/auth/waiting-for-reset` and verifies waiting-for-reset page.
 
-### `navigateToPrivatePage(page): Promise<void>`
+### `navigateToExpensesPage(page): Promise<void>`
 
-Goes to `/private` and verifies protected page banner.
+Goes to `/expenses` (`BASE_URLS.EXPENSES`) and verifies protected page (asserts `expenses-page` element). Replaces the previous `navigateToPrivatePage` helper.
 
 ### `navigateToProfile(page): Promise<void>`
 

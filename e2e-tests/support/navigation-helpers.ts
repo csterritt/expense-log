@@ -68,8 +68,8 @@ export const navigateToWaitingForReset = async (page: Page) => {
   await verifyOnWaitingForResetPage(page)
 }
 
-export const navigateToPrivatePage = async (page: Page) => {
-  await page.goto(BASE_URLS.PRIVATE)
+export const navigateToExpensesPage = async (page: Page) => {
+  await page.goto(BASE_URLS.EXPENSES)
   await verifyOnProtectedPage(page)
 }
 

@@ -1,12 +1,18 @@
+import type { APIRequestContext } from '@playwright/test'
+
+import { SERVER_BASE_URL } from './test-data'
+
+type RequestContext = Pick<APIRequestContext, 'delete' | 'post' | 'get'>
+
 /**
  * Clear all data from authentication-related tables
  * Calls test-only server endpoint to clear database
  */
-export const clearDatabase = async (): Promise<void> => {
+export const clearDatabase = async (request?: RequestContext): Promise<void> => {
   try {
-    const response = await fetch('http://localhost:3000/test/database/clear', {
-      method: 'DELETE',
-    })
+    const response = request
+      ? await request.delete('/test/database/clear')
+      : await fetch(`${SERVER_BASE_URL}/test/database/clear`, { method: 'DELETE' })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -32,11 +38,11 @@ export const clearDatabase = async (): Promise<void> => {
  * Clear all data from authentication session table
  * Calls test-only server endpoint to clear database
  */
-export const clearSessions = async (): Promise<void> => {
+export const clearSessions = async (request?: RequestContext): Promise<void> => {
   try {
-    const response = await fetch('http://localhost:3000/test/database/clear-sessions', {
-      method: 'DELETE',
-    })
+    const response = request
+      ? await request.delete('/test/database/clear-sessions')
+      : await fetch(`${SERVER_BASE_URL}/test/database/clear-sessions`, { method: 'DELETE' })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -63,12 +69,12 @@ export const clearSessions = async (): Promise<void> => {
  * @param code - The code to check
  * @returns Promise<boolean> - true if code exists, false otherwise
  */
-export const checkCodeExists = async (code: string): Promise<boolean> => {
+export const checkCodeExists = async (code: string, request?: RequestContext): Promise<boolean> => {
   try {
-    const response = await fetch(
-      `http://localhost:3000/test/database/code-exists/${encodeURIComponent(code)}`,
-      { method: 'GET' },
-    )
+    const path = `/test/database/code-exists/${encodeURIComponent(code)}`
+    const response = request
+      ? await request.get(path)
+      : await fetch(`${SERVER_BASE_URL}${path}`, { method: 'GET' })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -91,16 +97,242 @@ export const checkCodeExists = async (code: string): Promise<boolean> => {
   }
 }
 
+export interface SeedCategoryRow {
+  name: string
+}
+
+/**
+ * Seed database with a list of categories.
+ * Calls test-only server endpoint to insert rows directly.
+ */
+export const seedCategories = async (
+  rows: SeedCategoryRow[],
+  request?: RequestContext,
+): Promise<void> => {
+  try {
+    const response = request
+      ? await request.post('/test/database/seed-categories', { data: rows })
+      : await fetch(`${SERVER_BASE_URL}/test/database/seed-categories`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rows),
+        })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      created?: number
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed categories')
+    }
+
+    console.log(`Categories seeded successfully: ${result.created} created`)
+  } catch (error) {
+    console.error('Failed to seed categories:', error)
+    throw error
+  }
+}
+
+export interface SeedExpenseRow {
+  date: string
+  description: string
+  amountCents: number
+  categoryName: string
+  tagNames?: string[]
+}
+
+/**
+ * Seed database with a list of expenses (plus any needed categories/tags)
+ * Calls test-only server endpoint to insert rows directly.
+ */
+export const seedExpenses = async (
+  rows: SeedExpenseRow[],
+  request?: RequestContext,
+): Promise<void> => {
+  try {
+    const response = request
+      ? await request.post('/test/database/seed-expenses', { data: rows })
+      : await fetch(`${SERVER_BASE_URL}/test/database/seed-expenses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rows),
+        })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      created?: number
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed expenses')
+    }
+
+    console.log(`Expenses seeded successfully: ${result.created} created`)
+  } catch (error) {
+    console.error('Failed to seed expenses:', error)
+    throw error
+  }
+}
+
+export interface SeedTagRow {
+  name: string
+}
+
+/**
+ * Seed database with a list of tags.
+ * Calls test-only server endpoint to insert rows directly.
+ */
+export const seedTags = async (rows: SeedTagRow[], request?: RequestContext): Promise<void> => {
+  try {
+    const response = request
+      ? await request.post('/test/database/seed-tags', { data: rows })
+      : await fetch(`${SERVER_BASE_URL}/test/database/seed-tags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rows),
+        })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      created?: number
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed tags')
+    }
+
+    console.log(`Tags seeded successfully: ${result.created} created`)
+  } catch (error) {
+    console.error('Failed to seed tags:', error)
+    throw error
+  }
+}
+
+export interface SeedRecurringRow {
+  description: string
+  amountCents: number
+  categoryName: string
+  tagNames?: string[]
+  recurrence: 'Monthly' | 'Quarterly' | 'Yearly'
+  anchorDate: string
+  createdAtIso?: string
+}
+
+/**
+ * Seed database with recurring templates (plus any needed categories/tags).
+ * Returns the id of each created template in order.
+ */
+export const seedRecurringTemplates = async (
+  rows: SeedRecurringRow[],
+  request?: RequestContext,
+): Promise<string[]> => {
+  try {
+    const response = request
+      ? await request.post('/test/database/seed-recurring-templates', { data: rows })
+      : await fetch(`${SERVER_BASE_URL}/test/database/seed-recurring-templates`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(rows),
+        })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      ids?: string[]
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed recurring templates')
+    }
+
+    console.log(`Recurring templates seeded successfully: ${result.ids?.length} created`)
+    return result.ids ?? []
+  } catch (error) {
+    console.error('Failed to seed recurring templates:', error)
+    throw error
+  }
+}
+
+/**
+ * Seed a single generated expense row linked to a recurring template.
+ * Returns the new expense id.
+ */
+export const seedGeneratedExpense = async (
+  input: {
+    recurringId: string
+    date: string
+    occurrenceDate: string
+    description?: string
+    amountCents?: number
+    categoryId?: string
+  },
+  request?: RequestContext,
+): Promise<string> => {
+  try {
+    const response = request
+      ? await request.post('/test/database/seed-generated-expense', { data: input })
+      : await fetch(`${SERVER_BASE_URL}/test/database/seed-generated-expense`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      id?: string
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to seed generated expense')
+    }
+
+    console.log(`Generated expense seeded successfully: ${result.id}`)
+    return result.id ?? ''
+  } catch (error) {
+    console.error('Failed to seed generated expense:', error)
+    throw error
+  }
+}
+
 /**
  * Seed database with test data
  * Calls test-only server endpoint to seed database
  */
-export const seedDatabase = async (): Promise<void> => {
+export const seedDatabase = async (request?: RequestContext): Promise<void> => {
   try {
-    const response = await fetch('http://localhost:3000/test/database/seed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const response = request
+      ? await request.post('/test/database/seed', {
+          headers: { 'Content-Type': 'application/json' },
+        })
+      : await fetch(`${SERVER_BASE_URL}/test/database/seed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -123,6 +355,34 @@ export const seedDatabase = async (): Promise<void> => {
     )
   } catch (error) {
     console.error('Failed to seed database:', error)
+    throw error
+  }
+}
+
+/**
+ * Clear the in-memory password-reset rate-limit cache on the server
+ * Calls test-only server endpoint to clear the cache
+ */
+export const clearRateLimitCache = async (request?: RequestContext): Promise<void> => {
+  try {
+    const response = request
+      ? await request.delete('/test/database/clear-rate-limit-cache')
+      : await fetch(`${SERVER_BASE_URL}/test/database/clear-rate-limit-cache`, { method: 'DELETE' })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const result = (await response.json()) as {
+      success: boolean
+      error?: string
+    }
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to clear rate limit cache')
+    }
+  } catch (error) {
+    console.error('Failed to clear rate limit cache:', error)
     throw error
   }
 }

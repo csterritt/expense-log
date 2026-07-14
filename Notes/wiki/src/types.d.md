@@ -4,11 +4,28 @@
 
 ## Purpose
 
-Ambient type declarations. In this file it provides a type declaration for global `test` variable (used by Playwright and other test environments to detect test mode).
+Ambient type declarations and Hono module augmentation.
 
 ## Types
 
-- Declares `var test: unknown` globally
+### `Bindings` interface
+
+Declares the `PROJECT_DB: D1Database` binding.
+
+### Hono `ContextVariableMap` augmentation
+
+Augments `hono`'s `ContextVariableMap` with:
+- `db` — `DrizzleD1Database<typeof schema>`
+- `user` — `AuthUser | null`
+- `session` — `AuthSession | null`
+- `authSession` — `AuthSessionResponse | null`
+- `signInEmail` — optional string
+
+### Imports
+
+- `DrizzleD1Database` from `drizzle-orm/d1`
+- Schema from `./db/schema`
+- `AuthSession`, `AuthSessionResponse`, `AuthUser` from `./local-types`
 
 ---
 

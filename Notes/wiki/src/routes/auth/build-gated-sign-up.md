@@ -14,12 +14,14 @@ Route: `GET /auth/sign-up`
 
 ### Behavior
 
-1. Authenticated users are redirected to `/private` with `'You are already signed in.'`
-2. Renders the gated sign-up form
+1. Authenticated users are redirected to `/expenses` with `MESSAGES.ALREADY_SIGNED_IN`.
+2. Reads `EMAIL_ENTERED` cookie via `retrieveCookie` for pre-populating the email field.
+3. Sets no-cache headers via `setupNoCacheHeaders`.
+4. Renders the gated sign-up form.
 
 ### Form
 
-Uses the shared `<GatedSignUpForm />` component with `emailEntered` from `EMAIL_ENTERED` cookie.
+Uses the shared `<GatedSignUpForm emailEntered={emailEntered} />` component.
 
 ### Navigation
 
@@ -27,8 +29,13 @@ Uses the shared `<GatedSignUpForm />` component with `emailEntered` from `EMAIL_
 
 ## Cross-references
 
-- [components/gated-sign-up-form.md](../../components/gated-sign-up-form.md) — form component
-- [handle-gated-sign-up.md](handle-gated-sign-up.md) — POST handler
+- [../../components/gated-sign-up-form.md](../../components/gated-sign-up-form.md) — `GatedSignUpForm` component.
+- [handle-gated-sign-up.md](handle-gated-sign-up.md) — POST handler.
+- [../build-layout.md](../build-layout.md) — layout wrapper.
+- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `retrieveCookie`.
+- [../../lib/setup-no-cache-headers.md](../../lib/setup-no-cache-headers.md) — `setupNoCacheHeaders`.
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`.
+- [../../constants.md](../../constants.md) — `PATHS.AUTH`, `COOKIES.EMAIL_ENTERED`, `MESSAGES.ALREADY_SIGNED_IN`, `STANDARD_SECURE_HEADERS`.
 
 ---
 

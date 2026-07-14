@@ -15,8 +15,9 @@ Route: `GET /`
 Renders:
 
 - Welcome card with title "Welcome!"
-- Subtitle: "Worker, D1, Drizzle Project"
-- "Protected Content" button linking to `/private` — `data-testid='visit-private-action'`
+- Subtitle: "Expense Log"
+- "Protected Content" button linking to `/expenses` — `data-testid='visit-expenses-action'`
+- Wrapper element `data-testid='startup-page-banner'`
 
 ## Cross-references
 

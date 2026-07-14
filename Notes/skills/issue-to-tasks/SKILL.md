@@ -36,16 +36,19 @@ Label each task with its type:
 - **TEST**: write or update tests
 - **MIGRATE**: schema or data migration
 - **CONFIG**: environment, tooling, or infrastructure change
+- **DOCUMENT**: update docs, READMEs, the wiki in Notes/wiki (see Notes/wiki/wiki-rules.md for details) or other non-code artifacts
+- **CODE WALKTHROUGH**: Using showboat (run `uvx showboat --help` for details) create a walkthrough of the implementation, making a new directory under Notes/walkthroughs named {{TASK-ID}}/code-walkthrough, and put the files it generates there.
+- **UI WALKTHROUGH**: If there are user-facing changes in this task, use showboat (run `uvx showboat --help` for details) make a walkthrough showing the flow of user behavior added in this task.
 - **REVIEW**: human decision required before proceeding
 
-Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST.
+Prefer WRITE and TEST tasks interleaved over a block of WRITE followed by a block of TEST. Write the DOCUMENT, CODE WALKTHROUGH and UI WALKTHROUGH tasks after all code is written, just before the final REVIEW step.
 
 ### 4. Quiz the user
 
 Present the proposed task list as a numbered list. For each task show:
 
 - **Title**: short imperative description (e.g. "Add `user_id` column to `sessions` table")
-- **Type**: WRITE / TEST / MIGRATE / CONFIG / REVIEW
+- **Type**: WRITE / TEST / MIGRATE / CONFIG / WALKTHROUGH / REVIEW
 - **Output**: what exists or passes when this task is done
 - **Depends on**: task numbers that must complete first
 
@@ -74,9 +77,11 @@ Parent PRD: #<prd-issue-number>
 
 ### <n>. <Task title>
 
-**Type**: WRITE / TEST / MIGRATE / CONFIG / REVIEW  
+**Type**: WRITE / TEST / MIGRATE / CONFIG / WALKTHROUGH / REVIEW  
 **Output**: <what exists or passes when done>  
 **Depends on**: <task numbers or "none">
+
+<For WRITE and TEST tasks include a short paragraph asking the AI to read and follow the coding standards in Notes/skills/AGENTS.md>
 
 <A short paragraph describing exactly what to do. Written as an instruction to the AI that will execute it. Include: which files to touch, which pattern to follow, which existing code to use as reference. Do NOT include code snippets — describe intent, not implementation.>
 

@@ -22,7 +22,6 @@ export const HTML_STATUS = {
  */
 export const PATHS = {
   ROOT: '/' as const,
-  PRIVATE: '/private' as const,
 
   // Auth API paths
   AUTH: {
@@ -52,15 +51,8 @@ export const PATHS = {
     WAITING_FOR_RESET: '/auth/waiting-for-reset',
     RESET_PASSWORD: '/auth/reset-password',
 
-    // Set and reset clock (for testing) // PRODUCTION:REMOVE
-    SET_CLOCK: '/auth/set-clock', // PRODUCTION:REMOVE
-    RESET_CLOCK: '/auth/reset-clock', // PRODUCTION:REMOVE
 
-    // Set DB failures (for testing) // PRODUCTION:REMOVE
-    SET_DB_FAILURES: '/auth/set-db-failures', // PRODUCTION:REMOVE
 
-    // Clean sessions for a user (for testing) // PRODUCTION:REMOVE
-    CLEAN_SESSIONS: '/auth/clean-sessions', // PRODUCTION:REMOVE
 
     // Sign out
     SIGN_OUT: '/auth/sign-out',
@@ -70,34 +62,43 @@ export const PATHS = {
   PROFILE: '/profile' as const,
   PROFILE_DELETE_CONFIRM: '/profile/delete-confirm' as const,
   PROFILE_DELETE: '/profile/delete' as const,
+
+  // Expense feature paths
+  EXPENSES: '/expenses' as const,
+  CATEGORIES: '/categories' as const,
+  TAGS: '/tags' as const,
+  SUMMARY: '/summary' as const,
+  RECURRING: '/recurring' as const,
 } as const
 
-// Cookie names
+/**
+ * Cookie names and options used throughout the application
+ */
 export const COOKIES = {
   // Ordinary message cookie
   MESSAGE_FOUND: 'MESSAGE_FOUND',
   // Error message cookie
   ERROR_FOUND: 'ERROR_FOUND',
+  // Per-form field-error + sticky-values cookie (single-use)
+  FORM_ERRORS: 'FORM_ERRORS',
   // Email entered cookie
   EMAIL_ENTERED: 'EMAIL_ENTERED',
 
   // Session cookie
   SESSION: 'SESSION',
-  // DB failure count cookie for testing // PRODUCTION:REMOVE
-  DB_FAIL_COUNT: 'DB_FAIL_COUNT', // PRODUCTION:REMOVE
-  DB_FAIL_INCR: 'DB_FAIL_INCR', // PRODUCTION:REMOVE
   // Standard cookie options
   STANDARD_COOKIE_OPTIONS: {
     path: '/',
     httpOnly: true,
     sameSite: 'Strict',
-    // secure: true, // PRODUCTION:UNCOMMENT
-    // domain: 'mini-auth.example.com', // PRODUCTION:UNCOMMENT
+     secure: true, 
+     domain: 'expenses.cls.cloud', 
   },
 } as const
 
-/*
- * Sign up modes
+/**
+ * Sign up mode configuration
+ * Determines how new users can sign up for the application
  */
 export const SIGN_UP_MODES = {
   BOTH_SIGN_UP: 'BOTH_SIGN_UP' as const,
@@ -119,6 +120,7 @@ export const VALIDATION = {
   EMAIL_INVALID: 'Please enter a valid email address.',
   NAME_REQUIRED: 'Name is required',
   PASSWORD_MIN_LENGTH: 'Password must be at least 8 characters long.',
+  PASSWORD_MAX_LENGTH: 'Password must be at most 128 characters long.',
 } as const
 
 /**
@@ -151,9 +153,11 @@ export const MESSAGE_BUILDERS = {
     } before requesting another verification email.`,
 } as const
 
+/**
+ * Time duration constants (in seconds or milliseconds)
+ */
 export const DURATIONS = {
-  // EMAIL_RESEND_TIME_IN_MILLISECONDS: 30 * 1000, // PRODUCTION:UNCOMMENT
-  EMAIL_RESEND_TIME_IN_MILLISECONDS: 3 * 1000, // PRODUCTION:REMOVE
+   EMAIL_RESEND_TIME_IN_MILLISECONDS: 30 * 1000, 
   THIRTY_DAYS_IN_SECONDS: 60 * 60 * 24 * 30,
   ONE_DAY_IN_SECONDS: 60 * 60 * 24,
   FIVE_MINUTES_IN_SECONDS: 60 * 5,
@@ -164,12 +168,13 @@ export const DURATIONS = {
  * @readonly
  */
 export const STANDARD_RETRY_OPTIONS = {
-  // minTimeout: 200, // PRODUCTION:UNCOMMENT
-  minTimeout: 20, // PRODUCTION:REMOVE
+   minTimeout: 200, 
   retries: 5,
 } as const
 
-// API URLs
+/**
+ * External API endpoints used by the application
+ */
 export const API_URLS = {
   PUSHOVER: 'https://api.pushover.net/1/messages.json',
 }
@@ -187,14 +192,12 @@ interface SecureHeadersConfig {
 export const STANDARD_SECURE_HEADERS: SecureHeadersConfig = {
   referrerPolicy: 'strict-origin-when-cross-origin',
   contentSecurityPolicy: {
-    // defaultSrc: ["'self'", 'https://mini-auth.example.com', 'https://mini-auth.workers.dev'], // PRODUCTION:UNCOMMENT
-    defaultSrc: ["'self'"], // PRODUCTION:REMOVE
+     defaultSrc: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], 
     baseUri: ["'self'"],
     childSrc: ["'self'"],
     connectSrc: ["'self'"],
     fontSrc: ["'self'", 'data:'],
-    // formAction: ["'self'", 'https://mini-auth.example.com', 'https://mini-auth.workers.dev'], // PRODUCTION:UNCOMMENT
-    formAction: ["'self'"], // PRODUCTION:REMOVE
+     formAction: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], 
     frameAncestors: ["'self'"],
     frameSrc: ["'self'"],
     imgSrc: ["'self'", 'data:'],

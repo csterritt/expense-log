@@ -109,16 +109,19 @@ export const ERROR_MESSAGES = {
   ACCOUNT_DELETED: 'Your account has been successfully deleted.',
 } as const
 
+export const SERVER_BASE_URL = 'http://localhost:3000'
+
 export const BASE_URLS = {
-  HOME: 'http://localhost:3000',
-  SIGN_IN: 'http://localhost:3000/auth/sign-in',
-  SIGN_UP: 'http://localhost:3000/auth/sign-up',
-  INTEREST_SIGN_UP: 'http://localhost:3000/auth/interest-sign-up',
-  FORGOT_PASSWORD: 'http://localhost:3000/auth/forgot-password',
-  AWAIT_VERIFICATION: 'http://localhost:3000/auth/await-verification',
-  PRIVATE: 'http://localhost:3000/private',
-  WAITING_FOR_RESET: 'http://localhost:3000/auth/waiting-for-reset',
-  SIGN_OUT: 'http://localhost:3000/auth/sign-out',
-  PROFILE: 'http://localhost:3000/profile',
-  PROFILE_DELETE_CONFIRM: 'http://localhost:3000/profile/delete-confirm',
+  HOME: `${SERVER_BASE_URL}`,
+  SIGN_IN: `${SERVER_BASE_URL}/auth/sign-in`,
+  SIGN_UP: `${SERVER_BASE_URL}/auth/sign-up`,
+  INTEREST_SIGN_UP: `${SERVER_BASE_URL}/auth/interest-sign-up`,
+  FORGOT_PASSWORD: `${SERVER_BASE_URL}/auth/forgot-password`,
+  AWAIT_VERIFICATION: `${SERVER_BASE_URL}/auth/await-verification`,
+  EXPENSES: `${SERVER_BASE_URL}/expenses`,
+  WAITING_FOR_RESET: `${SERVER_BASE_URL}/auth/waiting-for-reset`,
+  SIGN_OUT: `${SERVER_BASE_URL}/auth/sign-out`,
+  PROFILE: `${SERVER_BASE_URL}/profile`,
+  PROFILE_DELETE_CONFIRM: `${SERVER_BASE_URL}/profile/delete-confirm`,
+  SUMMARY: `${SERVER_BASE_URL}/summary`,
 } as const

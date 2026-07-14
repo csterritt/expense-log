@@ -2,10 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { Maybe } from 'true-myth'
 import { Context } from 'hono'
 import { createDbClient } from './db/client'
 
+/**
+ * Sign-in session data structure
+ * Contains session information for authentication tracking
+ */
 export type SignInSession = {
   id: string
   token: string
@@ -17,11 +20,12 @@ export type SignInSession = {
   expiresAt: number
 }
 
+/**
+ * Cloudflare Worker environment bindings
+ * Contains all environment variables and resources available to the worker
+ */
 export interface Bindings {
   PROJECT_DB: D1Database
-  Session: Maybe<SignInSession>
-  db?: string
-  signUpType?: string
   SIGN_UP_MODE?: string
   EMAIL_SEND_URL?: string
   EMAIL_SEND_CODE?: string
@@ -30,15 +34,12 @@ export interface Bindings {
   CLOUDFLARE_D1_TOKEN?: string
   PO_APP_ID?: string
   PO_USER_ID?: string
-  ALTERNATE_ORIGIN?: string
   BETTER_AUTH_SECRET?: string
   NODE_ENV?: string
-  PLAYWRIGHT?: string
   SMTP_SERVER_HOST?: string
   SMTP_SERVER_PORT?: string
   SMTP_SERVER_USER?: string
   SMTP_SERVER_PASSWORD?: string
-  ENABLE_TEST_ROUTES?: string
 }
 
 /**

@@ -16,7 +16,7 @@ Renders:
 
 - `<html lang='en' data-theme='light'>`
 - `<head>` with charset, viewport, and linked stylesheet (`/style-20250722184943.css`)
-- `<title>Worker, D1, Drizzle</title>`
+- `<title>Expense Log</title>`
 - `<body className='min-h-screen bg-base-200'>` with `{children}`
 
 Configured with `{ docType: true }` to emit `<!DOCTYPE html>`.

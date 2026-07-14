@@ -13,7 +13,7 @@ import { secureHeaders } from 'hono/secure-headers'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import { PATHS, STANDARD_SECURE_HEADERS, MESSAGES, COOKIES } from '../../constants'
 import type { Bindings, DrizzleClient } from '../../local-types'
-import { addInterestedEmail } from '../../lib/db-access'
+import { addInterestedEmail } from '../../lib/db/auth-access'
 import { addCookie } from '../../lib/cookie-support'
 import {
   validateRequest,
@@ -51,7 +51,7 @@ export const handleGatedInterestSignUp = (app: Hono<{ Bindings: Bindings }>): vo
       id: string
     } | null
     if (user) {
-      return redirectWithMessage(c, PATHS.PRIVATE, MESSAGES.ALREADY_SIGNED_IN)
+      return redirectWithMessage(c, PATHS.EXPENSES, MESSAGES.ALREADY_SIGNED_IN)
     }
 
     // Get form data and validate

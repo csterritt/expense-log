@@ -9,6 +9,7 @@ Content-oriented catalog of all pages in this wiki.
 ## Source code
 
 - [source-code.md](source-code.md) — Catalog of all source files under `src/` organized by category. Each entry links to its individual page under `src/`.
+- [public-js/index.md](public-js/index.md) — Vanilla-JS progressive-enhancement modules under `public/js/` (category combobox, tag chip picker, tag chip checkboxes).
 
 ## Tests
 
@@ -17,7 +18,7 @@ Content-oriented catalog of all pages in this wiki.
 
 ## Meta
 
-- [AGENT.md](AGENT.md) — Wiki schema, conventions, and agent rules.
+- [AGENTS.md](AGENTS.md) — Wiki schema, conventions, and agent rules.
 - [wiki-rules.md](wiki-rules.md) — Original LLM Wiki pattern description (read-only source).
 
 ## Log

@@ -20,7 +20,6 @@ Centralized constants file. All configuration values that would otherwise be mag
 Route paths used throughout the application.
 
 - `ROOT` — `/`
-- `PRIVATE` — `/private`
 - `AUTH.API_BASE` — `/api/auth`
 - `AUTH.SIGN_IN_EMAIL_API` — `/api/auth/sign-in/email`
 - `AUTH.SIGN_IN` — `/auth/sign-in`
@@ -41,6 +40,11 @@ Route paths used throughout the application.
 - `PROFILE` — `/profile`
 - `PROFILE_DELETE_CONFIRM` — `/profile/delete-confirm`
 - `PROFILE_DELETE` — `/profile/delete`
+- `EXPENSES` — `/expenses`
+- `CATEGORIES` — `/categories`
+- `TAGS` — `/tags`
+- `SUMMARY` — `/summary`
+- `RECURRING` — `/recurring`
 
 ### `COOKIES`
 
@@ -48,6 +52,7 @@ Cookie names and standard options.
 
 - `MESSAGE_FOUND` — flash success message
 - `ERROR_FOUND` — flash error message
+- `FORM_ERRORS` — single-use payload for per-field form errors + sticky values; consumed by [`form-state.md`](lib/form-state.md)
 - `EMAIL_ENTERED` — email for verification flow
 - `SESSION` — session identifier
 - `DB_FAIL_COUNT` — test-only DB failure count

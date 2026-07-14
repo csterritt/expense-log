@@ -4,13 +4,11 @@
 
 /**
  * Email service for sending confirmation emails
- * Uses smtp-tester in test environment, nodemailer in production
+ * Uses SMTP transport in test environment and POST delivery in production
  * @module lib/email-service
  */
 
-import nodemailer from 'nodemailer'
 
-import { getTestSmtpConfig } from '../routes/test/smtp-config'
 import type { Bindings } from '../local-types'
 
 /**
@@ -23,11 +21,6 @@ const escapeHtml = (str: string): string =>
  * Configuration for email service
  */
 interface EmailConfig {
-  isTestMode: boolean
-  smtpHost?: string
-  smtpPort?: number
-  smtpUser?: string
-  smtpPass?: string
   emailUrl?: string
   emailCode?: string
 }
@@ -36,21 +29,10 @@ interface EmailConfig {
  * Get email configuration based on environment
  */
 const getEmailConfig = (env: Bindings): EmailConfig => {
+   return { emailUrl: env.EMAIL_SEND_URL, emailCode: env.EMAIL_SEND_CODE } 
   // More robust test environment detection
-  const isTestMode =
-    // false PROCESS:UNCOMMENT
-    env.NODE_ENV === 'test' || // PRODUCTION:REMOVE
-    env.NODE_ENV === 'development' || // PRODUCTION:REMOVE
-    env.PLAYWRIGHT === '1' || // Playwright sets this PROCESS:REMOVE
-    process.argv.includes('playwright') || // Running via playwright PROCESS:REMOVE
-    typeof (globalThis as any).test !== 'undefined' // Test environment PROCESS:REMOVE
 
   return {
-    isTestMode,
-    smtpHost: isTestMode ? '127.0.0.1' : env.SMTP_SERVER_HOST || '127.0.0.1',
-    smtpPort: isTestMode ? 1025 : parseInt(env.SMTP_SERVER_PORT || '587'),
-    smtpUser: env.SMTP_SERVER_USER,
-    smtpPass: env.SMTP_SERVER_PASSWORD,
     emailUrl: env.EMAIL_SEND_URL,
     emailCode: env.EMAIL_SEND_CODE,
   }
@@ -79,32 +61,15 @@ interface EmailTransporter {
 const createTransporter = (env: Bindings): EmailTransporter => {
   const config = getEmailConfig(env)
 
-  // Check if SMTP config has been overridden for testing
-  const testOverride = getTestSmtpConfig()
-  const smtpHost = testOverride?.host || config.smtpHost
-  const smtpPort = testOverride?.port || config.smtpPort
-
-  if (config.isTestMode) {
-    // Use smtp-tester for testing (assumes server running on port 1025)
-    // But allow override via environment variables for failure testing
-    return nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: false,
-      tls: {
-        rejectUnauthorized: false,
-      },
-    })
-  }
 
   // Production POST configuration
   return {
     sendMail: async (mailOptions: MailOptions) => {
-      if (!env.EMAIL_SEND_URL) {
+      if (!config.emailUrl) {
         throw new Error('EMAIL_SEND_URL is not configured')
       }
 
-      return fetch(env.EMAIL_SEND_URL, {
+      return fetch(config.emailUrl, {
         body: JSON.stringify({
           email_to: mailOptions.to,
           subject: mailOptions.subject,
@@ -114,7 +79,7 @@ const createTransporter = (env: Bindings): EmailTransporter => {
         }),
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${env.EMAIL_SEND_CODE}`,
+          Authorization: `Bearer ${config.emailCode}`,
           'content-type': 'application/json;charset=UTF-8',
         },
       })

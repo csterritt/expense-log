@@ -10,7 +10,7 @@ Exports the current application version string.
 
 ### `version: string`
 
-Hard-coded version string used for cache-busting the stylesheet and for display/debugging.
+Hard-coded version string exported as `version = '0'`. Used in the layout footer (`Copyright © 2025 V-{version}`).
 
 ---
 

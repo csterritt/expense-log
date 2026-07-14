@@ -13,8 +13,9 @@ import { redirectWithMessage, redirectWithError } from '../../lib/redirects'
 import { PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import type { AuthUser, Bindings, DrizzleClient } from '../../local-types'
 import { signedInAccess } from '../../middleware/signed-in-access'
-import { deleteUserAccount } from '../../lib/db-access'
+import { deleteUserAccount } from '../../lib/db/auth-access'
 import { removeCookie } from '../../lib/cookie-support'
+import { logError, logInfo, sanitizeError } from '../../lib/logger'
 
 /**
  * Attach the delete account handler to the app.
@@ -31,17 +32,17 @@ export const handleDeleteAccount = (app: Hono<{ Bindings: Bindings }>): void => 
         const db = c.get('db') as DrizzleClient
 
         if (!user || !user.id) {
-          console.error('Delete account: No user found in session')
+          logError('Delete account: No user found in session')
           return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Please sign in to delete your account.')
         }
 
         const userId = user.id
-        console.log('Deleting account for user:', user.email)
+        logInfo('Deleting account', { userId })
 
         const result = await deleteUserAccount(db, userId)
 
         if (result.isErr) {
-          console.error('Delete account error:', result.error)
+          logError('Delete account error', { userId, error: sanitizeError(result.error) })
           return redirectWithError(
             c,
             PATHS.PROFILE,
@@ -50,11 +51,11 @@ export const handleDeleteAccount = (app: Hono<{ Bindings: Bindings }>): void => 
         }
 
         if (!result.value) {
-          console.error('Delete account: User not found in database')
+          logError('Delete account: User not found in database', { userId })
           return redirectWithError(c, PATHS.PROFILE, 'Unable to delete account. Please try again.')
         }
 
-        console.log('Account deleted successfully for user:', user.email)
+        logInfo('Account deleted successfully', { userId })
 
         // Clear better-auth session cookies before creating redirect response
         removeCookie(c, 'better-auth.session_token')
@@ -67,7 +68,7 @@ export const handleDeleteAccount = (app: Hono<{ Bindings: Bindings }>): void => 
           'Your account has been successfully deleted.',
         )
       } catch (error) {
-        console.error('Delete account handler error:', error)
+        logError('Delete account handler error', { error: sanitizeError(error) })
         return redirectWithError(c, PATHS.PROFILE, 'An error occurred. Please try again.')
       }
     },

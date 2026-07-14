@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Tests the retry wrapper logic similar to what `db-access.ts` uses. Exercises `async-retry` with `true-myth` Result types.
+Tests the retry wrapper logic similar to what `db-access.ts` uses. Exercises `async-retry` with `true-myth` Result types. Imports `describe`/`it` from `bun:test`.
 
 ## Key logic tested
 
@@ -23,4 +23,4 @@ Tests the retry wrapper logic similar to what `db-access.ts` uses. Exercises `as
 
 ---
 
-See [tests.md](../tests.md) for the full catalog.
+See [unit-tests.md](../unit-tests.md) for the full catalog.

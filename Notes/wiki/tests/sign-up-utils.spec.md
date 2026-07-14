@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Unit tests for the error-message sanitization logic from `src/lib/sign-up-utils.ts` (extracted as standalone helpers for testing without Hono context).
+Unit tests for the error-message sanitization logic from `src/lib/sign-up-utils.ts` (extracted as standalone helpers for testing without Hono context). Imports `describe`/`it` from `bun:test`.
 
 ## Key logic tested
 
@@ -32,4 +32,4 @@ Pattern-matches lowercase strings against: `'already exists'`, `'duplicate'`, `'
 
 ---
 
-See [tests.md](../tests.md) for the full catalog.
+See [unit-tests.md](../unit-tests.md) for the full catalog.

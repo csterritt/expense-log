@@ -8,10 +8,11 @@ Validates name field restrictions on the gated sign-up form.
 
 ## Test cases
 
-- `shows error for empty name` — verifies `Name is required`
-- `shows error for name with invalid characters` — verifies name characters must match `/^[a-zA-Z0-9_\- ]+$/`
-- `shows error for name exceeding max length` — verifies max length limit
-- `accepts valid names with various characters` — underscores, hyphens, and spaces are allowed
+- `rejects names with special characters` — `<script>alert("xss")</script>` → `ERROR_MESSAGES.INVALID_NAME_CHARACTERS`
+- `rejects name with @ symbol` — `User@Name` → `ERROR_MESSAGES.INVALID_NAME_CHARACTERS`
+- `rejects name with punctuation marks` — `User!Name` → `ERROR_MESSAGES.INVALID_NAME_CHARACTERS`
+- `accepts valid name with letters and spaces` — `John Doe` succeeds (redirects away from `/auth/sign-up`)
+- `accepts valid name with hyphens and underscores` — `Test-User_123` succeeds (redirects away from `/auth/sign-up`)
 
 ---
 

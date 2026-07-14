@@ -101,7 +101,7 @@ const sendOtpToUserViaEmailActual = async (
       env,
       'noreply@cls.cloud',
       email,
-      'Your Mini-Auth Verification Code',
+      'Your Expense Log Verification Code',
       `<h1>Verification Code</h1>
          <p>Your verification code is: <strong>${otp}</strong></p>
          <p>This code will expire in 15 minutes.</p>`,
@@ -109,6 +109,6 @@ const sendOtpToUserViaEmailActual = async (
     console.log(`Email with OTP code sent to ${email}`)
     return Result.ok(true)
   } catch (e) {
-    throw Result.err(e instanceof Error ? e : new Error(String(e)))
+    return Result.err(e instanceof Error ? e : new Error(String(e)))
   }
 }

@@ -4,11 +4,11 @@
 
 ## Purpose
 
-Verifies that unauthenticated users are redirected to sign-in when accessing `/private`.
+Verifies that unauthenticated users are redirected to sign-in when accessing `/expenses` (the protected post-sign-in landing page).
 
 ## Test case
 
-- Directly navigates to `/private`
+- Directly navigates to `BASE_URLS.EXPENSES` (`/expenses`)
 - Verifies we are redirected to sign-in page
 - Verifies alert: `'You must sign in to visit that page'`
 

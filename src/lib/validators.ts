@@ -21,7 +21,12 @@ import {
 } from 'valibot'
 import { VALIDATION } from '../constants'
 
-// Email validation function
+/**
+ * Email validation function
+ * Checks if the value is a valid email string matching the email pattern
+ * @param value - The value to validate
+ * @returns True if the value is a valid email, false otherwise
+ */
 const validateEmail = (value: unknown) => {
   if (typeof value !== 'string') {
     return false
@@ -30,8 +35,18 @@ const validateEmail = (value: unknown) => {
   return VALIDATION.EMAIL_PATTERN.test(v)
 }
 
-// Name validation: only letters, numbers, hyphens, underscores, and spaces
+/**
+ * Name validation pattern
+ * Only allows letters, numbers, hyphens, underscores, and spaces
+ */
 const NAME_PATTERN = /^[a-zA-Z0-9_\- ]+$/
+
+/**
+ * Name character validation function
+ * Checks if the value is a valid name string containing only allowed characters
+ * @param value - The value to validate
+ * @returns True if the value is a valid name, false otherwise
+ */
 const validateNameCharacters = (value: unknown): boolean => {
   if (typeof value !== 'string') {
     return false
@@ -92,7 +107,7 @@ export const SignUpFormSchema = object({
   password: pipe(
     string(VALIDATION.REQUIRED),
     minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
-    maxLength(128, 'Password must be at most 128 characters long'),
+    maxLength(128, VALIDATION.PASSWORD_MAX_LENGTH),
   ),
 })
 
@@ -119,7 +134,7 @@ export const GatedSignUpFormSchema = object({
   password: pipe(
     string(VALIDATION.REQUIRED),
     minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
-    maxLength(128, 'Password must be at most 128 characters long'),
+    maxLength(128, VALIDATION.PASSWORD_MAX_LENGTH),
   ),
 })
 
@@ -138,11 +153,17 @@ export const ResetPasswordFormSchema = pipe(
     token: pipe(
       string(VALIDATION.REQUIRED),
       minLength(1, 'Invalid reset token. Please request a new password reset link.'),
+      maxLength(512, 'Invalid reset token. Please request a new password reset link.'),
     ),
-    password: pipe(string(VALIDATION.REQUIRED), minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)),
+    password: pipe(
+      string(VALIDATION.REQUIRED),
+      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
+      maxLength(128, VALIDATION.PASSWORD_MAX_LENGTH),
+    ),
     confirmPassword: pipe(
       string(VALIDATION.REQUIRED),
       minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
+      maxLength(128, VALIDATION.PASSWORD_MAX_LENGTH),
     ),
   }),
   custom((data) => {
@@ -160,10 +181,15 @@ export const ChangePasswordFormSchema = pipe(
       string(VALIDATION.REQUIRED),
       minLength(1, 'Current password is required.'),
     ),
-    newPassword: pipe(string(VALIDATION.REQUIRED), minLength(8, VALIDATION.PASSWORD_MIN_LENGTH)),
+    newPassword: pipe(
+      string(VALIDATION.REQUIRED),
+      minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
+      maxLength(128, VALIDATION.PASSWORD_MAX_LENGTH),
+    ),
     confirmPassword: pipe(
       string(VALIDATION.REQUIRED),
       minLength(8, VALIDATION.PASSWORD_MIN_LENGTH),
+      maxLength(128, VALIDATION.PASSWORD_MAX_LENGTH),
     ),
     userInfo: optional(
       pipe(
@@ -201,10 +227,10 @@ export const PathSignInValidationParamSchema = object({
  * @param schema - The schema to validate against
  * @returns A tuple with [isValid, result, error]
  */
-export function validateRequest<T extends BaseSchema<unknown, unknown, BaseIssue<unknown>>>(
+export const validateRequest = <T extends BaseSchema<unknown, unknown, BaseIssue<unknown>>>(
   data: unknown,
   schema: T,
-): [boolean, InferOutput<T> | null, string | null] {
+): [boolean, InferOutput<T> | null, string | null] => {
   const result = safeParse(schema, data)
 
   if (result.success) {

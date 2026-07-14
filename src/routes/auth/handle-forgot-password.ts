@@ -28,12 +28,43 @@ import {
   getUserWithAccountByEmail,
   updateAccountTimestamp,
   UserWithAccountData,
-} from '../../lib/db-access'
+} from '../../lib/db/auth-access'
 import { validateRequest, ForgotPasswordFormSchema } from '../../lib/validators'
+import { normalizeEmail } from '../../lib/email-utils'
 
 interface RateLimitResult {
   allowed: boolean
   remainingSeconds?: number
+}
+
+/**
+ * In-memory cache of last password-reset request times, keyed by normalized email.
+ * Provides uniform rate limiting for both known and unknown emails, preventing
+ * timing side-channel attacks and abuse on non-existent accounts.
+ * Scoped to the Worker isolate lifetime.
+ * Exported for test-only cache clearing.
+ */
+export const emailRateLimitCache = new Map<string, number>()
+
+/**
+ * Check if a password reset request is rate limited using the in-memory cache.
+ * Updates the cache on success.
+ * @param email - Normalized email address
+ * @returns Rate limit check result
+ */
+const checkAndUpdateInMemoryRateLimit = (email: string): RateLimitResult => {
+  const now = Date.now()
+  const lastEmailTime = emailRateLimitCache.get(email) ?? 0
+  const timeSinceLastEmail = now - lastEmailTime
+  const waitTimeMs = DURATIONS.EMAIL_RESEND_TIME_IN_MILLISECONDS
+
+  if (timeSinceLastEmail < waitTimeMs) {
+    const remainingSeconds = Math.ceil((waitTimeMs - timeSinceLastEmail) / 1000)
+    return { allowed: false, remainingSeconds }
+  }
+
+  emailRateLimitCache.set(email, now)
+  return { allowed: true }
 }
 
 /**
@@ -176,7 +207,17 @@ export const handleForgotPassword = (app: Hono<{ Bindings: Bindings }>): void =>
         )
       }
 
-      const email = data!.email as string
+      const email = normalizeEmail(data!.email as string)
+
+      const inMemoryRateLimit = checkAndUpdateInMemoryRateLimit(email)
+      if (!inMemoryRateLimit.allowed) {
+        return redirectWithError(
+          c,
+          PATHS.AUTH.FORGOT_PASSWORD,
+          MESSAGE_BUILDERS.passwordResetRateLimit(inMemoryRateLimit.remainingSeconds!),
+        )
+      }
+
       const db = createDbClient(c.env.PROJECT_DB)
 
       const userWithAccountResult = await getUserWithAccountByEmail(db, email)

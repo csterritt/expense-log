@@ -24,7 +24,7 @@ If any are missing, it logs the missing vars and returns `false` (the app still 
 
 1. `secureHeaders` — referrer policy `strict-origin-when-cross-origin`
 2. CSRF protection (`hono/csrf`) — skipped for `/test/*` when test routes are enabled; allows `localhost` origins in dev
-3. `bodyLimit` — 1 KB max in dev (4 KB in production)
+3. `bodyLimit` — 1 KB max in dev (4 KB in production); on overflow returns a plain-text response `'overflow :('` with status 413 (uses `c.text`, not a redirect).
 4. `logger` — Hono request logger
 5. `renderer` — JSX layout renderer
 6. `validateEnvBindings` — runtime check for `BETTER_AUTH_SECRET` and `SIGN_UP_MODE`
@@ -49,8 +49,14 @@ Routes are registered based on `SIGN_UP_MODE`:
 
 Always registered regardless of mode:
 
-- `buildRoot` — `/`
-- `buildPrivate` — `/private`
+- `buildExpenses` — `/expenses` (signed-in only)
+- `buildEditExpense` — `/expenses/:id/edit` and `/expenses/:id/delete` (signed-in only)
+- `buildCategories` — `/categories` (signed-in only)
+- `buildTags` — `/tags` (signed-in only)
+- `buildSummary` — `/summary` (signed-in only)
+- `buildRecurring` — `/recurring` (signed-in only)
+- `buildCreateRecurring` — `/recurring/create` (signed-in only)
+- `buildEditRecurring` — `/recurring/:id/edit` and `/recurring/:id/delete` (signed-in only)
 - `buildSignIn` — `/auth/sign-in`
 - `buildForgotPassword` — `/auth/forgot-password`
 - `buildWaitingForReset` — `/auth/waiting-for-reset`
@@ -75,6 +81,7 @@ When `isTestRouteEnabledFlag` is true:
 - `testDatabaseRouter` — mounted at `/test/database`
 - `testSignUpModeRouter` — mounted at `/test/sign-up-mode`
 - `testSmtpRouter` — mounted at `/test`
+- `testRunCronRouter` — mounted at `/test`
 
 ## 404
 
@@ -85,12 +92,13 @@ When `isTestRouteEnabledFlag` is true:
 - `✅ All required environment variables are set`
 - `❌ ERROR: Missing required environment variables: ...`
 - `==============> Environment variables are not valid!` (repeated 5x on failure)
-- `Already signed in` — when redirecting authenticated users from sign-in/up pages
+- `Body limit exceeded` — when a POST body exceeds the configured size limit
 
 ## Cross-references
 
 - [local-types.md](local-types.md) — `Bindings`, `AppVariables`
-- [constants.md](constants.md) — `HTML_STATUS`, `SIGN_UP_MODES`
+- [constants.md](constants.md) — `PATHS`, `SIGN_UP_MODES`
+- [lib/redirects.md](lib/redirects.md) — `redirectWithError` used by the body-limit overflow handler
 - [renderer.md](renderer.md) — `renderer`
 - [db/client.md](db/client.md) — `createDbClient`
 - [routes/auth/better-auth-handler.md](routes/auth/better-auth-handler.md) — `setupBetterAuth`

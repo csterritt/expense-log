@@ -6,7 +6,8 @@
  * Database schema definition using Drizzle ORM
  * Updated to match better-auth requirements
  */
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
+import { integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 /**
  * User table schema definition (better-auth compatible)
@@ -74,16 +75,130 @@ export const verification = sqliteTable('verification', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
 })
 
+/**
+ * Single-use code table schema definition
+ * Stores one-time sign-up codes for gated sign-up flow
+ */
 export const singleUseCode = sqliteTable('singleUseCode', {
   code: text('code').primaryKey(),
   email: text('email'),
 })
 
+/**
+ * Interested email table schema definition
+ * Stores email addresses of users interested in the app (for interest sign-up flow)
+ */
 export const interestedEmail = sqliteTable('interestedEmail', {
   email: text('email').primaryKey().unique(),
 })
 
-// Define schema object for export
+/**
+ * Category table schema definition
+ */
+export const category = sqliteTable(
+  'category',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [uniqueIndex('category_name_lower_unique').on(sql`lower(${table.name})`)],
+)
+
+/**
+ * Tag table schema definition
+ */
+export const tag = sqliteTable(
+  'tag',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [uniqueIndex('tag_name_lower_unique').on(sql`lower(${table.name})`)],
+)
+
+/**
+ * Recurring expense template schema definition
+ */
+export const recurring = sqliteTable('recurring', {
+  id: text('id').primaryKey(),
+  description: text('description').notNull(),
+  amountCents: integer('amountCents').notNull(),
+  categoryId: text('categoryId')
+    .notNull()
+    .references(() => category.id, { onDelete: 'restrict' }),
+  recurrence: text('recurrence').notNull(),
+  anchorDate: text('anchorDate').notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+})
+
+/**
+ * Expense table schema definition
+ */
+export const expense = sqliteTable(
+  'expense',
+  {
+    id: text('id').primaryKey(),
+    description: text('description').notNull(),
+    amountCents: integer('amountCents').notNull(),
+    categoryId: text('categoryId')
+      .notNull()
+      .references(() => category.id, { onDelete: 'restrict' }),
+    date: text('date').notNull(),
+    recurringId: text('recurringId').references(() => recurring.id, {
+      onDelete: 'set null',
+    }),
+    occurrenceDate: text('occurrenceDate'),
+    createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+    updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('expense_recurring_occurrence_unique')
+      .on(table.recurringId, table.occurrenceDate)
+      .where(sql`${table.recurringId} IS NOT NULL`),
+  ],
+)
+
+/**
+ * Join table between expense and tag
+ */
+export const expenseTag = sqliteTable(
+  'expenseTag',
+  {
+    expenseId: text('expenseId')
+      .notNull()
+      .references(() => expense.id, { onDelete: 'cascade' }),
+    tagId: text('tagId')
+      .notNull()
+      .references(() => tag.id, { onDelete: 'restrict' }),
+  },
+  (table) => [primaryKey({ columns: [table.expenseId, table.tagId] })],
+)
+
+/**
+ * Join table between recurring and tag
+ */
+export const recurringTag = sqliteTable(
+  'recurringTag',
+  {
+    recurringId: text('recurringId')
+      .notNull()
+      .references(() => recurring.id, { onDelete: 'cascade' }),
+    tagId: text('tagId')
+      .notNull()
+      .references(() => tag.id, { onDelete: 'restrict' }),
+  },
+  (table) => [primaryKey({ columns: [table.recurringId, table.tagId] })],
+)
+
+/**
+ * Complete database schema object
+ * Exports all table definitions for Drizzle ORM
+ */
 export const schema = {
   user,
   session,
@@ -91,18 +206,42 @@ export const schema = {
   verification,
   interestedEmail,
   singleUseCode,
+  category,
+  tag,
+  expense,
+  expenseTag,
+  recurring,
+  recurringTag,
 }
 
+/**
+ * Inferred select types for all tables (read operations)
+ */
 export type User = typeof user.$inferSelect
 export type Session = typeof session.$inferSelect
 export type Account = typeof account.$inferSelect
 export type Verification = typeof verification.$inferSelect
 export type InterestedEmail = typeof interestedEmail.$inferSelect
 export type SingleUseCode = typeof singleUseCode.$inferSelect
+export type Category = typeof category.$inferSelect
+export type Tag = typeof tag.$inferSelect
+export type Expense = typeof expense.$inferSelect
+export type ExpenseTag = typeof expenseTag.$inferSelect
+export type Recurring = typeof recurring.$inferSelect
+export type RecurringTag = typeof recurringTag.$inferSelect
 
+/**
+ * Inferred insert types for all tables (write operations)
+ */
 export type NewUser = typeof user.$inferInsert
 export type NewSession = typeof session.$inferInsert
 export type NewAccount = typeof account.$inferInsert
 export type NewVerification = typeof verification.$inferInsert
 export type NewInterestedEmail = typeof interestedEmail.$inferInsert
 export type NewSingleUseCode = typeof singleUseCode.$inferInsert
+export type NewCategory = typeof category.$inferInsert
+export type NewTag = typeof tag.$inferInsert
+export type NewExpense = typeof expense.$inferInsert
+export type NewExpenseTag = typeof expenseTag.$inferInsert
+export type NewRecurring = typeof recurring.$inferInsert
+export type NewRecurringTag = typeof recurringTag.$inferInsert

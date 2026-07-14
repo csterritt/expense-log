@@ -5,5 +5,9 @@
 import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
+  testDir: './e2e-tests',
+  use: {
+    baseURL: 'http://localhost:3000',
+  },
   workers: 1,
 })

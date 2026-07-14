@@ -123,7 +123,6 @@ treated as a static file by Cloudflare. The thinking behind this is that people 
 the website, see the description of the product or service, and many (alas :-) will decide it's
 not for them. So they leave, without causing a single Cloudflare worker execution. The
 `prod_deploy.sh` (currently untested, and probably broken) builds the `public/index.html`, but
-then removes it. The `index.ts` file would need to be changed to add `// PRODUCTION:REMOVE`
 comments to the import and call to `buildRoot`.
 
 In production, notifications can be made via the [Pushover](https://pushover.net) web service. None are
@@ -147,7 +146,6 @@ To run in production, set the following environment variables on Cloudflare:
 ##### Dev-only routes and flags
 
 Several routes and configuration toggles are intended only for development and testing and are
-marked in the code with `// PRODUCTION:REMOVE` or `// PRODUCTION:UNCOMMENT`. Ensure these are
 not enabled in production builds. The `prod_deploy.sh` script runs the
 `clean-for-production.rb` script, which removes all dev-only routes and flags. Note that the
 `prod_deploy.sh` script is currently untested, and probably broken.

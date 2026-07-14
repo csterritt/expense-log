@@ -41,9 +41,9 @@ const post = async (url: string, data: PushoverMessage): Promise<Response> => {
   return new Response(results, init)
 }
 
-export const pushoverNotify = async (c: AppContext, message: string): Promise<void> => {
-  const appId = c.env.PO_APP_ID?.trim()
-  const userId = c.env.PO_USER_ID?.trim()
+export const pushoverNotifyEnv = async (env: Bindings, message: string): Promise<void> => {
+  const appId = env.PO_APP_ID?.trim()
+  const userId = env.PO_USER_ID?.trim()
 
   if (appId && userId) {
     const msg: PushoverMessage = {
@@ -53,7 +53,7 @@ export const pushoverNotify = async (c: AppContext, message: string): Promise<vo
     }
 
     try {
-      if (c.env.NODE_ENV !== 'development') {
+      if (env.NODE_ENV !== 'development') {
         await post(API_URLS.PUSHOVER, msg)
       } else {
         console.log(`========> Notify would have been sent in production:`)
@@ -63,4 +63,8 @@ export const pushoverNotify = async (c: AppContext, message: string): Promise<vo
       console.log(`pushoverNotify final error:`, err)
     }
   }
+}
+
+export const pushoverNotify = async (c: AppContext, message: string): Promise<void> => {
+  await pushoverNotifyEnv(c.env, message)
 }

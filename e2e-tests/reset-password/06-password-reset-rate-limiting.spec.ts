@@ -97,9 +97,17 @@ test(
     await fillInput(page, 'forgot-email-input', nonExistentEmail)
     await clickLink(page, 'forgot-password-action')
 
-    // Should still redirect to waiting page (don't reveal that user doesn't exist)
-    // Note: For non-existent users, we don't apply rate limiting since we don't have
-    // an account record to track timestamps, but we still don't reveal the user doesn't exist
-    expect(page.url()).toContain('/auth/waiting-for-reset')
+    // The in-memory rate limiter is applied uniformly to all emails, so the
+    // second immediate request is throttled exactly like a known user would be.
+    // This removes the timing/behavior side-channel that previously let an
+    // attacker distinguish existing from non-existing accounts.
+    await verifyOnForgotPasswordPage(page)
+
+    const alertElement = page.getByRole('alert')
+    await expect(alertElement).toBeVisible()
+
+    const alertText = await alertElement.textContent()
+    expect(alertText).toMatch(/Please wait \d+ more second/i)
+    expect(alertText).toContain('before requesting another password reset email')
   }),
 )

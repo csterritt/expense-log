@@ -26,11 +26,14 @@
   },
   "d1_databases": [
     {
-      "binding": "PL_EXP_LOG_DB",
+      "binding": "PROJECT_DB",
       "database_name": "pl-exp-log-db",
       "database_id": "f312e719-e4b8-403b-afd1-9443ad28591f",
     },
   ],
+  "triggers": {
+    "crons": ["0 5 * * *"],
+  },
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

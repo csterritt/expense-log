@@ -33,7 +33,7 @@ export const handleResetPassword = (app: Hono<{ Bindings: Bindings }>): void => 
         const rawBody = body as Record<string, unknown>
         const tokenEntered = typeof rawBody?.token === 'string' ? rawBody.token : undefined
         const target = tokenEntered
-          ? `${PATHS.AUTH.RESET_PASSWORD}?token=${tokenEntered}`
+          ? `${PATHS.AUTH.RESET_PASSWORD}?token=${encodeURIComponent(tokenEntered)}`
           : PATHS.AUTH.FORGOT_PASSWORD
         return redirectWithError(c, target, err || MESSAGES.INVALID_INPUT)
       }
@@ -75,7 +75,7 @@ export const handleResetPassword = (app: Hono<{ Bindings: Bindings }>): void => 
 
         return redirectWithError(
           c,
-          `${PATHS.AUTH.RESET_PASSWORD}?token=${token}`,
+          `${PATHS.AUTH.RESET_PASSWORD}?token=${encodeURIComponent(token)}`,
           'An error occurred while resetting your password. Please try again.',
         )
       }

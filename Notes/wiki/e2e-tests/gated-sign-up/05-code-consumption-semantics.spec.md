@@ -8,9 +8,10 @@ Ensures single-use codes are consumed/invalidated after use and that code valida
 
 ## Test cases
 
-- `valid code can be used to create an account` — uses `completeGatedSignUpFlow`
-- `same code cannot be reused for another account` — signs up with code, then attempts second sign-up with same code; verifies `Invalid or expired sign-up code`
-- `used code is marked as consumed in database` — uses `checkCodeExists` to verify code status
+- `code is consumed only after successful sign-up` — verifies code exists before sign-up via `checkCodeExists`, completes successful sign-up, verifies code is deleted afterward
+- `code is NOT consumed when sign-up fails due to invalid email format` — invalid email fails validation, code still exists in DB afterward
+- `code IS consumed when sign-up fails due to duplicate email (atomic claim)` — duplicate email redirects to await-verification (security: don't reveal email exists), but code is consumed because atomic claim happens before account creation attempt
+- `user can retry with same code after validation failure` — short password fails, code still exists; second attempt with valid password succeeds, code consumed
 
 ---
 

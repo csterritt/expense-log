@@ -69,7 +69,7 @@ test.describe('Gated Sign-Up: Code Consumption Semantics', () => {
   )
 
   test(
-    'code IS consumed when sign-up fails due to duplicate email (atomic claim)',
+    'code is NOT consumed when sign-up fails due to duplicate email (code released)',
     testWithDatabase(async ({ page }) => {
       const testCode = 'BETA-ACCESS-123'
 
@@ -90,10 +90,12 @@ test.describe('Gated Sign-Up: Code Consumption Semantics', () => {
       // or show account exists message
       await verifyOnAwaitVerificationPage(page)
 
-      // Code is consumed because atomic claim happens before account creation attempt.
-      // This prevents race conditions where two users could claim the same code.
+      // The code is atomically claimed first, but because the email belongs to an
+      // existing user the sign-up cannot succeed, so the code is released again.
+      // This prevents an attacker from burning a valid invite code by submitting a
+      // known existing email.
       const existsAfter = await checkCodeExists(testCode)
-      expect(existsAfter).toBe(false)
+      expect(existsAfter).toBe(true)
     }),
   )
 

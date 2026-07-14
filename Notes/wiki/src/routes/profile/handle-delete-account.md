@@ -12,16 +12,22 @@ POST handler for account deletion (`POST /profile/delete`). Permanently deletes 
 
 ### Flow
 
-1. Gets current user from context (`c.get('user')`)
-2. If no user → redirects to `/auth/sign-in` with error
-3. Calls `deleteUserAccount(db, user.id)` to delete from DB (cascade deletes sessions and accounts)
-4. Calls `auth.api.signOut()` to invalidate the session
-5. Redirects to `/` with `'Your account has been deleted.'`
+1. Gets current user from context (`c.get('user')`) and DB client from context (`c.get('db')`).
+2. If no user → redirects to `/auth/sign-in` with error.
+3. Calls `deleteUserAccount(db, user.id)` to delete from DB (cascade deletes sessions and accounts).
+4. On `Err` or `false` result → redirects to `/profile` with error.
+5. Clears better-auth session cookies via `removeCookie(c, 'better-auth.session_token')` and `removeCookie(c, 'better-auth.session_data')`.
+6. Redirects to `/auth/sign-in` with `'Your account has been successfully deleted.'`
 
 ## Cross-references
 
 - [build-delete-confirm.md](build-delete-confirm.md) — confirmation page
-- [lib/db-access.md](../../lib/db-access.md) — `deleteUserAccount`
+- [../../lib/db/auth-access.md](../../lib/db/auth-access.md) — `deleteUserAccount`.
+- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `removeCookie`.
+- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`, `redirectWithError`.
+- [../../constants.md](../../constants.md) — `PATHS.PROFILE`, `PATHS.PROFILE_DELETE`, `PATHS.AUTH.SIGN_IN`, `STANDARD_SECURE_HEADERS`.
+- [../../middleware/signed-in-access.md](../../middleware/signed-in-access.md) — auth gate.
+- [../../local-types.md](../../local-types.md) — `AuthUser`, `Bindings`, `DrizzleClient` types.
 
 ---
 

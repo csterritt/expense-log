@@ -10,10 +10,11 @@ Mounts the Better Auth API handler (`/api/auth/*`) and sets up the session/user 
 
 ### `setupBetterAuth(app): void`
 
-Creates a sub-router at `/api/auth/*` that uses `toNextJsHandler` to bridge Better Auth to Hono. For every request it:
+Creates a catch-all route at `/api/auth/*` that delegates to Better Auth's request handler. For every request it:
 
 1. Calls `createAuth(c.env)` (fresh auth instance per request)
-2. Delegates to Better Auth's request handler
+2. Delegates to `auth.handler(c.req.raw)`
+3. On error, returns HTTP 500 with `'Internal Server Error'`
 
 ### `setupBetterAuthMiddleware(app): void`
 
@@ -23,12 +24,13 @@ Global middleware that runs `auth.api.getSession()` on every request and injects
 - `session` — `session.session`
 - `authSession` — full `{ user, session }`
 
-Logs `set user to null` when no session exists.
+When no session exists or on error, sets all three to `null` and continues. Logs `'Better Auth middleware error:'` on error.
 
 ## Cross-references
 
-- [lib/auth.md](../../lib/auth.md) — `createAuth`
-- [index.md](../../index.md) — middleware chain registration order
+- [../../lib/auth.md](../../lib/auth.md) — `createAuth`
+- [../../local-types.md](../../local-types.md) — `Bindings`, `AuthUser`, `AuthSession`, `AuthSessionResponse` types
+- [../../index.md](../../index.md) — middleware chain registration order
 
 ---
 

@@ -8,12 +8,17 @@ import { logger } from 'hono/logger'
 import { csrf } from 'hono/csrf'
 import { secureHeaders } from 'hono/secure-headers'
 import { bodyLimit } from 'hono/body-limit'
-import { showRoutes } from 'hono/dev' // PRODUCTION:REMOVE
 
 import { HTML_STATUS, SIGN_UP_MODES } from './constants'
 import { renderer } from './renderer'
-import { buildRoot } from './routes/build-root' // PRODUCTION:REMOVE
-import { buildPrivate } from './routes/build-private'
+import { buildExpenses } from './routes/expenses/build-expenses'
+import { buildEditExpense } from './routes/expenses/build-edit-expense'
+import { buildCategories } from './routes/build-categories'
+import { buildTags } from './routes/build-tags'
+import { buildSummary } from './routes/build-summary'
+import { buildRecurring } from './routes/build-recurring'
+import { buildCreateRecurring } from './routes/recurring/build-create-recurring'
+import { buildEditRecurring } from './routes/recurring/build-edit-recurring'
 import { build404 } from './routes/build-404'
 import { buildEmailConfirmation } from './routes/auth/build-email-confirmation'
 import { buildAwaitVerification } from './routes/auth/build-await-verification'
@@ -44,13 +49,7 @@ import { setupBetterAuthResponseInterceptor } from './routes/auth/better-auth-re
 
 import { Bindings } from './local-types'
 import { validateEnvBindings } from './middleware/guard-sign-up-mode'
-import { handleSetClock } from './routes/auth/handle-set-clock' // PRODUCTION:REMOVE
-import { handleResetClock } from './routes/auth/handle-reset-clock' // PRODUCTION:REMOVE
-import { handleSetDbFailures } from './routes/handle-set-db-failures' // PRODUCTION:REMOVE
-import { testDatabaseRouter } from './routes/test/database' // PRODUCTION:REMOVE
-import { testSignUpModeRouter } from './routes/test/sign-up-mode' // PRODUCTION:REMOVE
-import { testSmtpRouter } from './routes/test/smtp-config' // PRODUCTION:REMOVE
-import { isTestRouteEnabled } from './lib/test-routes'
+import { scheduled } from './scheduled'
 
 /**
  * Validates that all required environment variables are set
@@ -70,8 +69,8 @@ const validateEnvironmentVariables = (): boolean => {
   const missingVars: string[] = []
 
   for (const varName of requiredVars) {
-    // @ts-ignore
-    if (!env[varName] || env[varName]?.trim() === '') {
+    const envValue = String(env[varName as keyof typeof env] ?? '')
+    if (!envValue || envValue.trim() === '') {
       missingVars.push(varName)
     }
   }
@@ -97,38 +96,18 @@ if (!validateEnvironmentVariables()) {
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-const isTestRouteEnabledFlag = isTestRouteEnabled({
-  nodeEnv: env.NODE_ENV,
-  enableTestRoutes: (env as unknown as Bindings).ENABLE_TEST_ROUTES,
-  playwright: (env as unknown as Bindings).PLAYWRIGHT,
-})
 
-let alternateOrigin = /http:\/\/localhost(:\d+)?$/ // PRODUCTION:REMOVE
-// PRODUCTION:REMOVE-NEXT-LINE
-if (env.ALTERNATE_ORIGIN) {
-  alternateOrigin = new RegExp(env.ALTERNATE_ORIGIN) // PRODUCTION:REMOVE
-} // PRODUCTION:REMOVE
 
 // Apply middleware
 app.use(secureHeaders({ referrerPolicy: 'strict-origin-when-cross-origin' }))
 // Apply CSRF protection to all routes except test endpoints
 app.use(async (c, next) => {
-  // Skip CSRF for test endpoints // PRODUCTION:REMOVE
-  // PRODUCTION:REMOVE-NEXT-LINE
-  if (isTestRouteEnabledFlag && c.req.path.startsWith('/test/')) {
-    return next() // PRODUCTION:REMOVE
-  } // PRODUCTION:REMOVE
 
   // Apply CSRF protection to all other routes
   const csrfMiddleware = csrf({
     origin: (origin: string) => {
-      // return /https:\/\/mini-auth.example.com$/.test(origin) || // PRODUCTION:UNCOMMENT
-      //  /https:\/\/mini-auth.example.workers.dev$/.test(origin)  // PRODUCTION:UNCOMMENT
-      // PRODUCTION:REMOVE-NEXT-LINE
-      return (
-        /http:\/\/localhost(:\d+)?$/.test(origin) || // PRODUCTION:REMOVE
-        alternateOrigin.test(origin) // PRODUCTION:REMOVE
-      ) // PRODUCTION:REMOVE
+       return /https:\/\/expenses.cls.cloud$/.test(origin) || 
+        /https:\/\/expenses.cleverfox.workers.dev$/.test(origin)  
     },
   })
 
@@ -136,10 +115,10 @@ app.use(async (c, next) => {
 })
 app.use(
   bodyLimit({
-    // maxSize: 4 * 1024, // 4kb // PRODUCTION:UNCOMMENT
-    maxSize: 1024, // 1kb // PRODUCTION:REMOVE
+     maxSize: 4 * 1024, // 4kb 
     onError: (c) => {
       console.log('Body limit exceeded')
+      // NOTE: This 'c.text' instead of a 'redirectWithError' is correct, and should not be changed
       return c.text('overflow :(', HTML_STATUS.CONTENT_TOO_LARGE)
     },
   }),
@@ -166,8 +145,14 @@ setupBetterAuthResponseInterceptor(app) // Must come before setupBetterAuth to i
 setupBetterAuth(app)
 
 // Route declarations
-buildRoot(app) // PRODUCTION:REMOVE
-buildPrivate(app)
+buildExpenses(app)
+buildEditExpense(app)
+buildCategories(app)
+buildTags(app)
+buildSummary(app)
+buildRecurring(app)
+buildCreateRecurring(app)
+buildEditRecurring(app)
 buildSignIn(app)
 if (env.SIGN_UP_MODE === SIGN_UP_MODES.OPEN_SIGN_UP) {
   buildSignUp(app)
@@ -203,19 +188,9 @@ buildDeleteConfirm(app)
 handleChangePassword(app)
 handleDeleteAccount(app)
 
-if (isTestRouteEnabledFlag) {
-  handleSetClock(app) // PRODUCTION:REMOVE
-  handleResetClock(app) // PRODUCTION:REMOVE
-  handleSetDbFailures(app) // PRODUCTION:REMOVE
 
-  // Test-only database endpoints // PRODUCTION:REMOVE
-  app.route('/test/database', testDatabaseRouter) // PRODUCTION:REMOVE
-  app.route('/test/sign-up-mode', testSignUpModeRouter) // PRODUCTION:REMOVE
-  app.route('/test', testSmtpRouter) // PRODUCTION:REMOVE
-}
 
 // this MUST be the last route declared!
 build404(app)
-showRoutes(app) // PRODUCTION:REMOVE
 
-export default app
+export default { fetch: app.fetch, scheduled }

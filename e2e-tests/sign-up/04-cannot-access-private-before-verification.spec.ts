@@ -35,7 +35,7 @@ test(
     await verifyOnAwaitVerificationPage(page)
 
     // Now try to directly access the private page without being signed in
-    await page.goto(BASE_URLS.PRIVATE)
+    await page.goto(BASE_URLS.EXPENSES)
 
     // Should be redirected back to sign-in page with access denied message
     await verifyOnSignInPage(page)
@@ -53,7 +53,7 @@ test(
     )
 
     // Try to access private page again after failed sign-in attempt
-    await page.goto(BASE_URLS.PRIVATE)
+    await page.goto(BASE_URLS.EXPENSES)
 
     // Should still be redirected back to sign-in page with access denied message
     await verifyOnSignInPage(page)

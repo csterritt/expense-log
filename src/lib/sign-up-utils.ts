@@ -10,8 +10,14 @@ import { Context } from 'hono'
 
 import { redirectWithError, redirectWithMessage } from './redirects'
 import { addCookie } from './cookie-support'
-import { getUserIdByEmail, updateAccountTimestamp, claimSingleUseCode } from './db-access'
+import {
+  getUserIdByEmail,
+  updateAccountTimestamp,
+  claimSingleUseCode,
+  releaseSingleUseCode,
+} from './db/auth-access'
 import { createAuth } from './auth'
+import { normalizeEmail } from './email-utils'
 import { createDbClient } from '../db/client'
 import { PATHS, COOKIES, MESSAGES, LOG_MESSAGES } from '../constants'
 import type { Bindings, DrizzleClient } from '../local-types'
@@ -46,10 +52,18 @@ interface SignUpErrorResponse {
   error?: { message?: string }
 }
 
+/**
+ * Response with status code
+ */
 interface StatusResponse {
   status: number
 }
 
+/**
+ * Synthetic duplicate response from better-auth
+ * When requireEmailVerification=true and a duplicate email is used,
+ * better-auth returns this structure instead of throwing an error
+ */
 interface SyntheticDuplicateResponse {
   token: null
   user: { emailVerified: boolean }
@@ -78,6 +92,11 @@ export const isSyntheticDuplicateResponse = (
   )
 }
 
+/**
+ * Type guard to check if a response is an error response
+ * @param response - The response to check
+ * @returns True if the response is an error response
+ */
 const isErrorResponse = (response: unknown): response is SignUpErrorResponse => {
   return (
     typeof response === 'object' &&
@@ -87,6 +106,12 @@ const isErrorResponse = (response: unknown): response is SignUpErrorResponse => 
   )
 }
 
+/**
+ * Extract the HTTP status code from a response
+ * Handles both Response objects and objects with a status property
+ * @param response - The response to extract status from
+ * @returns The status code or null if not found
+ */
 export const getResponseStatus = (response: unknown): number | null => {
   if (response instanceof Response) {
     return response.status
@@ -245,7 +270,8 @@ export const processGatedSignUp = async (
   c: Context<{ Bindings: Bindings }>,
   data: GatedSignUpData,
 ): Promise<Response> => {
-  const { code, name, email, password } = data
+  const { code, name, password } = data
+  const email = normalizeEmail(data.email)
   const trimmedCode = code.trim()
   const dbClient = createDbClient(c.env.PROJECT_DB)
 
@@ -265,6 +291,19 @@ export const processGatedSignUp = async (
     )
   }
 
+  // The code is now claimed. If account creation fails for any reason, release
+  // it so a legitimate user doesn't permanently lose their one-time invite.
+  const releaseClaimedCode = async (): Promise<void> => {
+    const releaseResult = await releaseSingleUseCode(dbClient, trimmedCode, email)
+    if (releaseResult.isErr) {
+      console.error('Failed to release sign-up code after failed sign-up:', releaseResult.error)
+    }
+  }
+
+  // Check if user already exists before attempting sign-up
+  const existingUserResult = await getUserIdByEmail(dbClient, email)
+  const userAlreadyExists = existingUserResult.isOk && existingUserResult.value.length > 0
+
   // Code claimed successfully - proceed with account creation
   const auth = createAuth(c.env)
 
@@ -279,25 +318,37 @@ export const processGatedSignUp = async (
     })
 
     if (!signUpResponse) {
+      await releaseClaimedCode()
       return redirectWithError(c, PATHS.AUTH.SIGN_UP, 'Failed to create account. Please try again.')
     }
 
     const errorResponse = handleSignUpResponseError(c, signUpResponse, email, PATHS.AUTH.SIGN_UP)
 
     if (errorResponse) {
+      await releaseClaimedCode()
       return errorResponse
     }
 
     if (isSyntheticDuplicateResponse(signUpResponse)) {
       addCookie(c, COOKIES.EMAIL_ENTERED, email)
-      return redirectWithMessage(c, PATHS.AUTH.AWAIT_VERIFICATION, MESSAGES.ACCOUNT_ALREADY_EXISTS)
+      if (userAlreadyExists) {
+        await releaseClaimedCode()
+        return redirectWithMessage(
+          c,
+          PATHS.AUTH.AWAIT_VERIFICATION,
+          MESSAGES.ACCOUNT_ALREADY_EXISTS,
+        )
+      }
+      return redirectToAwaitVerification(c, email)
     }
 
     const responseStatus = getResponseStatus(signUpResponse)
     if (responseStatus !== null && responseStatus !== 200) {
+      await releaseClaimedCode()
       return redirectWithError(c, PATHS.AUTH.SIGN_UP, MESSAGES.GENERIC_ERROR_TRY_AGAIN)
     }
   } catch (apiError: unknown) {
+    await releaseClaimedCode()
     return handleSignUpApiError(c, apiError, email, PATHS.AUTH.SIGN_UP)
   }
 

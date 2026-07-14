@@ -4,7 +4,6 @@
 
 import { Context } from 'hono'
 
-import { addCookie, removeCookie, retrieveCookie } from './cookie-support'
 import type { Bindings } from '../local-types'
 
 /**
@@ -20,33 +19,12 @@ export const getCurrentTime = (c: Context, ...args: (string | number | Date)[]):
       return new Date()
     }
 
-    // @ts-ignore
-    return new Date(...args)
+    return new Date(...(args as ConstructorParameters<typeof Date>))
   }
 
-  // if (args.length === 0) { // PRODUCTION:UNCOMMENT
-  //   return new Date() // PRODUCTION:UNCOMMENT
-  // } // PRODUCTION:UNCOMMENT
+   if (args.length === 0) { 
+     return new Date() 
+   } 
 
-  // // @ts-ignore // PRODUCTION:UNCOMMENT
-  // return new Date(...args) // PRODUCTION:UNCOMMENT
-  // } // PRODUCTION:UNCOMMENT
-  // PRODUCTION:STOP
-
-  const ds = retrieveCookie(c, 'delta')
-  const delta = parseInt(ds == null || ds.toString().trim() === '' ? '0' : ds)
-  if (args.length === 0) {
-    return new Date(new Date().getTime() + delta)
-  }
-
-  // @ts-ignore
-  return new Date(new Date(...args).getTime() + delta)
-}
-
-export const setCurrentDelta = (c: Context, delta: number): void => {
-  addCookie(c, 'delta', String(delta))
-}
-
-export const clearCurrentDelta = (c: Context): void => {
-  removeCookie(c, 'delta')
-}
+   return new Date(...(args as ConstructorParameters<typeof Date>)) 
+   } 

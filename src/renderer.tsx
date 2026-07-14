@@ -4,6 +4,10 @@
 
 import { jsxRenderer } from 'hono/jsx-renderer'
 
+/**
+ * Hono JSX renderer for HTML responses
+ * Wraps page content in a standard HTML5 document structure with basic meta tags and CSS
+ */
 export const renderer = jsxRenderer(
   ({ children }) => {
     return (

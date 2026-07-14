@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Builds HTML/text email templates and sends them. Detects test environments (development, test, Playwright, or `globalThis.test`) and routes to a local smtp-tester on port 1025; in production uses an external POST endpoint.
+Builds HTML/text email templates and sends them. Detects test environments (development, test, Playwright, or `globalThis.test`) and routes to a local `nodemailer` SMTP transport on port 1025; in production uses an external POST endpoint.
 
 ## Types
 

@@ -15,6 +15,27 @@
       "when": 1769522009945,
       "tag": "0001_careless_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777057502231,
+      "tag": "0002_sharp_sleeper",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1777895796787,
+      "tag": "0003_misty_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1778005490951,
+      "tag": "0004_large_bushwacker",
+      "breakpoints": true
     }
   ]
 }
