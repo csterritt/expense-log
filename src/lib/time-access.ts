@@ -14,22 +14,15 @@ import type { Bindings } from '../local-types'
  */
 
 export const getCurrentTime = (c: Context, ...args: (string | number | Date)[]): Date => {
-  const isTestMode = (c as Context<{ Bindings: Bindings }>).env?.NODE_ENV !== 'production'
+  const isTestMode = (c as Context<{ Bindings: Bindings }>).env?.NODE_ENV === 'development' // PRODUCTION:REMOVE
+   // PRODUCTION:REMOVE-NEXT-LINE
   if (!isTestMode) {
     if (args.length === 0) {
       return new Date()
     }
 
     return new Date(...(args as ConstructorParameters<typeof Date>))
-  }
-
-  // if (args.length === 0) { // PRODUCTION:UNCOMMENT
-  //   return new Date() // PRODUCTION:UNCOMMENT
-  // } // PRODUCTION:UNCOMMENT
-
-  // return new Date(...(args as ConstructorParameters<typeof Date>)) // PRODUCTION:UNCOMMENT
-  // } // PRODUCTION:UNCOMMENT
-  // PRODUCTION:STOP
+  } // PRODUCTION:REMOVE
 
   const ds = retrieveCookie(c, 'delta')
   const delta = parseInt(ds == null || ds.toString().trim() === '' ? '0' : ds)
