@@ -1,43 +1,45 @@
-- [ ] src/renderer.tsx
-- [ ] src/middleware/guard-sign-up-mode.ts
-- [ ] src/middleware/signed-in-access.ts
-- [ ] src/types.d.ts
-- [ ] src/scheduled.ts
-- [ ] src/local-types.ts
-- [ ] src/components/tag-chip-checkboxes.tsx
-- [ ] src/components/gated-sign-up-form.tsx
-- [ ] src/constants.ts
-- [ ] src/style.css
-- [ ] src/lib/et-date.ts
-- [ ] src/lib/sign-up-utils.ts
-- [ ] src/lib/expense-validators.ts
-- [ ] src/lib/po-notify.ts
-- [ ] src/lib/email-service.ts
-- [ ] src/lib/confirmation-hmac.ts
-- [ ] src/lib/money.ts
-- [ ] src/lib/url-validation.ts
-- [ ] src/lib/generate-code.ts
-- [ ] src/lib/test-routes.ts
-- [ ] src/lib/recurrence.ts
-- [ ] src/lib/validators.ts
-- [ ] src/lib/send-email.ts
-- [ ] src/lib/time-access.ts
-- [ ] src/lib/db/summary-access.ts
-- [ ] src/lib/db/category-access.ts
-- [ ] src/lib/db/confirm-helpers.ts
-- [ ] src/lib/db/auth-access.ts
-- [ ] src/lib/db/tag-access.ts
-- [ ] src/lib/db/expense-access.ts
-- [ ] src/lib/cookie-support.ts
-- [ ] src/lib/redirects.tsx
-- [ ] src/lib/form-state.ts
-- [ ] src/lib/auth.ts
-- [ ] src/lib/setup-no-cache-headers.ts
-- [ ] src/lib/db-helpers.ts
-- [ ] src/db/schema.ts
-- [ ] src/db/client.ts
-- [ ] src/index.ts
-- [ ] src/version.ts
+- [x] src/renderer.tsx
+- [x] src/middleware/guard-sign-up-mode.ts
+- [x] src/middleware/signed-in-access.ts
+- [x] src/types.d.ts
+- [x] src/scheduled.ts
+- [x] src/local-types.ts
+- [x] src/components/tag-chip-checkboxes.tsx
+- [x] src/components/gated-sign-up-form.tsx
+- [x] src/constants.ts
+- [x] src/style.css
+- [x] src/lib/et-date.ts
+- [x] src/lib/sign-up-utils.ts
+- [x] src/lib/expense-validators.ts
+- [x] src/lib/email-utils.ts
+- [x] src/lib/po-notify.ts
+- [x] src/lib/email-service.ts
+- [x] src/lib/confirmation-hmac.ts
+- [x] src/lib/money.ts
+- [x] src/lib/logger.ts
+- [x] src/lib/url-validation.ts
+- [x] src/lib/generate-code.ts
+- [x] src/lib/test-routes.ts
+- [x] src/lib/recurrence.ts
+- [x] src/lib/validators.ts
+- [x] src/lib/send-email.ts
+- [x] src/lib/time-access.ts
+- [x] src/lib/db/summary-access.ts
+- [x] src/lib/db/category-access.ts
+- [x] src/lib/db/confirm-helpers.ts
+- [x] src/lib/db/auth-access.ts
+- [x] src/lib/db/tag-access.ts
+- [x] src/lib/db/expense-access.ts
+- [x] src/lib/cookie-support.ts
+- [x] src/lib/redirects.tsx
+- [x] src/lib/form-state.ts
+- [x] src/lib/auth.ts
+- [x] src/lib/setup-no-cache-headers.ts
+- [x] src/lib/db-helpers.ts
+- [x] src/db/schema.ts
+- [x] src/db/client.ts
+- [x] src/index.ts
+- [x] src/version.ts
 - [ ] src/routes/build-summary.tsx
 - [ ] src/routes/build-tags.tsx
 - [ ] src/routes/build-root.tsx
@@ -104,6 +106,7 @@
 - [ ] tests/tag-chip-checkboxes.spec.ts
 - [ ] tests/recurrence.spec.ts
 - [ ] tests/tsconfig.json
+- [ ] tests/auth-validators.spec.ts
 - [ ] tests/sign-up-utils.spec.ts
 - [ ] tests/helpers/test-db.ts
 - [ ] tests/et-date.spec.ts
@@ -186,6 +189,7 @@
 - [ ] e2e-tests/reset-password/01-can-access-forgot-password-page.spec.ts
 - [ ] e2e-tests/reset-password/02-can-request-password-reset.spec.ts
 - [ ] e2e-tests/reset-password/05-password-reset-navigation.spec.ts
+- [ ] e2e-tests/reset-password/08-password-reset-token-url-encoding.spec.ts
 - [ ] e2e-tests/reset-password/06-password-reset-rate-limiting.spec.ts
 - [ ] e2e-tests/sign-in/04-cant-visit-protected-page-signed-out.spec.ts
 - [ ] e2e-tests/sign-in/02-can-sign-in-with-known-email.spec.ts
