@@ -25,6 +25,7 @@ jj describe -m "$msg"
 jj bookmark set dev -r @
 jj new main dev -m "$msg"
 if [[ $(jj resolve --list) ]] ; then
+    echo "========> Resolving conflicts..."
   jj resolve --tool :theirs
 fi
 
