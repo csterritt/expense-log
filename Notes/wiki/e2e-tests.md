@@ -59,6 +59,8 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/`, organized by feat
 - [e2e-tests/expenses/19-entry-new-tag-confirmation.spec.ts](./e2e-tests/expenses/19-entry-new-tag-confirmation.spec.md) — New-tag confirmation flow via the chip UI: typing new tag names in the `newTags` input reaches `confirm-create-new-page` listing each new tag; mixed comma and whitespace separators create all named tags; typing an existing tag name while its chip is selected deduplicates so the tag is attached exactly once.
 - [e2e-tests/expenses/20-entry-tamper-and-error.spec.ts](./e2e-tests/expenses/20-entry-tamper-and-error.spec.md) — Cancel and tamper/error recovery: cancelling confirmation preserves chip selections and `newTags` text; submitting a non-ULID `tagId` or an unknown-but-valid ULID shows a recoverable error with all form values preserved.
 - [e2e-tests/expenses/21-entry-no-js-and-broken-js.spec.ts](./e2e-tests/expenses/21-entry-no-js-and-broken-js.spec.md) — Progressive-enhancement resilience: with JS disabled, native checkboxes still toggle and submit correctly; `newTags` text field submits and reaches confirmation; validation-error round-trip preserves checked chips. With broken JS (throwing module), native checkboxes remain functional and form submission succeeds.
+- [e2e-tests/expenses/22-edit-tag-chip-ui.spec.ts](./e2e-tests/expenses/22-edit-tag-chip-ui.spec.md) — Tag chip-checkbox UI on the expense edit form: pre-existing tag attachments render as selected chips, toggling updates native checkboxes, and tag changes persist on save.
+- [e2e-tests/expenses/23-list-filter-chip-unification.spec.ts](./e2e-tests/expenses/23-list-filter-chip-unification.spec.md) — Expense list filter bar uses the shared tag chip-checkbox component with consistent class hooks, ordering, AND/OR mode, and safe handling of excess, invalid, or stale `tagId` values.
 
 ## Interest sign-up (`e2e-tests/interest-sign-up/`)
 
@@ -92,6 +94,7 @@ Catalog of all Playwright end-to-end tests under `e2e-tests/`, organized by feat
 - [e2e-tests/reset-password/05-password-reset-navigation.spec.ts](./e2e-tests/reset-password/05-password-reset-navigation.spec.md) — Navigation within reset password flow.
 - [e2e-tests/reset-password/06-password-reset-rate-limiting.spec.ts](./e2e-tests/reset-password/06-password-reset-rate-limiting.spec.md) — Rate limiting on repeated reset requests.
 - [e2e-tests/reset-password/07-password-reset-email-send-failure.spec.ts](./e2e-tests/reset-password/07-password-reset-email-send-failure.spec.md) — Graceful handling when email send fails.
+- [e2e-tests/reset-password/08-password-reset-token-url-encoding.spec.ts](./e2e-tests/reset-password/08-password-reset-token-url-encoding.spec.md) — Reset token containing URL-reserved characters (`&`, `#`, `=`, spaces) is encoded on arrival and round-trips correctly through the redirect URL.
 
 ## Sign-in (`e2e-tests/sign-in/`)
 

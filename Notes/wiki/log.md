@@ -510,3 +510,18 @@ Found and fixed two missing catalog entries during test-file verification:
 
 - **`tests/helpers/test-db.ts`** — was missing from `unit-tests.md`. Added entry documenting the shared in-memory SQLite setup (`createTestDb`) and seed helpers (`seedCategory`, `seedTag`, `seedExpense`, `seedExpenseTag`, `seedRecurring`). Updated header count from "17 spec files plus `tsconfig.json`" to "17 spec files, 1 shared helper, plus `tsconfig.json`".
 - **`e2e-tests/summary/03-summary-chip-and-sort.spec.ts`** — was missing from `e2e-tests.md`. Added entry documenting Issue 18 coverage: chip-checkbox tag filter UI, chronological sort labels (`Mmm YYYY` / `Mmm-Mmm YYYY`), descending sort toggle, cross-year ordering, malformed query fallback, dimension-aware sort allow-list, untagged expense exclusion, and stale tagId handling.
+
+## [2026-07-16] lint | File-checklist audit: verified 211 files, created 4 missing wiki pages, updated catalogs
+
+Completed full pass of `Notes/_file-checklist.md` against the wiki.
+
+- **Created missing individual wiki pages** (4):
+  - `Notes/wiki/src/lib/email-utils.md`
+  - `Notes/wiki/src/lib/logger.md`
+  - `Notes/wiki/tests/auth-validators.spec.md`
+  - `Notes/wiki/e2e-tests/reset-password/08-password-reset-token-url-encoding.spec.md`
+- **Updated catalog pages**:
+  - `Notes/wiki/source-code.md` — added `email-utils.ts` and `logger.ts` entries.
+  - `Notes/wiki/unit-tests.md` — updated spec count to 18, added `auth-validators.spec.ts` and `tests/tsconfig.json` entries.
+  - `Notes/wiki/e2e-tests.md` — added `expenses/22-edit-tag-chip-ui.spec.ts`, `expenses/23-list-filter-chip-unification.spec.ts`, and `reset-password/08-password-reset-token-url-encoding.spec.ts` entries.
+- **Checked off all 211 files** in `Notes/_file-checklist.md`.
