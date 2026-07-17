@@ -2,6 +2,21 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2025-07-22] ingest | Individual wiki pages for all src/routes/, src/middleware/, src/components/, and public/js/ files
+
+Created detailed individual wiki pages for every remaining source file not yet documented:
+
+- **src/routes/ top-level** (8 pages): `build-404`, `build-root`, `build-layout`, `build-categories`, `build-recurring`, `build-summary`, `build-tags`, `handle-set-db-failures`
+- **src/routes/expenses/** (8 pages): `build-expenses`, `build-edit-expense`, `expense-form`, `expense-form-helpers`, `expense-get-handler`, `expense-post-handler`, `expense-confirm-post-handler`, `expense-list-renderer`
+- **src/routes/auth/** (23 pages): `better-auth-handler`, `better-auth-response-interceptor`, `build-sign-in`, `build-sign-up`, `build-sign-out`, `build-await-verification`, `build-email-confirmation`, `build-forgot-password`, `build-reset-password`, `build-waiting-for-reset`, `build-gated-sign-up`, `build-interest-sign-up`, `build-gated-interest-sign-up`, `handle-sign-up`, `handle-sign-out`, `handle-forgot-password`, `handle-reset-password`, `handle-gated-sign-up`, `handle-gated-interest-sign-up`, `handle-interest-sign-up`, `handle-resend-email`, `handle-reset-clock`, `handle-set-clock`
+- **src/routes/profile/** (4 pages): `build-profile`, `build-delete-confirm`, `handle-change-password`, `handle-delete-account`
+- **src/routes/recurring/** (3 pages): `build-create-recurring`, `build-edit-recurring`, `recurring-form`
+- **src/routes/test/** (4 pages): `database`, `run-cron`, `sign-up-mode`, `smtp-config`
+- **src/middleware/** (2 pages): `guard-sign-up-mode`, `signed-in-access`
+- **src/components/** (2 pages): `gated-sign-up-form`, `tag-chip-checkboxes`
+- **public/js/** (2 pages): `category-combobox`, `tag-chip-checkboxes`
+- **index.md** — fixed public JS links from `public-js/` to `public/js/` to match actual file paths.
+
 ## [2026-06-13] ingest | Issue 18: Tag chip-checkbox UI everywhere + chronological time-period sort on Summary
 
 Updated wiki documentation for the Issue 18 implementation across all affected source files and routes.
