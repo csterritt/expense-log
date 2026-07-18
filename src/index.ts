@@ -107,7 +107,7 @@ app.use(async (c, next) => {
   const csrfMiddleware = csrf({
     origin: (origin: string) => {
        return /https:\/\/expenses.cls.cloud$/.test(origin) || 
-        /https:\/\/expenses.cleverfox.workers.dev$/.test(origin)  
+        /https:\/\/expense-log.cleverfox.workers.dev$/.test(origin)  
     },
   })
 

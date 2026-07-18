@@ -4,7 +4,6 @@
 
 import { Context } from 'hono'
 
-import type { Bindings } from '../local-types'
 
 /**
  * Returns the current time as a Date object. Use this instead of calling new Date() directly.

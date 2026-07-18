@@ -90,7 +90,7 @@ export const createAuth = (env: Bindings) => {
     //   },
     // },
     trustedOrigins: [
-       'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev' 
+       'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev' 
     ],
      baseURL: 'https://expenses.cls.cloud', 
     redirectTo: '/expenses', // Redirect to protected page after successful sign-in

@@ -192,12 +192,12 @@ interface SecureHeadersConfig {
 export const STANDARD_SECURE_HEADERS: SecureHeadersConfig = {
   referrerPolicy: 'strict-origin-when-cross-origin',
   contentSecurityPolicy: {
-     defaultSrc: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], 
+     defaultSrc: ["'self'", 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev'], 
     baseUri: ["'self'"],
     childSrc: ["'self'"],
     connectSrc: ["'self'"],
     fontSrc: ["'self'", 'data:'],
-     formAction: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], 
+     formAction: ["'self'", 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev'], 
     frameAncestors: ["'self'"],
     frameSrc: ["'self'"],
     imgSrc: ["'self'", 'data:'],
