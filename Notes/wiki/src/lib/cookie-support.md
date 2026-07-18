@@ -1,29 +1,23 @@
-# cookie-support.ts
+# src/lib/cookie-support.ts
 
-**Source:** `src/lib/cookie-support.ts`
+Cookie utility functions wrapping Hono's cookie API with standard options.
 
-## Purpose
+## Functions
 
-Thin wrappers around Hono's `getCookie`, `setCookie`, `deleteCookie` that apply the app's standard cookie options consistently.
+### retrieveCookie(c, name): string | undefined
 
-## Exports
+Gets a cookie value by name using `hono/cookie`'s `getCookie`.
 
-### `retrieveCookie(c, name): string | undefined`
+### addCookie(c, name, value, extraOptions?): void
 
-Thin wrapper around `getCookie(c, name)`.
+Sets a cookie with `COOKIES.STANDARD_COOKIE_OPTIONS` (path `/`, httpOnly, sameSite Strict). Merges extra options if provided.
 
-### `addCookie(c, name, value, extraOptions?): void`
+### removeCookie(c, name): void
 
-Calls `setCookie(c, name, value, options)` where `options` starts with `COOKIES.STANDARD_COOKIE_OPTIONS` (`path: '/'`, `httpOnly: true`, `sameSite: 'Strict'`) and merges any extra options.
+Deletes a cookie using `hono/cookie`'s `deleteCookie` with standard options.
 
-### `removeCookie(c, name): void`
+## Dependencies
 
-Calls `deleteCookie(c, name, COOKIES.STANDARD_COOKIE_OPTIONS)`.
-
-## Cross-references
-
-- [constants.md](../constants.md) — `COOKIES`
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `hono/cookie` — `setCookie`, `deleteCookie`, `getCookie`
+- `../constants` — `COOKIES.STANDARD_COOKIE_OPTIONS`
+- `../local-types` — `Bindings`

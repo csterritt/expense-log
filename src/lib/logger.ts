@@ -17,7 +17,7 @@ export const sanitizeError = (error: unknown): Record<string, unknown> => {
       name: error.name,
       message: error.message,
       // Only include stack in development
-      ...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
     }
   }
 

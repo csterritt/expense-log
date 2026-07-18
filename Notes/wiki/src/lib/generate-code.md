@@ -1,17 +1,9 @@
-# generate-code.ts
+# src/lib/generate-code.ts
 
-**Source:** `src/lib/generate-code.ts`
+Cryptographically secure random token generator for invite codes.
 
-## Purpose
+## Functions
 
-Generates cryptographically secure random 8-character alphanumeric tokens for single-use sign-up codes (or similar token use).
+### generateToken(): Promise\<string\>
 
-## Export
-
-### `generateToken(): Promise<string>`
-
-Generates 8 random alphanumeric characters (A-Z, a-z, 0-9) using `crypto.getRandomValues`. Each byte is mapped to the 62-character alphabet via modulo. Yields ~218 trillion possible tokens.
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+Generates an 8-character alphanumeric token using `crypto.getRandomValues`. Character set: `A-Z`, `a-z`, `0-9` (62 chars). ~218 trillion possible values.

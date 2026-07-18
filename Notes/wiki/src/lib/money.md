@@ -1,50 +1,26 @@
-# money.ts
+# src/lib/money.ts
 
-**Source:** `src/lib/money.ts`
+Money formatting and parsing utilities. All amounts stored as integer cents.
 
-## Purpose
+## Functions
 
-Money formatting and parsing utilities. Issue 02 introduced `formatCents`; Issue 03 added `parseAmount`.
+### formatCents(cents): string
 
-## Exports
+Formats integer cents as US-English dollar string with comma separators and 2 decimal places. Examples: `0` → `"0.00"`, `100` → `"1.00"`, `123456` → `"1,234.56"`. Handles negative amounts.
 
-### `formatCents(cents: number): string`
+### formatCentsPlain(cents): string
 
-Formats an integer cent amount as a US-English dollar string with comma thousands separators and exactly two decimal places.
+Formats integer cents as plain decimal string (no grouping separators). Examples: `0` → `"0.00"`, `123456` → `"1234.56"`. Used for form input values that `parseAmount` can round-trip.
 
-- `0` → `"0.00"`
-- `1` → `"0.01"`
-- `100` → `"1.00"`
-- `123456` → `"1,234.56"`
-- `100000000` → `"1,000,000.00"`
+### parseAmount(input): Result\<number, string\>
 
-Implemented with `Intl.NumberFormat('en-US')` for the integer part and a manual two-digit pad for the cents fraction; this avoids floating-point rounding when scaling cents to dollars.
+Parses user-entered positive money amount into integer cents. Accepts: `1234.56`, `1,234.56`, `1234`, `.50`. Rejects: empty, zero, negative, >2 decimal places, malformed commas, non-numeric. Returns `Result.ok(cents)` or `Result.err(message)`.
 
-### `formatCentsPlain(cents: number): string`
+## Regex patterns
 
-Added in Issue 08. Like `formatCents` but emits a plain decimal with no comma grouping — suitable for round-tripping through the entry / edit form's `amount` `<input>` (which `parseAmount` then re-validates).
+- `NO_COMMA_RE` — `/^\d*\.?\d+$/` (no commas)
+- `WITH_COMMA_RE` — `/^[1-9]\d{0,2}(,\d{3})+(\.\d+)?$/` (US-style grouping)
 
-- `0` → `"0.00"`
-- `100` → `"1.00"`
-- `123456` → `"1234.56"`
+## Dependencies
 
-Used by the edit page GET to seed `expense-form-amount`'s `value` attribute from the loaded `amountCents`.
-
-### `parseAmount(input: string): Result<number, string>`
-
-Parses a user-entered positive money amount into integer cents.
-
-- Trims whitespace.
-- Accepts forms like `1234`, `1234.56`, `1,234.56`, `.50`, `1,000,000.00`.
-- Validates with two regexes: `/^\d*\.?\d+$/` for the no-comma case and `/^[1-9]\d{0,2}(,\d{3})+(\.\d+)?$/` for the comma case.
-- Rejects empty input, zero (`0`, `0.00`), negatives, more than 2 decimal places, malformed comma placement (e.g. `1,23.45`, `,123`, `12,3456`), and non-numeric input.
-- Returns `Result.ok(cents)` on success, `Result.err(message)` on failure (no exceptions).
-
-## Cross-references
-
-- [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — uses `formatCents` for the amount column and `parseAmount` for the entry-form POST handler.
-- [tests/money.spec.md](../../tests/money.spec.md) — unit coverage of both `formatCents` and `parseAmount`.
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `true-myth/result` — Result type

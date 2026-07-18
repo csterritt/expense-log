@@ -1,45 +1,36 @@
-# recurring-form.tsx
+# src/routes/recurring/recurring-form.tsx
 
-**Source:** `src/routes/recurring/recurring-form.tsx`
+Shared renderer for the recurring template create/edit form. Similar to `expense-form.tsx` but with additional recurrence and anchor date fields.
 
-## Purpose
-
-Shared renderer for the recurring-template entry / edit form (Issue 13). Both the create flow (`POST /recurring`) and the edit flow (`POST /recurring/:id/edit`) use the same field shape, sticky `value` bindings, and per-field error blocks.
-
-## Exports
-
-### `renderRecurringForm({ mode, action, state, payloads })`
-
-Returns a JSX `<form>` (`data-testid='recurring-form'`, `noValidate`) with a responsive grid layout (`md:grid-cols-5`). Fields:
-
-- **Description** — text input (`data-testid='recurring-form-description'`), max length from `descriptionMax`.
-- **Amount** — text input with `inputMode='decimal'` (`data-testid='recurring-form-amount'`).
-- **Category** — text input wired to the JS-on combobox (`data-category-combobox`, `data-testid='recurring-form-category'`).
-- **Recurrence** — `<select>` (`data-testid='recurring-form-recurrence'`) populated from `VALID_RECURRENCES`.
-- **Anchor date** — date input (`data-testid='recurring-form-anchor-date'`).
-- **Tags** — rendered via `TagChipCheckboxes` component (`allowNewTags={true}`), with per-field error block (`data-testid='recurring-form-tags-error'`).
-
-Submit button label is `'Add recurring'` (`data-testid='recurring-form-create'`) in create mode or `'Save changes'` (`data-testid='recurring-form-save'`) in edit mode.
-
-Each field has an associated error block (`data-testid='recurring-form-{field}-error'`) when `fieldErrors` contains a message for that key.
-
-One `<script type='application/json'>` block embeds the categories payload as safely-escaped JSON for the progressive-enhancement combobox script.
-
-### Types
+## Types
 
 - `RecurringFormState` — `{ fieldErrors: FieldErrors, values: ExpenseFormValues }`
-- `RecurringFormPayloads` — `{ categories: { name: string }[], tags: { id: string; name: string }[] }`
+- `RecurringFormPayloads` — `{ categories: { name }[], tags: { id, name }[] }`
 - `RecurringFormMode` — `'create' | 'edit'`
-- `RenderRecurringFormProps` — combines mode, action, state, and payloads.
+- `RenderRecurringFormProps` — `{ mode, action, state, payloads }`
 
-## Cross-references
+## Functions
 
-- [../../components/tag-chip-checkboxes.md](../../components/tag-chip-checkboxes.md) — `TagChipCheckboxes` component used for tag selection.
-- [../../lib/expense-validators.md](../../lib/expense-validators.md) — `VALID_RECURRENCES`, `FieldErrors`, max-length constants.
-- [../../lib/form-state.md](../../lib/form-state.md) — `ExpenseFormValues`.
-- [build-create-recurring.md](build-create-recurring.md) — mounts this form in `mode='create'`.
-- [build-edit-recurring.md](build-edit-recurring.md) — mounts this form in `mode='edit'`.
+### renderRecurringForm(props): JSX
 
----
+Renders the recurring form with:
+- Description input
+- Amount input (decimal mode)
+- Category combobox (datalist with existing categories)
+- Tag chip checkboxes + new tags text input
+- Recurrence select (Monthly, Quarterly, Yearly)
+- Anchor date input
+- Submit button (label depends on mode)
+- Embedded `<script>` with category data for combobox JS
 
-See [source-code.md](../../../source-code.md) for the full catalog.
+## Internal Helpers
+
+- `fieldError(field, message)` — renders error `<p>`
+- `inputClass(base, hasError)` — adds `input-error` class
+- `safeJsonForScript(data)` — safe JSON for `<script>` embedding
+
+## Dependencies
+
+- `../../lib/expense-validators` — `categoryNameMax`, `descriptionMax`, `VALID_RECURRENCES`, `FieldErrors`
+- `../../lib/form-state` — `ExpenseFormValues`
+- `../../components/tag-chip-checkboxes` — `TagChipCheckboxes`

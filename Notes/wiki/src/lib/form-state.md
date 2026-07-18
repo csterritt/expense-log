@@ -1,37 +1,36 @@
-# form-state.ts
+# src/lib/form-state.ts
 
-**Source:** `src/lib/form-state.ts`
-
-## Purpose
-
-Single-use flash payload for re-rendering a form on the next GET after a validation-failure redirect. Introduced in Issue 04 because per-field error rendering needs more than the single-string `MESSAGE_FOUND` / `ERROR_FOUND` cookies that [`redirects.tsx`](redirects.md) provides — the round trip has to carry both the `FieldErrors` record and the user's typed values so the form can re-render with inline errors AND sticky values.
-
-The payload is JSON-encoded into a dedicated `COOKIES.FORM_ERRORS` cookie that inherits the project's `STANDARD_COOKIE_OPTIONS` (HttpOnly, SameSite=Strict, Path=`/`, Secure in production via the `PRODUCTION:UNCOMMENT` line in [`constants.md`](../constants.md)).
+Single-use flash payload for re-rendering forms after validation-failure redirects. Uses a cookie (`COOKIES.FORM_ERRORS`) to pass field errors and sticky values from POST handler to GET handler.
 
 ## Types
 
-- `ExpenseFormValues` — sticky values for the entry/category forms: `{ description?, amount?, date?, category?, tags?, tagIds?, newTags?, name?, id?, sourceId?, targetId?, recurrence?, anchorDate? }`. Each field is the raw string the user typed, not the parsed form, so the input redisplays exactly what they entered. (Issue 05 renamed `categoryId` → `category`. Issue 06 added `tags` for the CSV input. Issue 09 added category-management fields. Tag chip-checkbox refactor added `tagIds?: string[]` and `newTags?: string` to support native checkbox selections plus free-text new tag names.)
-- `FormState` — `{ fieldErrors: FieldErrors, values: ExpenseFormValues }`. Generic enough that the expense entry form and category management page can both reuse it.
+### ExpenseFormValues
 
-## Exports
+Per-field sticky values: `description`, `amount`, `date`, `category`, `tags`, `tagIds[]`, `newTags`, `name`, `id`, `sourceId`, `targetId`, `recurrence`, `anchorDate`.
 
-### `redirectWithFormErrors(c, redirectUrl, fieldErrors, values): Response`
+### FormState
 
-Stashes `{ fieldErrors, values }` in the `FORM_ERRORS` cookie (JSON-stringified, then `encodeURIComponent`-wrapped so cookie reserved characters never break parsing) and returns a `303 See Other` redirect to `redirectUrl`. Used by the `POST /expenses` handler when `parseExpenseCreate` returns `Err` and by `/categories` create/rename handlers for field-level category errors.
+`{ fieldErrors: FieldErrors, values: ExpenseFormValues }` — the round-tripped payload.
 
-### `readAndClearFormState(c): FormState | undefined`
+## Functions
 
-Reads the `FORM_ERRORS` cookie via `retrieveCookie`, **unconditionally clears it via `removeCookie`** (so a refresh never re-shows stale errors), then attempts to parse the payload back into `FormState`. Returns `undefined` if the cookie was missing or the payload was malformed; otherwise returns `{ fieldErrors, values }` with empty defaults filled in.
+### redirectWithFormErrors(c, redirectUrl, fieldErrors, values): Response
 
-## Cross-references
+Stores `{ fieldErrors, values }` as URL-encoded JSON in the `FORM_ERRORS` cookie, then redirects (303) to `redirectUrl`. The next GET handler should call `readAndClearFormState` to consume it.
 
-- [expense-validators.md](expense-validators.md) — `FieldErrors` type used in the payload.
-- [cookie-support.md](cookie-support.md) — `addCookie`, `retrieveCookie`, `removeCookie` primitives.
-- [../constants.md](../constants.md) — `COOKIES.FORM_ERRORS`, `COOKIES.STANDARD_COOKIE_OPTIONS`, `HTML_STATUS.SEE_OTHER`.
-- [redirects.md](redirects.md) — sibling helpers for the simpler single-string flash cases (`redirectWithMessage`, `redirectWithError`).
-- [../routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — expense form consumer.
-- [../routes/build-categories.md](../routes/build-categories.md) — category create/rename form consumer.
+### readAndClearFormState(c): FormState | undefined
 
----
+Reads and deletes the `FORM_ERRORS` cookie. Returns `undefined` if no cookie or parse failure. Returns `{ fieldErrors, values }` on success.
 
-See [source-code.md](../../source-code.md) for the full catalog.
+## Pattern
+
+This implements the PRG (Post-Redirect-Get) pattern:
+1. POST handler validates input → on error, calls `redirectWithFormErrors` with field errors + user's typed values
+2. Browser follows 303 redirect to the form page
+3. GET handler calls `readAndClearFormState` → re-renders form with inline errors and preserved values
+
+## Dependencies
+
+- `../constants` — `COOKIES`, `HTML_STATUS`
+- `./cookie-support` — `addCookie`, `removeCookie`, `retrieveCookie`
+- `./expense-validators` — `FieldErrors` type

@@ -1,84 +1,67 @@
-# sign-up-utils.ts
+# src/lib/sign-up-utils.ts
 
-**Source:** `src/lib/sign-up-utils.ts`
-
-## Purpose
-
-Shared logic for all sign-up flows (open, gated, interest). Handles duplicate-email detection, synthetic duplicate responses from better-auth, error extraction, and the full gated-sign-up process.
+Shared utilities for sign-up handlers: duplicate detection, error handling, code claiming, and the `processGatedSignUp` pipeline.
 
 ## Types
 
-### `GatedSignUpData`
+### GatedSignUpData
 
-`{ code, name, email, password }`
+`{ code, name, email, password }` — validated gated sign-up form data.
 
-## Internal constants
+## Functions
 
-### `DUPLICATE_EMAIL_PATTERNS`
+### isSyntheticDuplicateResponse(response): boolean
 
-`['already exists', 'duplicate', 'unique constraint', 'unique', 'violates unique']`
+Detects Better Auth's synthetic duplicate response: `{ token: null, user: { emailVerified: false } }`. Used when `requireEmailVerification=true` and a duplicate email is used.
 
-### `CONSTRAINT_ERROR_PATTERNS`
+### isDuplicateEmailError(errorMessage): boolean
 
-`['constraint', 'sqlite_constraint']`
+Checks if an error message indicates a duplicate email (patterns: "already exists", "duplicate", "unique constraint", "email exists").
 
-## Exports
+### isConstraintError(errorMessage): boolean
 
-### `isSyntheticDuplicateResponse(response): boolean`
+Checks for database constraint violation patterns.
 
-Detects better-auth's special duplicate response shape: `{ token: null, user: { emailVerified: false } }`. Returned when `requireEmailVerification=true` and a duplicate email signs up.
+### getResponseStatus(response): number | null
 
-### `getResponseStatus(response): number | null`
+Extracts HTTP status from Response objects or objects with `status` property.
 
-Extracts `.status` from a `Response` or an object with a `status` property.
+### extractErrorMessage(error): string
 
-### `isDuplicateEmailError(errorMessage): boolean`
+Extracts a string message from unknown error values.
 
-Checks if the error message matches any `DUPLICATE_EMAIL_PATTERNS` or contains both `'email'` and `'exists'`.
+### handleSignUpResponseError(c, response, email, fallbackPath): Response | null
 
-### `isConstraintError(errorMessage): boolean`
+Inspects Better Auth sign-up response for errors. Returns a redirect Response if error detected, `null` if response is clean.
 
-Checks if the error message matches any `CONSTRAINT_ERROR_PATTERNS`.
+### handleSignUpApiError(c, error, email, fallbackPath): Response
 
-### `extractErrorMessage(error): string`
+Handles thrown errors from Better Auth sign-up API. Redirects to await-verification for duplicates, error page for other failures.
 
-Returns `error.message` if an `Error`, otherwise `String(error)`.
+### updateAccountTimestampAfterSignUp(db, email): Promise\<void\>
 
-### `handleSignUpResponseError(c, response, email, fallbackPath): Response | null`
+Looks up user by email and updates their `accountUpdatedAt` timestamp. Logs errors but does not throw.
 
-If the response is an error object:
+### redirectToAwaitVerification(c, email): Response
 
-- Duplicate email → sets `EMAIL_ENTERED` cookie and redirects to `await-verification` with `MESSAGES.ACCOUNT_ALREADY_EXISTS`
-- Otherwise → redirects to `fallbackPath` with `MESSAGES.REGISTRATION_GENERIC_ERROR`
+Sets `EMAIL_ENTERED` cookie and redirects to await-verification page.
 
-### `handleSignUpApiError(c, error, email, fallbackPath): Response`
+### processGatedSignUp(c, data): Promise\<Response\>
 
-Catches better-auth API exceptions. Same duplicate/constraint detection logic; falls back to generic error redirect.
+Full gated sign-up pipeline:
+1. Claims invite code atomically (`claimSingleUseCode`)
+2. Checks for existing user
+3. Calls Better Auth `signUpEmail` API
+4. On failure: releases claimed code
+5. On synthetic duplicate: redirects to await-verification
+6. On success: updates account timestamp, redirects to await-verification
 
-### `updateAccountTimestampAfterSignUp(db, email): Promise<void>`
+## Dependencies
 
-Looks up user by email and updates `account.updatedAt`. Logs on failure but does not throw.
-
-### `redirectToAwaitVerification(c, email): Response`
-
-Sets `EMAIL_ENTERED` cookie and redirects to `/auth/await-verification`.
-
-### `processGatedSignUp(c, data): Promise<Response>`
-
-Full gated sign-up flow:
-
-1. Atomically claim the single-use code via `claimSingleUseCode`
-2. Call `auth.api.signUpEmail` with `callbackURL`
-3. Handle synthetic duplicates and error responses
-4. Update account timestamp
-5. Redirect to await-verification
-
-## Cross-references
-
-- [db/auth-access.md](db/auth-access.md) — `claimSingleUseCode`, `getUserIdByEmail`, `updateAccountTimestamp`
-- [validators.md](validators.md) — validation schemas
-- [constants.md](../constants.md) — `PATHS`, `COOKIES`, `MESSAGES`
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `./redirects` — `redirectWithError`, `redirectWithMessage`
+- `./cookie-support` — `addCookie`
+- `./db/auth-access` — `getUserIdByEmail`, `updateAccountTimestamp`, `claimSingleUseCode`, `releaseSingleUseCode`
+- `./auth` — `createAuth`
+- `./email-utils` — `normalizeEmail`
+- `../db/client` — `createDbClient`
+- `../constants` — `PATHS`, `COOKIES`, `MESSAGES`, `LOG_MESSAGES`

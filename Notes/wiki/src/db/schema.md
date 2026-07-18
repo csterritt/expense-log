@@ -1,181 +1,59 @@
-# schema.ts
+# src/db/schema.ts
 
-**Source:** `src/db/schema.ts`
-
-## Purpose
-
-Drizzle ORM schema definitions for the D1 (SQLite) database. Defines all tables and their columns, plus inferred TypeScript types for inserts and selects.
+Drizzle ORM schema definitions for all database tables. Uses SQLite-compatible types.
 
 ## Tables
 
-### `user`
+### user
 
-| Column          | Type                | Constraints            |
-| --------------- | ------------------- | ---------------------- |
-| `id`            | text                | primaryKey             |
-| `name`          | text                | notNull, unique        |
-| `email`         | text                | notNull, unique        |
-| `emailVerified` | integer (boolean)   | default false, notNull |
-| `image`         | text                |                        |
-| `createdAt`     | integer (timestamp) | notNull                |
-| `updatedAt`     | integer (timestamp) | notNull                |
+Better Auth user table: `id` (PK), `name` (unique), `email` (unique), `emailVerified` (boolean), `image`, `createdAt`, `updatedAt`.
 
-### `session`
+### session
 
-| Column      | Type                | Constraints                           |
-| ----------- | ------------------- | ------------------------------------- |
-| `id`        | text                | primaryKey                            |
-| `userId`    | text                | notNull, references user.id (cascade) |
-| `token`     | text                | notNull, unique                       |
-| `expiresAt` | integer (timestamp) | notNull                               |
-| `ipAddress` | text                |                                       |
-| `userAgent` | text                |                                       |
-| `createdAt` | integer (timestamp) | notNull                               |
-| `updatedAt` | integer (timestamp) | notNull                               |
+Better Auth session table: `id` (PK), `userId` (FK → user, cascade delete), `token` (unique), `expiresAt`, `ipAddress`, `userAgent`, `createdAt`, `updatedAt`.
 
-### `account`
+### account
 
-Better-auth account table. Stores provider info and password hash.
+Better Auth account table: `id` (PK), `userId` (FK → user, cascade delete), `accountId`, `providerId`, `accessToken`, `refreshToken`, token expiry dates, `scope`, `idToken`, `password`, `createdAt`, `updatedAt`.
 
-| Column                  | Type                | Constraints                           |
-| ----------------------- | ------------------- | ------------------------------------- |
-| `id`                    | text                | primaryKey                            |
-| `userId`                | text                | notNull, references user.id (cascade) |
-| `accountId`             | text                | notNull                               |
-| `providerId`            | text                | notNull                               |
-| `accessToken`           | text                |                                       |
-| `refreshToken`          | text                |                                       |
-| `accessTokenExpiresAt`  | integer (timestamp) |                                       |
-| `refreshTokenExpiresAt` | integer (timestamp) |                                       |
-| `scope`                 | text                |                                       |
-| `idToken`               | text                |                                       |
-| `password`              | text                |                                       |
-| `createdAt`             | integer (timestamp) | notNull                               |
-| `updatedAt`             | integer (timestamp) | notNull                               |
+### verification
 
-### `verification`
+Better Auth verification table: `id` (PK), `identifier`, `value`, `expiresAt`, `createdAt`, `updatedAt`.
 
-Better-auth verification tokens (email verification, password reset).
+### singleUseCode
 
-| Column       | Type                | Constraints |
-| ------------ | ------------------- | ----------- |
-| `id`         | text                | primaryKey  |
-| `identifier` | text                | notNull     |
-| `value`      | text                | notNull     |
-| `expiresAt`  | integer (timestamp) | notNull     |
-| `createdAt`  | integer (timestamp) | notNull     |
-| `updatedAt`  | integer (timestamp) | notNull     |
+Invite codes for gated sign-up: `code` (PK), `email` (nullable, claimed by setting email).
 
-### `singleUseCode`
+### interestedEmail
 
-Gated sign-up codes.
+Interest sign-up list: `email` (PK, unique).
 
-| Column  | Type | Constraints                   |
-| ------- | ---- | ----------------------------- |
-| `code`  | text | primaryKey                    |
-| `email` | text | (nullable — set when claimed) |
+### category
 
-### `interestedEmail`
+Expense categories: `id` (PK), `name`, `createdAt`, `updatedAt`. Has `uniqueIndex` on `lower(name)` for case-insensitive uniqueness.
 
-Waitlist emails for interest sign-up mode.
+### tag
 
-| Column  | Type | Constraints        |
-| ------- | ---- | ------------------ |
-| `email` | text | primaryKey, unique |
+Expense tags: `id` (PK), `name`, `createdAt`, `updatedAt`. Has `uniqueIndex` on `lower(name)` for case-insensitive uniqueness.
 
-### `category`
+### recurring
 
-Expense categories. Names are unique case-insensitively through the `category_name_lower_unique` unique index on `lower(name)`.
+Recurring expense templates: `id` (PK), `description`, `amountCents`, `categoryId` (FK → category, restrict delete), `recurrence`, `anchorDate`, `createdAt`, `updatedAt`.
 
-| Column      | Type                | Constraints     |
-| ----------- | ------------------- | --------------- |
-| `id`        | text                | primaryKey      |
-| `name`      | text                | notNull         |
-| `createdAt` | integer (timestamp) | notNull         |
-| `updatedAt` | integer (timestamp) | notNull         |
+### expense
 
-Unique indexes:
+Expense entries: `id` (PK), `description`, `amountCents`, `categoryId` (FK → category, restrict delete), `date`, `recurringId` (FK → recurring, set null on delete), `occurrenceDate`, `createdAt`, `updatedAt`. Has `uniqueIndex` on `(recurringId, occurrenceDate)` where `recurringId IS NOT NULL` to prevent duplicate materializations.
 
-- `category_name_lower_unique` on `lower(name)` — enforces lowercase-normalized category uniqueness while preserving the original `name` column and existing foreign-key relationships.
+### expenseTag
 
-### `tag`
+Join table (expense ↔ tag): `expenseId` (FK → expense, cascade delete), `tagId` (FK → tag, restrict delete). Composite primary key.
 
-Expense tags. Names are unique case-insensitively through the `tag_name_lower_unique` unique index on `lower(name)`.
+### recurringTag
 
-| Column      | Type                | Constraints     |
-| ----------- | ------------------- | --------------- |
-| `id`        | text                | primaryKey      |
-| `name`      | text                | notNull         |
-| `createdAt` | integer (timestamp) | notNull         |
-| `updatedAt` | integer (timestamp) | notNull         |
+Join table (recurring ↔ tag): `recurringId` (FK → recurring, cascade delete), `tagId` (FK → tag, restrict delete). Composite primary key.
 
-Unique indexes:
+## Exports
 
-- `tag_name_lower_unique` on `lower(name)` — enforces lowercase-normalized tag uniqueness while preserving the original `name` column and existing foreign-key relationships.
-
-### `recurring`
-
-Recurring expense templates that materialize into `expense` rows over time.
-
-| Column        | Type                | Constraints                                |
-| ------------- | ------------------- | ------------------------------------------ |
-| `id`          | text                | primaryKey                                 |
-| `description` | text                | notNull                                    |
-| `amountCents` | integer             | notNull                                    |
-| `categoryId`  | text                | notNull, references category.id (restrict) |
-| `recurrence`  | text                | notNull                                    |
-| `anchorDate`  | text                | notNull                                    |
-| `createdAt`   | integer (timestamp) | notNull                                    |
-| `updatedAt`   | integer (timestamp) | notNull                                    |
-
-### `expense`
-
-Individual expense records, optionally linked to a `recurring` template.
-
-| Column           | Type                | Constraints                                |
-| ---------------- | ------------------- | ------------------------------------------ |
-| `id`             | text                | primaryKey                                 |
-| `description`    | text                | notNull                                    |
-| `amountCents`    | integer             | notNull                                    |
-| `categoryId`     | text                | notNull, references category.id (restrict) |
-| `date`           | text                | notNull                                    |
-| `recurringId`    | text                | references recurring.id (set null)         |
-| `occurrenceDate` | text                |                                            |
-| `createdAt`      | integer (timestamp) | notNull                                    |
-| `updatedAt`      | integer (timestamp) | notNull                                    |
-
-Includes a partial unique index `expense_recurring_occurrence_unique` on `(recurringId, occurrenceDate)` filtered to rows where `recurringId IS NOT NULL`. This enforces at most one materialized expense per (template, occurrence) while leaving manual expenses unconstrained.
-
-### `expenseTag`
-
-Join table between `expense` and `tag`.
-
-| Column      | Type | Constraints                              |
-| ----------- | ---- | ---------------------------------------- |
-| `expenseId` | text | notNull, references expense.id (cascade) |
-| `tagId`     | text | notNull, references tag.id (restrict)    |
-
-Composite primary key `(expenseId, tagId)`.
-
-### `recurringTag`
-
-Join table between `recurring` and `tag`.
-
-| Column        | Type | Constraints                                |
-| ------------- | ---- | ------------------------------------------ |
-| `recurringId` | text | notNull, references recurring.id (cascade) |
-| `tagId`       | text | notNull, references tag.id (restrict)      |
-
-Composite primary key `(recurringId, tagId)`.
-
-## Schema export
-
-`schema` re-exports all twelve tables: `user`, `session`, `account`, `verification`, `interestedEmail`, `singleUseCode`, `category`, `tag`, `expense`, `expenseTag`, `recurring`, `recurringTag`.
-
-## Inferred types
-
-For each table: `User`, `NewUser`, `Session`, `NewSession`, `Account`, `NewAccount`, `Verification`, `NewVerification`, `SingleUseCode`, `NewSingleUseCode`, `InterestedEmail`, `NewInterestedEmail`, `Category`, `NewCategory`, `Tag`, `NewTag`, `Expense`, `NewExpense`, `ExpenseTag`, `NewExpenseTag`, `Recurring`, `NewRecurring`, `RecurringTag`, `NewRecurringTag`.
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `schema` — object with all table definitions
+- Inferred select types: `User`, `Session`, `Account`, `Verification`, `InterestedEmail`, `SingleUseCode`, `Category`, `Tag`, `Expense`, `ExpenseTag`, `Recurring`, `RecurringTag`
+- Inferred insert types: `NewUser`, `NewSession`, `NewAccount`, `NewVerification`, `NewInterestedEmail`, `NewSingleUseCode`, `NewCategory`, `NewTag`, `NewExpense`, `NewExpenseTag`, `NewRecurring`, `NewRecurringTag`

@@ -1,133 +1,152 @@
 # Source Code Catalog
 
-Catalog of all source files under `src/`, organized by category. Each file links to its individual wiki page.
+Catalog of all source files under `src/`. Each entry links to its detailed wiki page.
 
-## Core application
+## Root
 
-- [src/index.ts](./src/index.md) — Hono app setup, middleware chain, route registration, environment variable validation, and sign-up mode conditional routing. Issue 15: default export changed from `app` to `{ fetch: app.fetch, scheduled }` to carry both the fetch and cron handlers.
-- [src/scheduled.ts](./src/scheduled.md) — Issue 15: Cloudflare Workers scheduled handler. Builds DB client, calls `materializeRecurring(todayEt())`, logs the outcome, and sends a Pushover notification via `pushoverNotifyEnv` on failure. Exports `scheduled` (production entry point) and `createScheduled(deps)` (factory for unit testing via dep injection).
-- [src/local-types.ts](./src/local-types.md) — TypeScript type definitions for Hono Bindings and context variables.
-- [src/renderer.tsx](./src/renderer.md) — JSX renderer middleware for Hono; sets up HTML document shell with Tailwind/DaisyUI styling.
-- [src/style.css](./src/style.md) — Tailwind CSS entrypoint and custom styles.
-- [src/types.d.ts](./src/types.d.md) — Additional ambient type declarations.
-- [src/version.ts](./src/version.md) — Application version string export.
+| File | Summary |
+|------|---------|
+| [index.ts](src/index.md) | Worker entry point; registers all route builders, middleware, and cron trigger. |
+| [constants.ts](src/constants.md) | Shared constants: PATHS, COOKIES, MESSAGES, HTTP status, secure header presets. |
+| [local-types.ts](src/local-types.md) | TypeScript type definitions for Bindings, AuthUser, DrizzleClient, and env vars. |
+| [renderer.tsx](src/renderer.md) | Hono JSX renderer setup with custom layout and HTML shell. |
+| [style.css](src/style-css.md) | Tailwind CSS v4 + DaisyUI entry with font theme definitions. |
 
-## Constants
+## db/
 
-- [src/constants.ts](./src/constants.md) — Centralized constants: HTTP status codes, route paths, cookie names/options, sign-up modes, validation patterns/messages, user-facing messages, duration values, retry options, API URLs, security header configs, and log message prefixes.
+| File | Summary |
+|------|---------|
+| [client.ts](src/db/client.md) | Drizzle ORM client factory; creates a Drizzle instance from a D1 binding. |
+| [schema.ts](src/db/schema.md) | Drizzle table definitions for expenses, categories, tags, recurring templates, join tables, invite codes, interest signups. |
 
-## Components
+## lib/
 
-- [src/components/gated-sign-up-form.tsx](./src/components/gated-sign-up-form.md) — React/JSX component for the gated sign-up form (single-use code input).
-- [src/components/tag-chip-checkboxes.tsx](./src/components/tag-chip-checkboxes.md) — Shared tag chip-checkbox component for mutation forms and filter forms. Renders native server-rendered checkboxes as DaisyUI badge chips, sorted alphabetically (case-insensitive). Supports `allowNewTags` mode with an adjacent `newTags` text input. Empty-tag-list behavior: mutation forms show a "No tags yet." hint with the newTags input; filter forms render nothing. Exports `CHIP_CLASS_BASE` and `CHIP_CLASS_SELECTED` constants consumed by the progressive-enhancement JS module.
+| File | Summary |
+|------|---------|
+| [auth.ts](src/lib/auth.md) | Better Auth instance factory; configures email/password, session, verification, and SMTP. |
+| [confirmation-hmac.ts](src/lib/confirmation-hmac.md) | HMAC signing and verification for confirmation tokens. |
+| [cookie-support.ts](src/lib/cookie-support.md) | Cookie helpers: addCookie, removeCookie, getCookie with consistent attributes. |
+| [db-helpers.ts](src/lib/db-helpers.md) | Generic DB helper utilities (retry logic, transaction wrappers). |
+| [email-service.ts](src/lib/email-service.md) | Email service abstraction for sending transactional emails. |
+| [email-utils.ts](src/lib/email-utils.md) | Email utility functions (template rendering, address formatting). |
+| [et-date.ts](src/lib/et-date.md) | America/New_York date utilities: todayEt, defaultRangeEt, month/quarter labels, chronological keys. |
+| [expense-validators.ts](src/lib/expense-validators.md) | Valibot schemas and parsers for expense forms, filters, summary queries, tag inputs, category names. |
+| [form-state.ts](src/lib/form-state.md) | Cookie-based flash form state: redirectWithFormErrors, readAndClearFormState, ExpenseFormValues. |
+| [generate-code.ts](src/lib/generate-code.md) | Cryptographically secure 8-character alphanumeric token generator. |
+| [logger.ts](src/lib/logger.md) | Structured JSON logging (logInfo, logError, logWarn) with sensitive data redaction. |
+| [money.ts](src/lib/money.md) | Money utilities: formatCents, formatCentsPlain, parseAmount (cents from user input). |
+| [po-notify.ts](src/lib/po-notify.md) | Pushover notification integration; sends admin alerts in non-dev environments. |
+| [recurrence.ts](src/lib/recurrence.md) | Recurrence date arithmetic: nextOccurrenceAfter, occurrencesToGenerate for Monthly/Quarterly/Yearly. |
+| [redirects.tsx](src/lib/redirects.md) | Redirect helpers with flash cookies: redirectWithMessage, redirectWithError. |
+| [send-email.ts](src/lib/send-email.md) | SMTP email sending via Nodemailer; sendEmail, sendOtpToUserViaEmail with retry logic. |
+| [setup-no-cache-headers.ts](src/lib/setup-no-cache-headers.md) | Sets Cache-Control/Pragma/Expires headers to prevent caching on authenticated pages. |
+| [sign-up-utils.ts](src/lib/sign-up-utils.md) | Gated sign-up utilities: code claiming, duplicate detection, error handling, processGatedSignUp. |
+| [test-routes.ts](src/lib/test-routes.md) | Determines if test/debug routes are enabled based on environment variables. |
+| [time-access.ts](src/lib/time-access.md) | Time management with test-mode delta support; getCurrentTime, setCurrentDelta, clearCurrentDelta. |
+| [url-validation.ts](src/lib/url-validation.md) | validateCallbackUrl — prevents open redirects; allows relative paths and same-origin URLs only. |
+| [validators.ts](src/lib/validators.md) | Valibot schemas for auth forms (sign-in, sign-up, forgot/reset password, change password, resend email). |
 
-## Database
+## lib/db/
 
-- [src/db/client.ts](./src/db/client.md) — Drizzle ORM client factory for D1 database.
-- [src/db/schema.ts](./src/db/schema.md) — Drizzle schema definitions for auth and expense-tracking tables. Category names now use a unique `lower(name)` index for case-insensitive uniqueness while preserving `expense`/`recurring` category FK restrictions.
+| File | Summary |
+|------|---------|
+| [auth-access.ts](src/lib/db/auth-access.md) | DB access for auth: user lookup, deleteUserAccount, accountUpdatedAt management. |
+| [category-access.ts](src/lib/db/category-access.md) | DB access for categories: listCategories, findCategoryByName, createCategory. |
+| [confirm-helpers.ts](src/lib/db/confirm-helpers.md) | Shared confirmation pipeline: resolveConfirmTagsAndCategory, createOrReuseCategory, createOrReuseTag. |
+| [expense-access.ts](src/lib/db/expense-access.md) | DB access for expenses and recurring templates: CRUD, list with filters, tag linking. |
+| [summary-access.ts](src/lib/db/summary-access.md) | DB access for summary aggregation: group-by dimension, granularity, chronological sort. |
+| [tag-access.ts](src/lib/db/tag-access.md) | DB access for tags: listTags, createTag, tag name lookup. |
 
-## Libraries (`src/lib/`)
+## middleware/
 
-- [src/lib/auth.ts](./src/lib/auth.md) — Better Auth instance configuration: Drizzle adapter, email/password setup, email verification callbacks, session config, trusted origins, and secret binding.
-- [src/lib/cookie-support.ts](./src/lib/cookie-support.md) — Cookie parsing, serialization, and deletion utilities.
-- [src/lib/db-helpers.ts](./src/lib/db-helpers.md) — Shared `withRetry` and `toResult` wrappers used by `db/auth-access.ts` and `db/expense-access.ts`.
-- [src/lib/recurrence.ts](./src/lib/recurrence.md) — Issue 14: Pure calendar arithmetic for recurring expenses. `nextOccurrenceAfter(after, recurrence, anchorDate)` computes the next YYYY-MM-DD strictly after a given date with 28th-shift clamping for Monthly/Quarterly/Yearly. `occurrencesToGenerate(params)` enumerates all undone occurrences between `createdAt`/`lastOccurrence` and `today` using the first-occurrence rule.
-- [src/lib/confirmation-hmac.ts](./src/lib/confirmation-hmac.md) — HMAC-SHA-256 signing utilities for expense and recurring confirmation payloads. Exports `ConfirmationPayload`, `RecurringConfirmationPayload`, `signConfirmationPayload`, `verifyConfirmationPayload`, `signRecurringConfirmationPayload`, and `verifyRecurringConfirmationPayload`. Fail-closed verification with constant-time comparison.
-- [src/lib/db/auth-access.ts](./src/lib/db/auth-access.md) — Auth DB access helpers (retry + Result): `getUserWithAccountByEmail`, `claimSingleUseCode`, `addInterestedEmail`, `deleteUserAccount`.
-- [src/lib/db/confirm-helpers.ts](./src/lib/db/confirm-helpers.md) — Race-tolerant create-or-reuse helpers for confirmation handlers: `createOrReuseTag`, `createOrReuseCategory`, and shared `resolveConfirmTagsAndCategory` pipeline. Returns discriminated unions for tag-list, tag-input, category-lookup, and new-category-name errors.
-- [src/lib/db/expense-access.ts](./src/lib/db/expense-access.md) — Expense/category/tag DB access helpers (retry + Result): list/read/create/update/delete expense flows plus Issue 09 category management helpers. Issue 11: `ListExpenseFilters` now accepts optional `from`, `to`, `description`, `categoryId`, `tagIds`, and `tagMode` ('or'|'and') — all fields optional; no filters returns all rows; default 2-month window is applied at the route layer. Issue 14: `ExpenseRow` gains `recurringId: string | null`; `listExpensesActual` selects and returns `recurringId`; adds `materializeOneRecurring(db, template, today)` (idempotent single-template insert using `ON CONFLICT DO NOTHING` via a unique partial index on `(recurringId, occurrenceDate)`) and `materializeRecurring(db, today)` (public aggregator returning `{ generated, skipped, failed }`; error-isolates per-template failures).
-- [src/lib/db/category-access.ts](./src/lib/db/category-access.md) — Category DB access helpers (retry + Result): `listCategories`, `findCategoryByName`, `createCategory`, `renameCategory`, `mergeCategory`, `deleteCategory`, `countCategoryExpenses`. Case-insensitive lookups and duplicate protection.
-- [src/lib/db/tag-access.ts](./src/lib/db/tag-access.md) — Tag DB access helpers (retry + Result): `listTags`, `findTagsByNames`, `createTag`, `renameTag`, `mergeTag`, `deleteTag`, `countTagExpenses`. Case-insensitive lookups and collision-aware merge logic for both `expenseTag` and `recurringTag` tables.
-- [src/lib/db/summary-access.ts](./src/lib/db/summary-access.md) — Issue 17: `summarize(db, opts)` for expense aggregation by dimension (`time`, `category`, `tag`, `category-tag`), granularity (`month`, `quarter`, `year`), tag-AND filtering, and explicit sorting. Issue 18: chronological sort with internal `(year, monthIndex|quarterIndex)` keys and year-bearing labels (`Mmm YYYY` / `Mmm-Mmm YYYY` / `YYYY`); `timePeriod` labels are never compared for sorting — only the internal key is used. Uses `withRetry` + `Result` pattern.
-- [src/lib/email-service.ts](./src/lib/email-service.md) — Email template builders and sending logic for confirmation and password-reset emails.
-- [src/lib/et-date.ts](./src/lib/et-date.md) — `America/New_York` date helpers: `todayEt`, `defaultRangeEt`, `isValidYmd`. Issue 17 adds `monthKeyEt`, `quarterKeyEt`, `yearKeyEt` for summary time-period abbreviations. Issue 18 adds `monthLabelEt` (`Mmm YYYY`), `monthChronKeyEt` (numeric key for cross-year month sorting), `quarterLabelEt` (`Mmm-Mmm YYYY`), and `quarterChronKeyEt` (numeric key for cross-year quarter sorting).
-- [src/lib/expense-validators.ts](./src/lib/expense-validators.md) — Per-field validators for expense entry/edit plus category and tag management. Issue 11 adds `parseExpenseListFilters(raw)`. Issue 13 adds `parseRecurringCreate(values: RecurringFormValues)` → `Result<ParsedRecurringCreate, FieldErrors>`, along with `RecurrenceSchema`, `AnchorDateSchema`, `VALID_RECURRENCES`, `Recurrence`, `RecurringFormValues`, and `ParsedRecurringCreate`. `FieldErrors` gains optional `recurrence` and `anchorDate` keys. Issue 16: `parseExpenseListFilters` gains a `from <= to` ordering check — when both dates are present and valid, `from > to` sets `fieldErrors.date`. Issue 17 re-introduces `parseSummaryQuery(raw)` with four dimensions, three granularities, tag-AND filtering, and sort validation. Issue 18: adds `parseTagInputs` (ULID syntactic check, raw-count cap, `newTags` regex + caps, existing-tag collision normalization), `parseCategoryInput` (ULID category check, existing-category collision normalization), shared `parseFilterTagIds` / `parseDateRange` helpers, module-level constants (`TAG_ID_RAW_CAP`, `NEW_TAGS_RAW_LENGTH_CAP`, `NEW_TAGS_TOKEN_COUNT_CAP`, `ULID_REGEX`, `NEW_TAG_TOKEN_REGEX`); `parseSummaryQuery` gains a dimension-aware sort allow-list (`DIMENSION_EXTRA_SORT_COLUMNS`) and drops non-`YYYY-MM-DD` / impossible-calendar dates silently.
-- [src/lib/form-state.ts](./src/lib/form-state.md) — Single-use flash payload (`{fieldErrors, values}`) for re-rendering expense/category forms on the next GET after a validation-failure redirect. Issue 13: `ExpenseFormValues` gains optional `recurrence` and `anchorDate` fields to round-trip recurring-template form values through the flash cookie.
-- [src/lib/generate-code.ts](./src/lib/generate-code.md) — Single-use sign-up code generation utility.
-- [src/lib/money.ts](./src/lib/money.md) — Money formatting helpers: `formatCents` (comma-formatted), `formatCentsPlain` (plain decimal, used to pre-populate edit form fields), and `parseAmount`.
-- [src/lib/po-notify.ts](./src/lib/po-notify.md) — Pushover notification integration (optional). Issue 15: added `pushoverNotifyEnv(env: Bindings, message)` (context-free, callable from scheduled handler); `pushoverNotify(c, message)` now delegates to it — no behaviour change for existing callers.
-- [src/lib/redirects.tsx](./src/lib/redirects.md) — JSX-based redirect response builders.
-- [src/lib/send-email.ts](./src/lib/send-email.md) — Low-level email sending via Nodemailer or fetch-based transport.
-- [src/lib/setup-no-cache-headers.ts](./src/lib/setup-no-cache-headers.md) — Middleware/util to set cache-busting headers.
-- [src/lib/sign-up-utils.ts](./src/lib/sign-up-utils.md) — Shared sign-up validation and processing utilities.
-- [src/lib/test-routes.ts](./src/lib/test-routes.md) — Predicate to determine if dev-only test routes should be enabled.
-- [src/lib/time-access.ts](./src/lib/time-access.md) — Time-related utilities (clock manipulation for testing).
-- [src/lib/url-validation.ts](./src/lib/url-validation.md) — URL validation helpers for redirects and origins.
-- [src/lib/validators.ts](./src/lib/validators.md) — Valibot-based input validators (email, password, name, etc.).
+| File | Summary |
+|------|---------|
+| [guard-sign-up-mode.ts](src/middleware/guard-sign-up-mode.md) | Middleware restricting sign-up routes based on SIGN_UP_MODE env var. |
+| [signed-in-access.ts](src/middleware/signed-in-access.md) | Middleware requiring authenticated session; redirects to sign-in if not signed in. |
 
-## Middleware
+## components/
 
-- [src/middleware/guard-sign-up-mode.ts](./src/middleware/guard-sign-up-mode.md) — Validates that the current SIGN_UP_MODE environment binding matches the route being accessed; returns 404 for mismatched modes.
-- [src/middleware/signed-in-access.ts](./src/middleware/signed-in-access.md) — Protects private routes by requiring an active Better Auth session; redirects unauthenticated users to sign-in.
+| File | Summary |
+|------|---------|
+| [gated-sign-up-form.tsx](src/components/gated-sign-up-form.md) | JSX form for gated sign-up with invite code, name, email, password fields. |
+| [tag-chip-checkboxes.tsx](src/components/tag-chip-checkboxes.md) | JSX component rendering tag checkboxes as clickable chips with new-tag input. |
 
-## Route builders (`src/routes/`)
+## routes/
 
-### Layout and error pages
+| File | Summary |
+|------|---------|
+| [build-404.tsx](src/routes/build-404.md) | 404 not-found page route. |
+| [build-categories.tsx](src/routes/build-categories.md) | Category management page route. |
+| [build-layout.tsx](src/routes/build-layout.md) | Shared HTML layout wrapper (head, nav, body shell) used by all pages. |
+| [build-recurring.tsx](src/routes/build-recurring.md) | Recurring templates list page route. |
+| [build-root.tsx](src/routes/build-root.md) | Root `/` route; redirects to expenses or sign-in based on auth state. |
+| [build-summary.tsx](src/routes/build-summary.md) | Summary page route with group-by controls, tag filters, sortable results table. |
+| [build-tags.tsx](src/routes/build-tags.md) | Tag management page route. |
+| [handle-set-db-failures.ts](src/routes/handle-set-db-failures.md) | Test route for simulating DB failures. |
 
-- [src/routes/build-404.tsx](./src/routes/build-404.md) — 404 page builder (returns HTTP 200 with "Page Not Found" content per project convention).
-- [src/routes/build-layout.tsx](./src/routes/build-layout.md) — Shared layout wrapper component for all pages (navbar, footer, flash messages).
+## routes/auth/
 
-### Expense feature pages
+| File | Summary |
+|------|---------|
+| [better-auth-handler.ts](src/routes/auth/better-auth-handler.md) | Sets up Better Auth catch-all API route and session-enriching middleware. |
+| [better-auth-response-interceptor.ts](src/routes/auth/better-auth-response-interceptor.md) | Intercepts Better Auth API responses, converts to user-friendly redirects; form-data to JSON conversion. |
+| [build-await-verification.tsx](src/routes/auth/build-await-verification.md) | GET /auth/await-verification page — instructs user to check email. |
+| [build-email-confirmation.tsx](src/routes/auth/build-email-confirmation.md) | GET /auth/verify-email and /auth/email-sent — token verification and confirmation pages. |
+| [build-forgot-password.tsx](src/routes/auth/build-forgot-password.md) | GET /auth/forgot-password — password reset request form. |
+| [build-gated-interest-sign-up.tsx](src/routes/auth/build-gated-interest-sign-up.md) | Gated interest sign-up page (waitlist + invite code combined). |
+| [build-gated-sign-up.tsx](src/routes/auth/build-gated-sign-up.md) | Gated sign-up page with invite code field. |
+| [build-interest-sign-up.tsx](src/routes/auth/build-interest-sign-up.md) | Interest sign-up waitlist page. |
+| [build-reset-password.tsx](src/routes/auth/build-reset-password.md) | GET /auth/reset-password — new password form with token validation. |
+| [build-sign-in.tsx](src/routes/auth/build-sign-in.md) | GET /auth/sign-in — sign-in form with email pre-fill and sign-up mode links. |
+| [build-sign-out.tsx](src/routes/auth/build-sign-out.md) | GET /auth/sign-out — sign-out success page. |
+| [build-sign-up.tsx](src/routes/auth/build-sign-up.md) | GET /auth/sign-up — account creation form. |
+| [build-waiting-for-reset.tsx](src/routes/auth/build-waiting-for-reset.md) | GET /auth/waiting-for-reset — password reset email sent confirmation. |
+| [handle-forgot-password.ts](src/routes/auth/handle-forgot-password.md) | POST /auth/forgot-password — validates email, rate-limits, sends reset email. |
+| [handle-gated-interest-sign-up.ts](src/routes/auth/handle-gated-interest-sign-up.md) | POST handler for gated interest sign-up form. |
+| [handle-gated-sign-up.ts](src/routes/auth/handle-gated-sign-up.md) | POST handler for gated sign-up with invite code validation. |
+| [handle-interest-sign-up.ts](src/routes/auth/handle-interest-sign-up.md) | POST handler for interest/waitlist sign-up. |
+| [handle-resend-email.ts](src/routes/auth/handle-resend-email.md) | POST /auth/resend-email — rate-limited verification email resend. |
+| [handle-reset-clock.ts](src/routes/auth/handle-reset-clock.md) | Test-only GET route to clear time delta cookie. |
+| [handle-reset-password.ts](src/routes/auth/handle-reset-password.md) | POST /auth/reset-password — validates token and new password, resets via Better Auth. |
+| [handle-set-clock.ts](src/routes/auth/handle-set-clock.md) | Test-only GET route to set time delta cookie. |
+| [handle-sign-out.ts](src/routes/auth/handle-sign-out.md) | POST /auth/sign-out — calls Better Auth sign-out API, clears session cookies. |
+| [handle-sign-up.ts](src/routes/auth/handle-sign-up.md) | POST /auth/sign-up — validates form, calls Better Auth signUpEmail, redirects to await verification. |
 
-All routes are signed-in-only via the `signedInAccess` middleware. `/summary` was reduced to a placeholder in 2026-05-22 after the full Issue 12 implementation was removed, then re-implemented in Issue 17 with a redesigned aggregation UI. `/recurring` and its sub-routes were implemented in Issue 13.
+## routes/expenses/
 
-- [src/routes/expenses/build-expenses.tsx](./src/routes/expenses/build-expenses.md) — Route builder for the expenses list page. Refactored in Issue 14B to be a thin orchestrator that delegates to separate handler modules. Registers GET `/expenses` (via `handleExpensesGet`), POST `/expenses` (via `handleExpensesPost`), and POST `/expenses/confirm-create-new` (via `handleExpensesConfirmPost`). All routes use `secureHeaders` and `signedInAccess` middleware.
-- [src/routes/expenses/expense-list-renderer.tsx](./src/routes/expenses/expense-list-renderer.md) — Render functions for the expenses list page. Exports `renderFilterBar`, `renderExpenseTable`, and `renderExpenses` for the filter bar, expense table, and complete page layout respectively. Extracted from `build-expenses.tsx` in Issue 14B. Issue 14: expense description cell renders an underlined `<span>` and a `↻` badge (`data-testid="expense-row-recurring-badge"`) when `recurringId` is non-null. Issue 18: `renderFilterBar` uses `TagChipCheckboxes` component (with `allowNewTags=false`) for tag filter chips; loads `tag-chip-checkboxes.js` for progressive enhancement.
-- [src/routes/expenses/expense-form-helpers.ts](./src/routes/expenses/expense-form-helpers.md) — Helper functions for expense form handling. Exports `emptyState` (creates default form state) and `readRawBody` (parses request body). Extracted from `build-expenses.tsx` in Issue 14B.
-- [src/routes/expenses/expense-get-handler.ts](./src/routes/expenses/expense-get-handler.md) — GET handler for `/expenses`. Parses query-string filters, loads expenses/categories/tags, applies default 2-month window on first load, and renders the page. Extracted from `build-expenses.tsx` in Issue 14B.
-- [src/routes/expenses/expense-post-handler.ts](./src/routes/expenses/expense-post-handler.md) — POST handler for `/expenses`. Validates expense data, parses tags via `parseTagInputs`, looks up existing categories/tags, detects new items, and either creates the expense directly or renders a confirmation page. Extracted from `build-expenses.tsx` in Issue 14B. Issue 18: consumes `parseTagInputs` for ULID-validated tag handling; unknown/stale `tagId` values are rejected before DB lookup.
-- [src/routes/expenses/expense-confirm-post-handler.ts](./src/routes/expenses/expense-confirm-post-handler.md) — POST handler for `/expenses/confirm-create-new`. Handles cancel action, defensive re-validation, and atomic creation of new categories/tags/expense. Extracted from `build-expenses.tsx` in Issue 14B. Issue 18: uses `resolveConfirmTagsAndCategory` from `confirm-helpers.ts` for race-tolerant tag/category resolution; preserves `tagIds` and `newTags` on cancel.
-- [src/routes/expenses/build-edit-expense.tsx](./src/routes/expenses/build-edit-expense.md) — Edit + delete flow (Issue 08): `GET /expenses/:id/edit`, `POST /expenses/:id/edit`, `POST /expenses/:id/confirm-edit-new`, `GET /expenses/:id/delete`, `POST /expenses/:id/delete`. Issue 18: edit POST uses `parseTagInputs` for tag validation; confirmation handler uses `parseTagInputs` and `parseNewCategoryName` with full defensive re-validation; pre-existing tag attachments render as selected chips on initial load.
-- [src/routes/expenses/expense-form.tsx](./src/routes/expenses/expense-form.md) — Shared entry/edit form renderer + shared *Confirm new items* page renderer (Issue 08). Issue 13: `ConfirmNewItemsProps` gains optional `entity: 'expense' | 'recurring'` prop; when `entity='recurring'` the page uses `confirm-recurring-{create,edit}-new-*` testid prefixes, shows recurrence/anchor-date in the preview, and carries `recurrence`/`anchorDate` hidden inputs instead of `date`. Issue 18: `renderExpenseForm` uses `TagChipCheckboxes` component (with `allowNewTags=true`) for tag chip-checkboxes, replacing the CSV `tags` text input.
-- [src/routes/build-categories.tsx](./src/routes/build-categories.md) — Signed-in category management page (`/categories`) with create, rename, merge-on-collision confirmation, and delete flows.
-- [src/routes/build-tags.tsx](./src/routes/build-tags.md) — Signed-in tag management page (`/tags`) with create, rename, merge-on-collision confirmation, and delete flows (Issue 10, mirrors category management from Issue 09).
-- [src/routes/build-summary.tsx](./src/routes/build-summary.md) — Issue 17: Full summary aggregation page (`/summary`). Supports four dimensions, three granularities, tag-AND filtering, sortable columns, and clear-reset. Issue 18: tag filter uses `TagChipCheckboxes` component (with `allowNewTags=false`); time-period labels are `Mmm YYYY` / `Mmm-Mmm YYYY` / `YYYY` with internal chronological sort keys; sort headers follow a dimension-aware allow-list; malformed query parameters fall back to defaults. No grand total or percent-of-total rows.
-- [src/routes/build-recurring.tsx](./src/routes/build-recurring.md) — Issue 13: Real recurring-templates list page (`GET /recurring`). Calls `listRecurring`, renders DaisyUI table with Description, Amount, Category, Tags, Recurrence, Anchor date, and Next occurrence columns. Next occurrence is computed via `nextOccurrenceAfter`; Quarterly/Yearly fall back to `—` until Issue 14. `data-testid="recurring-page"`, `recurring-row`, `recurring-new`.
-- [src/routes/recurring/recurring-form.tsx](./src/routes/recurring/recurring-form.md) — Issue 13: Shared recurring-template entry/edit form renderer. Exports `renderRecurringForm({ mode, action, state, payloads })` with description, amount, category (combobox), recurrence (select), anchor date (date input), and tags (via `TagChipCheckboxes` component). Issue 18: uses `TagChipCheckboxes` with `allowNewTags=true` for tag chip-checkboxes. Testids: `recurring-form`, `recurring-form-create` / `recurring-form-save`.
-- [src/routes/recurring/build-create-recurring.tsx](./src/routes/recurring/build-create-recurring.md) — Issue 13: Create flow for recurring templates. Registers `GET /recurring/new`, `POST /recurring`, and `POST /recurring/confirm-create-new`. Mirrors the expense create flow: validates via `parseRecurringCreate`, resolves category/tags via `parseTagInputs`, routes through `renderConfirmNewItems(entity='recurring')` when new items are needed, then calls `createRecurringWithTags` or `createManyAndRecurring`. Issue 18: confirmation handler uses `resolveConfirmTagsAndCategory` from `confirm-helpers.ts` for race-tolerant tag/category resolution.
-- [src/routes/recurring/build-edit-recurring.tsx](./src/routes/recurring/build-edit-recurring.md) — Issue 13: Edit and delete flows for recurring templates. Registers `GET /recurring/:id/edit`, `POST /recurring/:id/edit`, `POST /recurring/:id/confirm-edit-new`, `GET /recurring/:id/delete`, and `POST /recurring/:id/delete`. Pre-populates edit form with `formatCentsPlain`. Delete confirmation page uses `confirm-delete-recurring-*` testids; delete POST calls `deleteRecurring` then redirects to list. Issue 18: edit POST uses `parseTagInputs` for tag validation; confirmation handler uses `resolveConfirmTagsAndCategory` plus `createOrReuseCategory`/`createOrReuseTag` for race-tolerant resolution.
+| File | Summary |
+|------|---------|
+| [build-edit-expense.tsx](src/routes/expenses/build-edit-expense.md) | GET/POST /expenses/:id/edit, confirm-edit-new, delete — expense edit and delete flows. |
+| [build-expenses.tsx](src/routes/expenses/build-expenses.md) | Route registration for expenses list (GET/POST) and confirm-create-new. |
+| [expense-confirm-post-handler.ts](src/routes/expenses/expense-confirm-post-handler.md) | POST /expenses/confirm-create-new — finalizes expense with new categories/tags. |
+| [expense-form-helpers.ts](src/routes/expenses/expense-form-helpers.md) | Shared helpers: emptyState, readRawBody for expense form parsing. |
+| [expense-form.tsx](src/routes/expenses/expense-form.md) | Shared JSX renderer for expense create/edit form and confirm-new-items page. |
+| [expense-get-handler.ts](src/routes/expenses/expense-get-handler.md) | GET /expenses — loads expenses, categories, tags, filters; renders list page. |
+| [expense-list-renderer.tsx](src/routes/expenses/expense-list-renderer.md) | JSX renderers for filter bar, expense table, and full expenses page. |
+| [expense-post-handler.ts](src/routes/expenses/expense-post-handler.md) | POST /expenses — validates, creates expense or shows confirm-new-items page. |
 
-### Auth pages (JSX builders)
+## routes/profile/
 
-- [src/routes/auth/build-await-verification.tsx](./src/routes/auth/build-await-verification.md) — "Await email verification" page.
-- [src/routes/auth/build-email-confirmation.tsx](./src/routes/auth/build-email-confirmation.md) — Email verification and sent-confirmation pages. Registers `GET /auth/verify-email` (token verification via Better Auth `verifyEmail` API) and `GET /auth/email-sent` (email-sent confirmation page with 24-hour expiry notice).
-- [src/routes/auth/build-forgot-password.tsx](./src/routes/auth/build-forgot-password.md) — "Forgot password" request page.
-- [src/routes/auth/build-gated-interest-sign-up.tsx](./src/routes/auth/build-gated-interest-sign-up.md) — Combined gated + interest sign-up page.
-- [src/routes/auth/build-gated-sign-up.tsx](./src/routes/auth/build-gated-sign-up.md) — Gated sign-up page (requires single-use code).
-- [src/routes/auth/build-interest-sign-up.tsx](./src/routes/auth/build-interest-sign-up.md) — Interest/waitlist sign-up page.
-- [src/routes/auth/build-reset-password.tsx](./src/routes/auth/build-reset-password.md) — Password reset form page.
-- [src/routes/auth/build-sign-in.tsx](./src/routes/auth/build-sign-in.md) — Sign-in page builder.
-- [src/routes/auth/build-sign-out.tsx](./src/routes/auth/build-sign-out.md) — Sign-out confirmation page.
-- [src/routes/auth/build-sign-up.tsx](./src/routes/auth/build-sign-up.md) — Open sign-up page builder.
-- [src/routes/auth/build-waiting-for-reset.tsx](./src/routes/auth/build-waiting-for-reset.md) — "Check your email for reset link" page.
+| File | Summary |
+|------|---------|
+| [build-profile.tsx](src/routes/profile/build-profile.md) | GET /profile — user info, change password form, delete account link. |
+| [build-delete-confirm.tsx](src/routes/profile/build-delete-confirm.md) | GET /profile/delete-confirm — account deletion confirmation page. |
+| [handle-change-password.ts](src/routes/profile/handle-change-password.md) | POST /profile — validates and changes password via Better Auth. |
+| [handle-delete-account.ts](src/routes/profile/handle-delete-account.md) | POST /profile/delete — deletes user account and clears session cookies. |
 
-### Auth handlers (API logic)
+## routes/recurring/
 
-- [src/routes/auth/better-auth-handler.ts](./src/routes/auth/better-auth-handler.md) — Initializes Better Auth middleware and mounts the /api/auth/\* Better Auth API handler.
-- [src/routes/auth/better-auth-response-interceptor.ts](./src/routes/auth/better-auth-response-interceptor.md) — Intercepts Better Auth responses to customize behavior (e.g., redirect on sign-in, flash messages).
-- [src/routes/auth/handle-forgot-password.ts](./src/routes/auth/handle-forgot-password.md) — POST handler for initiating password reset; sends reset email via Better Auth.
-- [src/routes/auth/handle-gated-interest-sign-up.ts](./src/routes/auth/handle-gated-interest-sign-up.md) — POST handler for combined gated + interest sign-up submissions.
-- [src/routes/auth/handle-gated-sign-up.ts](./src/routes/auth/handle-gated-sign-up.md) — POST handler for gated sign-up; validates single-use code.
-- [src/routes/auth/handle-interest-sign-up.ts](./src/routes/auth/handle-interest-sign-up.md) — POST handler for interest/waitlist submissions.
-- [src/routes/auth/handle-resend-email.ts](./src/routes/auth/handle-resend-email.md) — POST handler to resend verification email with rate limiting.
-- [src/routes/auth/handle-reset-password.ts](./src/routes/auth/handle-reset-password.md) — POST handler for completing password reset with token validation.
-- [src/routes/auth/handle-sign-out.ts](./src/routes/auth/handle-sign-out.md) — POST handler for sign-out; clears session and cookies.
-- [src/routes/auth/handle-sign-up.ts](./src/routes/auth/handle-sign-up.md) — POST handler for open sign-up; creates user and sends verification email.
+| File | Summary |
+|------|---------|
+| [build-create-recurring.tsx](src/routes/recurring/build-create-recurring.md) | GET/POST /recurring/new, /recurring, confirm-create-new — recurring template creation. |
+| [build-edit-recurring.tsx](src/routes/recurring/build-edit-recurring.md) | GET/POST /recurring/:id/edit, confirm-edit-new, delete — recurring template edit and delete. |
+| [recurring-form.tsx](src/routes/recurring/recurring-form.md) | Shared JSX renderer for recurring template create/edit form. |
 
-### Profile routes
+## routes/test/
 
-- [src/routes/profile/build-delete-confirm.tsx](./src/routes/profile/build-delete-confirm.md) — Account deletion confirmation page.
-- [src/routes/profile/build-profile.tsx](./src/routes/profile/build-profile.md) — Profile page builder. Displays user name and email, includes a change-password form, a humorous "question of the day" (deterministic by day of year), and a link to the delete-account confirmation page.
-- [src/routes/profile/handle-change-password.ts](./src/routes/profile/handle-change-password.md) — POST handler for changing password.
-- [src/routes/profile/handle-delete-account.ts](./src/routes/profile/handle-delete-account.md) — POST handler for account deletion.
-
-### Dev-only test routes (`src/routes/test/`)
-
-
-### Other handlers
-
-
-## Cross-references
-
-- See [e2e-tests.md](e2e-tests.md) for tests covering these routes.
-- See [unit-tests.md](unit-tests.md) for isolated tests of `lib/` utilities.
+| File | Summary |
+|------|---------|
+| [database.ts](src/routes/test/database.md) | Test-only route for DB inspection/reset. |
+| [run-cron.ts](src/routes/test/run-cron.md) | Test-only route to manually trigger cron job. |
+| [sign-up-mode.ts](src/routes/test/sign-up-mode.md) | Test-only route to inspect/change sign-up mode. |
+| [smtp-config.ts](src/routes/test/smtp-config.md) | Test-only route to inspect SMTP configuration. |

@@ -1,40 +1,28 @@
-# handle-gated-interest-sign-up.ts
+# src/routes/auth/handle-gated-interest-sign-up.ts
 
-**Source:** `src/routes/auth/handle-gated-interest-sign-up.ts`
+POST handler for combined gated + interest sign-up. Handles both sign-up with code and waitlist email submission.
 
-## Purpose
+## Routes Registered
 
-POST handler for combined gated + interest sign-up. Only active in `BOTH_SIGN_UP` mode. Registers two separate POST routes: one for gated sign-up (with code) and one for interest/waitlist sign-up.
+- `POST /auth/sign-up` — Gated sign-up with code (same as `handle-gated-sign-up.ts`)
+- `POST /auth/interest-sign-up` — Waitlist email submission
 
-## Export
+## Interest Sign-up Flow
 
-### `handleGatedInterestSignUp(app): void`
+1. Checks if user already signed in → redirect to expenses
+2. Validates email via `InterestSignUpFormSchema`
+3. On validation error: stores email in cookie, redirects back with error
+4. Normalizes email (trim + lowercase)
+5. Calls `addInterestedEmail` to add to waitlist
+6. On DB error: redirects with error message
+7. If email already on list: redirects with "already on waitlist" message
+8. On success: redirects with "thanks for joining" message
 
-### Routes
+## Dependencies
 
-**`POST /auth/sign-up`** (gated sign-up):
-
-1. Parses request body and validates with `GatedSignUpFormSchema`. On invalid → redirects to `/auth/sign-up` with error.
-2. Delegates to `processGatedSignUp(c, data)` from `sign-up-utils.ts`.
-
-**`POST /auth/interest-sign-up`** (interest/waitlist):
-
-1. Checks if user is already signed in → redirects to `/expenses` with `MESSAGES.ALREADY_SIGNED_IN`.
-2. Parses request body and validates with `InterestSignUpFormSchema`. On invalid → sets `EMAIL_ENTERED` cookie if email present, redirects to `/auth/sign-up` with error.
-3. Trims and lowercases email, gets DB client from context.
-4. Calls `addInterestedEmail(db, email)`. On DB error → redirects with error. If email already exists → redirects to `/auth/sign-in` with "already on waitlist" message. On success → redirects to `/auth/sign-in` with "added to waitlist" message.
-
-## Cross-references
-
-- [../../lib/sign-up-utils.md](../../lib/sign-up-utils.md) — `processGatedSignUp`, `GatedSignUpData`.
-- [../../lib/db/auth-access.md](../../lib/db/auth-access.md) — `addInterestedEmail`.
-- [../../lib/validators.md](../../lib/validators.md) — `validateRequest`, `GatedSignUpFormSchema`, `InterestSignUpFormSchema`.
-- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `addCookie`.
-- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithError`, `redirectWithMessage`.
-- [../../constants.md](../../constants.md) — `PATHS.AUTH`, `MESSAGES`, `COOKIES`, `STANDARD_SECURE_HEADERS`.
-- [../../local-types.md](../../local-types.md) — `Bindings`, `DrizzleClient` types.
-- [build-gated-interest-sign-up.md](build-gated-interest-sign-up.md) — GET page.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../lib/validators` — `validateRequest`, `GatedSignUpFormSchema`, `InterestSignUpFormSchema`
+- `../../lib/sign-up-utils` — `processGatedSignUp`, `GatedSignUpData`
+- `../../lib/db/auth-access` — `addInterestedEmail`
+- `../../lib/redirects` — `redirectWithError`, `redirectWithMessage`
+- `../../lib/cookie-support` — `addCookie`
+- `../../constants` — `PATHS`, `STANDARD_SECURE_HEADERS`, `MESSAGES`, `COOKIES`

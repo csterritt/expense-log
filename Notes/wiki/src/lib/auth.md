@@ -1,35 +1,31 @@
-# auth.ts
+# src/lib/auth.ts
 
-**Source:** `src/lib/auth.ts`
+Better Auth instance factory. Configures email/password authentication, email verification, password reset, and session management.
 
-## Purpose
+## Exports
 
-Factory that creates and configures the better-auth instance. Called once per request (via `createAuth(env)`).
+### createAuth(env: Bindings): Auth
 
-## Export
+Creates a Better Auth instance with:
+- **Drizzle adapter** with SQLite provider and the app's schema
+- **Email/password**: enabled, requires email verification, min 8 / max 128 char passwords
+- **sendResetPassword**: delegates to `sendPasswordResetEmail` from `email-service.ts`
+- **sendVerificationEmail**: delegates to `sendConfirmationEmail` from `email-service.ts`
+- **Session**: 30-day expiry, 1-day update age, 5-minute cookie cache
+- **Trusted origins**: localhost in dev, production domains in prod
+- **Base URL**: localhost:3000 in dev, production domain in prod
+- **Redirect**: `/expenses` after successful sign-in
+- **Secret**: `env.BETTER_AUTH_SECRET`
 
-### `createAuth(env: Bindings) => BetterAuth`
+### Auth
 
-Builds a better-auth instance with the following configuration:
+Type alias for `ReturnType<typeof createAuth>`.
 
-- **Database** — `drizzleAdapter(dbClient, { schema })` from `../db/client.ts` and `../db/schema.ts`
-- **Email & Password** — enabled, `requireEmailVerification: true`, `minPasswordLength: 8`, `maxPasswordLength: 128`
-- **Email Verification** — `sendVerificationEmail` callback sends a confirmation email via `sendConfirmationEmail()` from `email-service.ts`
-- **Password Reset** — `sendResetPassword` callback sends a reset email via `sendPasswordResetEmail()` from `email-service.ts`
-- **Session** — expires in `THIRTY_DAYS_IN_SECONDS`, updates every `ONE_DAY_IN_SECONDS`, cookie cache enabled with `FIVE_MINUTES_IN_SECONDS` max age
-- **Trusted Origins** — `['http://localhost:3000', 'http://127.0.0.1:3000', alternateOrigin]` (dev only; production origins are commented out)
-- **Redirect after sign-in** — `redirectTo: '/expenses'`
-- **Base URL** — `http://localhost:3000` (dev only; production URL commented out)
-- **Secret** — `env.BETTER_AUTH_SECRET`
+## Dependencies
 
-## Cross-references
-
-- [db/auth-access.md](db/auth-access.md) — DB auth helpers
-- [db-helpers.md](db-helpers.md) — `withRetry`, `toResult`
-- [email-service.md](email-service.md) — `sendConfirmationEmail`, `sendPasswordResetEmail`
-- [constants.md](../constants.md) — `DURATIONS`
-- [local-types.md](../local-types.md) — `Bindings`
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `better-auth` — auth library
+- `better-auth/adapters/drizzle` — Drizzle ORM adapter
+- `../db/client` — Drizzle client factory
+- `../db/schema` — table definitions
+- `./email-service` — email sending functions
+- `../constants` — DURATIONS for session config

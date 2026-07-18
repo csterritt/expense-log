@@ -29,8 +29,6 @@ interface EmailConfig {
  * Get email configuration based on environment
  */
 const getEmailConfig = (env: Bindings): EmailConfig => {
-   return { emailUrl: env.EMAIL_SEND_URL, emailCode: env.EMAIL_SEND_CODE } 
-  // More robust test environment detection
 
   return {
     emailUrl: env.EMAIL_SEND_URL,

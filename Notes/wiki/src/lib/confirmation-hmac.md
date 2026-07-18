@@ -1,60 +1,38 @@
-# confirmation-hmac.ts
+# src/lib/confirmation-hmac.ts
 
-HMAC-SHA-256 signing utilities for expense and recurring confirmation payloads.
+HMAC-SHA-256 signing utilities for expense and recurring confirmation payloads. Prevents hidden form field tampering on confirmation pages.
 
-## Overview
+## Types
 
-Produces a hex signature over the canonical JSON representation of a confirmation payload. The caller stores the signature in a hidden form field and the confirm handler verifies it before any further processing.
+### ConfirmationPayload
 
-Fail-closed: `verifyConfirmationPayload` returns `false` whenever the signing key is absent or the crypto operation fails.
+Fields covered by the HMAC signature for expense confirmations: `description`, `amount`, `date`, `category`, `tagIds[]`, `newTags`.
 
-## Exports
+### RecurringConfirmationPayload
 
-### `ConfirmationPayload`
+Fields covered by the HMAC signature for recurring confirmations: `description`, `amount`, `recurrence`, `anchorDate`, `category`, `tagIds[]`, `newTags`.
 
-The fields covered by the HMAC signature on the expense confirmation page:
-- `description: string`
-- `amount: string`
-- `date: string`
-- `category: string`
-- `tagIds: string[]`
-- `newTags: string`
+## Functions
 
-### `RecurringConfirmationPayload`
+### signConfirmationPayload(payload, key): Promise\<string\>
 
-The fields covered by the HMAC signature on the recurring confirmation page. Uses `recurrence` and `anchorDate` instead of `date`:
-- `description: string`
-- `amount: string`
-- `recurrence: string`
-- `anchorDate: string`
-- `category: string`
-- `tagIds: string[]`
-- `newTags: string`
+Canonicalizes the payload (sorts tagIds), JSON-stringifies, signs with HMAC-SHA-256, returns hex string.
 
-### `signConfirmationPayload(payload, key)`
+### verifyConfirmationPayload(payload, signature, key): Promise\<boolean\>
 
-Signs a `ConfirmationPayload` with HMAC-SHA-256 and returns a hex string. The key is typically the `CONFIRMATION_SIGNING_KEY` Worker secret.
+Verifies signature against payload. Fail-closed: returns `false` if key is absent or any crypto operation throws. Uses constant-time comparison to prevent timing attacks.
 
-### `verifyConfirmationPayload(payload, signature, key)`
+### signRecurringConfirmationPayload(payload, key): Promise\<string\>
 
-Verifies that `signature` was produced by `signConfirmationPayload` over `payload` with `key`. Returns `false` when the key is absent or any crypto operation throws — fail-closed by design.
+Same as above for `RecurringConfirmationPayload`.
 
-### `signRecurringConfirmationPayload(payload, key)`
+### verifyRecurringConfirmationPayload(payload, signature, key): Promise\<boolean\>
 
-Signs a `RecurringConfirmationPayload` with HMAC-SHA-256 and returns a hex string.
+Same as above for `RecurringConfirmationPayload`.
 
-### `verifyRecurringConfirmationPayload(payload, signature, key)`
+## Security
 
-Verifies a recurring confirmation payload signature. Returns `false` on missing key or crypto failure.
-
-## Implementation notes
-
-- Canonicalisation sorts `tagIds` before serialisation so tag ordering is stable.
-- Verification uses a constant-time string comparison to avoid timing attacks.
-- Uses `crypto.subtle.importKey` and `crypto.subtle.sign` via the Web Crypto API. Verification re-signs the canonical payload and compares hex strings with a constant-time comparison (does not use `crypto.subtle.verify`).
-
-## Cross-references
-
-- See [expense-confirm-post-handler.ts](../routes/expenses/expense-confirm-post-handler.md) and [build-edit-expense.tsx](../routes/expenses/build-edit-expense.md) for consumers of the expense signing utilities.
-- See [build-create-recurring.tsx](../routes/recurring/build-create-recurring.md) and [build-edit-recurring.tsx](../routes/recurring/build-edit-recurring.md) for consumers of the recurring signing utilities.
-- See [expense-confirm-handler.spec.ts](../../../tests/expense-confirm-handler.spec.md), [recurring-confirm-handler.spec.ts](../../../tests/recurring-confirm-handler.spec.md), and [recurring-edit-confirm-handler.spec.ts](../../../tests/recurring-edit-confirm-handler.spec.md) for tests.
+- Canonicalization sorts `tagIds` for deterministic serialization
+- Constant-time signature comparison prevents timing attacks
+- Fail-closed: missing key or crypto error → `false`
+- Uses Web Crypto API (`crypto.subtle`)

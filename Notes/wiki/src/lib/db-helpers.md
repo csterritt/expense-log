@@ -1,30 +1,21 @@
-# db-helpers.ts
+# src/lib/db-helpers.ts
 
-**Source:** `src/lib/db-helpers.ts`
+Generic database helper utilities providing retry logic and Result-type wrapping.
 
-## Purpose
+## Functions
 
-Shared database helper utilities: retry wrapper and Result converter. Extracted from the former `db-access.ts` so auth and expense modules can share the same patterns without a circular dependency.
+### withRetry\<T\>(operationName, operation): Promise\<Result\<T, Error\>\>
 
-## Exports
+Wraps a `Result`-returning async operation with retry logic using `async-retry`. If the operation returns an error Result, it throws to trigger retry. After exhausting retries, returns the error as `Result.err`.
 
-### `withRetry(operationName, operation): Promise<Result<T, Error>>`
+Uses `STANDARD_RETRY_OPTIONS` from constants (5 retries, 20ms min timeout in dev / 200ms in prod).
 
-Wraps an async operation in `async-retry` with `STANDARD_RETRY_OPTIONS`. If the returned `Result` is `Err`, the retry layer throws it so `async-retry` can back off and try again. After retries are exhausted, logs `final error` and returns `Result.err` with the final error. Preserves the original `Error` object.
+### toResult\<T\>(fn): Promise\<Result\<T, Error\>\>
 
-### `toResult(fn): Promise<Result<T, Error>>`
+Wraps a throwing async function into a `true-myth` Result. Returns `Result.ok` on success, `Result.err` on thrown error.
 
-Executes `fn` and wraps:
+## Dependencies
 
-- Success → `Result.ok(await fn())`
-- Thrown error → `Result.err(e instanceof Error ? e : new Error(String(e)))`
-
-## Cross-references
-
-- [constants.md](../constants.md) — `STANDARD_RETRY_OPTIONS`
-- [src/lib/db/auth-access.md](auth-access.md) — uses `withRetry` + `toResult` for auth queries
-- [src/lib/db/expense-access.md](expense-access.md) — uses `withRetry` for expense queries
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `async-retry` — retry library
+- `true-myth/result` — Result type
+- `../constants` — `STANDARD_RETRY_OPTIONS`

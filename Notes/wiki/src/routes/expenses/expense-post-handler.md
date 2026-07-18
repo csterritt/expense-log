@@ -1,39 +1,32 @@
-# expense-post-handler.ts
+# src/routes/expenses/expense-post-handler.ts
 
-**Source:** `src/routes/expenses/expense-post-handler.ts`
+POST handler for expense creation.
 
-## Purpose
+## Functions
 
-POST handler for creating a new expense. Validates the form, resolves category and tag inputs, and either creates the expense directly or renders a confirmation page when new categories or tags need to be created.
+### handleExpensesPost(c): Promise\<Response\>
 
-## Flow
+1. Parses and validates form body via `parseExpenseCreate`
+2. On validation error: redirects back with form errors (PRG)
+3. Fetches all tags and parses tag inputs (`parseTagInputs`)
+4. Validates tag IDs exist
+5. Looks up category by name (`findCategoryByName`)
+6. **If everything is existing**: creates expense directly via `createExpenseWithTags`, redirects with success
+7. **If new category or new tags**: validates new category name, renders confirmation page (`renderConfirmNewItems`) with hidden fields for user to confirm
 
-1. Reads the raw form body via `readRawBody`.
-2. Validates description, amount, date, and category via `parseExpenseCreate`.
-3. On validation failure, redirects back to `/expenses` with field errors and preserved raw values (including `tagIds` and `newTags`).
-4. Fetches all tags from the database.
-5. Parses tag inputs via `parseTagInputs` (handles both selected tag IDs and new tag names).
-6. Validates that all submitted `tagId` values exist in the database (tamper protection).
-7. Looks up the category by name. If it doesn't exist, the category is considered "new".
-8. If no new category and no new tags, creates the expense directly via `createExpenseWithTags`.
-9. If something is new, validates the new category name and renders the consolidated confirmation page (`confirm-create-new-page`) via `renderConfirmNewItems`.
+## Confirmation Flow
 
-## Key functions
+When new category names or new tag names are detected, the handler does NOT write to DB. Instead it renders a confirmation page showing what will be created. The user confirms via `POST /expenses/confirm-create-new`.
 
-- `handleExpensesPost(c)` — Main POST handler.
+## Dependencies
 
-## Cross-references
-
-- [expense-form-helpers.md](expense-form-helpers.md) — `readRawBody` helper.
-- [expense-form.md](expense-form.md) — `renderConfirmNewItems` and form types.
-- [expense-confirm-post-handler.md](expense-confirm-post-handler.md) — Handles the confirmation POST.
-- [../build-layout.md](../build-layout.md) — layout wrapper.
-- [../../db/client.md](../../db/client.md) — `createDbClient`.
-- [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseExpenseCreate`, `parseNewCategoryName`, `parseTagInputs`.
-- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `createExpenseWithTags`.
-- [../../lib/db/category-access.md](../../lib/db/category-access.md) — `findCategoryByName`.
-- [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `listTags`.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../db/client` — `createDbClient`
+- `../../lib/db/category-access` — `findCategoryByName`
+- `../../lib/db/tag-access` — `listTags`
+- `../../lib/db/expense-access` — `createExpenseWithTags`
+- `../../lib/expense-validators` — `parseExpenseCreate`, `parseNewCategoryName`, `parseTagInputs`
+- `../../lib/form-state` — `redirectWithFormErrors`, `ExpenseFormValues`
+- `../../lib/redirects` — `redirectWithError`, `redirectWithMessage`
+- `./expense-form-helpers` — `readRawBody`
+- `./expense-form` — `renderConfirmNewItems`
+- `../build-layout` — `useLayout`

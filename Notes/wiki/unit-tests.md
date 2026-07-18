@@ -1,35 +1,32 @@
 # Unit Tests Catalog
 
-Catalog of all unit tests under `tests/` (17 spec files, 1 shared helper, plus `tsconfig.json`; Issue 13 adds new test cases to two existing files and a new `recurrence.spec.ts`; Issue 14 expands `recurrence.spec.ts` and `expense-access.spec.ts`; Issue 15 adds `po-notify.spec.ts` and `scheduled.spec.ts`; 2026-05-22 removes `summarize`, `parseSummaryQuery`, and `monthKeyEt`/`yearKeyEt` tests; Issue 17 re-introduces all three; tag-chip-checkboxes.spec.ts, expense-confirm-handler.spec.ts, recurring-confirm-handler.spec.ts, and recurring-edit-confirm-handler.spec.ts added subsequently). Each file links to its individual wiki page.
+Catalog of all unit test files under `tests/`. Tests run with Bun's built-in test runner (`bun test`).
 
 ## Test files
 
-- [tests/helpers/test-db.ts](./tests/helpers/test-db.md) — Shared in-memory SQLite test database setup. Exports `createTestDb` (creates `:memory:` DB with all schema tables, unique indexes, and `batch` wrapper) and seed helpers (`seedCategory`, `seedTag`, `seedExpense`, `seedExpenseTag`, `seedRecurring`). Used by `expense-access.spec.ts`, `expense-confirm-handler.spec.ts`, `recurring-confirm-handler.spec.ts`, `recurring-edit-confirm-handler.spec.ts`, and `summary-access.spec.ts`.
-- [tests/db-access-retry.spec.ts](./tests/db-access-retry.spec.md) — Tests database access retry logic (`src/lib/db-helpers.ts`). Validates that transient D1 failures are retried up to the configured limit and that permanent failures bubble up correctly.
-- [tests/et-date.spec.ts](./tests/et-date.spec.md) — Tests `America/New_York` date helpers (src/lib/et-date.ts). Covers DST boundaries, default-range month wrapping, and `isValidYmd` edges. Issue 17 re-introduces `monthKeyEt`, `quarterKeyEt`, and `yearKeyEt` test coverage (33 cases total across the three helpers).
-- [tests/expense-access.spec.ts](./tests/expense-access.spec.md) — Tests Issue 09/10 category and tag repository helpers with an in-memory SQLite harness. Issue 11 adds `listExpenses filters` coverage (14 cases). Issue 13 adds coverage for `listRecurring`, `getRecurringById`, `createRecurringWithTags`, `createManyAndRecurring`, `updateRecurringWithTags`, `updateManyAndRecurring`, and `deleteRecurring` helpers. Issue 14: adds unique partial index `expense_recurring_occurrence_unique` on `(recurringId, occurrenceDate)` to the test schema; adds `materializeRecurring` block covering tag-copying, idempotency, catch-up, first-occurrence rule, error isolation per template, and `listExpenses` `recurringId` surfacing.
-- [tests/summary-access.spec.ts](./tests/summary-access.spec.md) — Issue 17. Tests `summarize` across four dimensions (`time`, `category`, `tag`, `category-tag`), three granularities (`month`, `quarter`, `year`), tag-AND filtering, materialized recurring rows, default sort, and explicit sort override. In-memory SQLite harness with shared seed dataset.
-- [tests/expense-validators.spec.ts](./tests/expense-validators.spec.md) — Tests `parseExpenseCreate`, `parseNewCategoryName`, `parseTagCsv`, Issue 09/10 category/tag-management validators, Issue 11 `parseExpenseListFilters`, Issue 13 `parseRecurringCreate`, and Issue 17 `parseSummaryQuery`. Issue 13 adds 25 cases covering happy paths for each recurrence value, description/amount/category/recurrence/anchorDate rejection paths, and a multi-error simultaneous-failure test. Issue 16 adds 5 cases for `parseExpenseListFilters` reversed-date-range validation (`from > to` → `fieldErrors.date`; same-day accepted; single-field no-error; format-error priority). Issue 17 adds 46 cases for `parseSummaryQuery` (dimension, granularity, date range, tag filter, sort); test count 110 → 156.
-- [tests/recurrence.spec.ts](./tests/recurrence.spec.md) — Issue 13. Tests `nextOccurrenceAfter` (src/lib/recurrence.ts): monthly anchors 1/15/28/29/30/31, clamping on short months (Feb, April), strictly-after semantics when anchor day equals `after` day. Issue 14: Quarterly (3-month advance, 28th-shift, strictly-after) and Yearly (1-year advance, 28th-shift, Feb 29 anchor); throws for unknown recurrence; comprehensive `occurrencesToGenerate` coverage: input validation, first-occurrence rule, `lastOccurrence` lower bound, catch-up for Monthly/Quarterly/Yearly.
-- [tests/po-notify.spec.ts](./tests/po-notify.spec.md) — Issue 15. Tests `pushoverNotifyEnv` from `src/lib/po-notify.ts`. Covers: no-op when `PO_APP_ID`/`PO_USER_ID` missing or blank; fetch call with correct URL and JSON body in production mode; development mode skips network and logs preview; swallows fetch rejections.
-- [tests/money.spec.ts](./tests/money.spec.md) — Tests `formatCents` and `parseAmount` (src/lib/money.ts) for representative cent values and the parser's accept/reject grammar.
-- [tests/send-email.spec.ts](./tests/send-email.spec.md) — Tests email sending utilities (src/lib/send-email.ts). Covers transport selection, template rendering, error handling, and optional SMTP configuration parsing.
-- [tests/sign-up-utils.spec.ts](./tests/sign-up-utils.spec.md) — Tests sign-up validation and processing utilities (src/lib/sign-up-utils.ts). Validates email normalization, password strength checks, name trimming, and duplicate detection logic.
-- [tests/time-access.spec.ts](./tests/time-access.spec.md) — Tests time-access utilities (src/lib/time-access.ts). Covers clock manipulation for testing, duration formatting, and boundary conditions.
-- [tests/scheduled.spec.ts](./tests/scheduled.spec.md) — Issue 15. Tests `createScheduled` from `src/scheduled.ts` with injected mock deps (no `mock.module`). Covers: `materializeRecurring` invoked once with correct args; no Pushover call on clean success; Pushover called on partial failures (with count); Pushover called on hard `err` Result (with message); no re-throw on synchronous throw; `createDbClient` receives `env.PROJECT_DB`.
-- [tests/tag-chip-checkboxes.spec.ts](./tests/tag-chip-checkboxes.spec.md) — Tests `TagChipCheckboxes` component (`src/components/tag-chip-checkboxes.tsx`). Covers: checkbox rendering per tag, alphabetical ordering (case-insensitive), selected vs unselected visual classes, XSS safety via JSX escaping, `allowNewTags` prop controlling `newTags` input visibility, empty tag list states, and constant parity between TSX and `public/js/tag-chip-checkboxes.js`.
-- [tests/url-validation.spec.ts](./tests/url-validation.spec.md) — Tests URL validation helpers (src/lib/url-validation.ts). Validates allowed origin patterns, redirect URL safeness, and hostname matching logic.
-- [tests/expense-confirm-handler.spec.ts](./tests/expense-confirm-handler.spec.md) — Task 22 RED. Tests schema unique-index assertions (tag/category lowercase unique), HMAC signing/verification utilities (`src/lib/confirmation-hmac.ts`), race-tolerant `createOrReuseTag`/`createOrReuseCategory` helpers (`src/lib/db/confirm-helpers.ts`), and `createManyAndExpense` atomicity (no partial rows on constraint failure). In-memory SQLite harness.
-- [tests/recurring-confirm-handler.spec.ts](./tests/recurring-confirm-handler.spec.md) — Task 25 RED. Mirrors `expense-confirm-handler.spec.ts` for the recurring-create confirmation route. Tests `signRecurringConfirmationPayload`/`verifyRecurringConfirmationPayload` (recurrence/anchorDate fields), `createManyAndRecurring` atomicity, and re-asserts `createOrReuseTag`/`createOrReuseCategory` for the recurring path.
-- [tests/recurring-edit-confirm-handler.spec.ts](./tests/recurring-edit-confirm-handler.spec.md) — Task 28 RED. Mirrors `recurring-confirm-handler.spec.ts` for the recurring-edit confirmation route. Tests HMAC utilities, `updateManyAndRecurring` atomicity, `updateRecurringWithTags` pre-existing attachment survival, and chip-off tag detachment on edit.
+| File | Summary |
+|------|---------|
+| [auth-validators.spec.ts](tests/auth-validators.md) | Tests for Valibot auth form schemas (sign-in, sign-up, password reset validation). |
+| [db-access-retry.spec.ts](tests/db-access-retry.md) | Tests for DB access retry logic on transient failures. |
+| [et-date.spec.ts](tests/et-date.md) | Tests for America/New_York date utilities (todayEt, defaultRangeEt, month/quarter labels, chronological keys). |
+| [expense-access.spec.ts](tests/expense-access.md) | Tests for expense DB access (CRUD, list with filters, tag linking). |
+| [expense-confirm-handler.spec.ts](tests/expense-confirm-handler.md) | Tests for expense confirm-create-new POST handler logic. |
+| [expense-validators.spec.ts](tests/expense-validators.md) | Tests for expense form validators (parseExpenseCreate, parseTagInputs, parseSummaryQuery, filter parsing). |
+| [money.spec.ts](tests/money.md) | Tests for money utilities (formatCents, formatCentsPlain, parseAmount with various input formats). |
+| [po-notify.spec.ts](tests/po-notify.md) | Tests for Pushover notification integration. |
+| [recurrence.spec.ts](tests/recurrence.md) | Tests for recurrence date arithmetic (nextOccurrenceAfter, occurrencesToGenerate, day-of-month clamping). |
+| [recurring-confirm-handler.spec.ts](tests/recurring-confirm-handler.md) | Tests for recurring confirm-create-new POST handler logic. |
+| [recurring-edit-confirm-handler.spec.ts](tests/recurring-edit-confirm-handler.md) | Tests for recurring confirm-edit-new POST handler logic. |
+| [scheduled.spec.ts](tests/scheduled.md) | Tests for scheduled cron job (recurring expense materialization). |
+| [send-email.spec.ts](tests/send-email.md) | Tests for email sending (SMTP config validation, OTP email, retry logic). |
+| [sign-up-utils.spec.ts](tests/sign-up-utils.md) | Tests for sign-up utilities (duplicate detection, error handling, processGatedSignUp). |
+| [summary-access.spec.ts](tests/summary-access.md) | Tests for summary DB access (group-by aggregation, chronological sort, granularity). |
+| [tag-chip-checkboxes.spec.ts](tests/tag-chip-checkboxes.md) | Tests for tag chip checkbox component rendering and behavior. |
+| [time-access.spec.ts](tests/time-access.md) | Tests for time access module (getCurrentTime, delta manipulation in test mode). |
+| [url-validation.spec.ts](tests/url-validation.md) | Tests for URL validation (open redirect prevention, same-origin check, relative path handling). |
 
-## Notes
+## helpers/
 
-- Unit tests run with `bun test` (or the project's configured unit test runner).
-- These focus on pure logic and utility functions that do not require Hono request context, Better Auth sessions, or a live database.
-- Any change to the corresponding `src/lib/` utilities should include updates to these tests.
-
-## Cross-references
-
-- See [source-code.md](source-code.md) for the `lib/` source files being tested.
-- See [e2e-tests.md](e2e-tests.md) for broader integration and UI tests.
+| File | Summary |
+|------|---------|
+| [test-db.ts](tests/helpers/test-db.md) | Test database helper — creates isolated D1 database instance for unit tests. |

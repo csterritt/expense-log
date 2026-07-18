@@ -1,26 +1,18 @@
-# expense-form-helpers.ts
+# src/routes/expenses/expense-form-helpers.ts
 
-**Source:** `src/routes/expenses/expense-form-helpers.ts`
+Helper functions for expense form handling.
 
-## Purpose
+## Functions
 
-Shared helper functions for expense form handling: creating empty form state and reading/parsing the raw form body.
+### emptyState(today): ExpenseFormState
 
-## Exported functions
+Returns an empty form state with default values: empty description, amount, category, tags; date set to `today`.
 
-- `emptyState(today: string): ExpenseFormState` — Returns an empty form state with default values. All fields are empty strings except `tagIds` (empty array) and `date` (set to `today`).
-- `readRawBody(c)` — Reads and parses the raw form body from a Hono request. Handles:
-  - `tagId` as either an array (from checkboxes) or a single string, filtering out non-string values.
-  - All other fields as strings with empty-string fallback.
-  - Returns an object with: `description`, `amount`, `date`, `category`, `tags` (legacy), `tagId` (string array), `newTags`, `action`.
+### readRawBody(c): Promise\<RawBody\>
 
-## Cross-references
+Parses form body and returns typed object with: `description`, `amount`, `date`, `category`, `tags`, `tagId` (string[]), `newTags`, `action`. Handles `tagId` as both single and multi-value field.
 
-- [expense-form.md](expense-form.md) — `ExpenseFormState` type definition.
-- [../../local-types.md](../../local-types.md) — `Bindings` type.
-- [expense-post-handler.md](expense-post-handler.md) — Uses `readRawBody`.
-- [expense-confirm-post-handler.md](expense-confirm-post-handler.md) — Uses `readRawBody`.
+## Dependencies
 
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../local-types` — `Bindings`
+- `./expense-form` — `ExpenseFormState` type

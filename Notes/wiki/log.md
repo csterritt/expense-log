@@ -2,6 +2,21 @@
 
 Chronological, append-only record of wiki activity.
 
+## [2025-07-22] ingest | Individual wiki pages for all src/routes/, src/middleware/, src/components/, and public/js/ files
+
+Created detailed individual wiki pages for every remaining source file not yet documented:
+
+- **src/routes/ top-level** (8 pages): `build-404`, `build-root`, `build-layout`, `build-categories`, `build-recurring`, `build-summary`, `build-tags`, `handle-set-db-failures`
+- **src/routes/expenses/** (8 pages): `build-expenses`, `build-edit-expense`, `expense-form`, `expense-form-helpers`, `expense-get-handler`, `expense-post-handler`, `expense-confirm-post-handler`, `expense-list-renderer`
+- **src/routes/auth/** (23 pages): `better-auth-handler`, `better-auth-response-interceptor`, `build-sign-in`, `build-sign-up`, `build-sign-out`, `build-await-verification`, `build-email-confirmation`, `build-forgot-password`, `build-reset-password`, `build-waiting-for-reset`, `build-gated-sign-up`, `build-interest-sign-up`, `build-gated-interest-sign-up`, `handle-sign-up`, `handle-sign-out`, `handle-forgot-password`, `handle-reset-password`, `handle-gated-sign-up`, `handle-gated-interest-sign-up`, `handle-interest-sign-up`, `handle-resend-email`, `handle-reset-clock`, `handle-set-clock`
+- **src/routes/profile/** (4 pages): `build-profile`, `build-delete-confirm`, `handle-change-password`, `handle-delete-account`
+- **src/routes/recurring/** (3 pages): `build-create-recurring`, `build-edit-recurring`, `recurring-form`
+- **src/routes/test/** (4 pages): `database`, `run-cron`, `sign-up-mode`, `smtp-config`
+- **src/middleware/** (2 pages): `guard-sign-up-mode`, `signed-in-access`
+- **src/components/** (2 pages): `gated-sign-up-form`, `tag-chip-checkboxes`
+- **public/js/** (2 pages): `category-combobox`, `tag-chip-checkboxes`
+- **index.md** — fixed public JS links from `public-js/` to `public/js/` to match actual file paths.
+
 ## [2026-06-13] ingest | Issue 18: Tag chip-checkbox UI everywhere + chronological time-period sort on Summary
 
 Updated wiki documentation for the Issue 18 implementation across all affected source files and routes.
@@ -508,3 +523,18 @@ Found and fixed two missing catalog entries during test-file verification:
 
 - **`tests/helpers/test-db.ts`** — was missing from `unit-tests.md`. Added entry documenting the shared in-memory SQLite setup (`createTestDb`) and seed helpers (`seedCategory`, `seedTag`, `seedExpense`, `seedExpenseTag`, `seedRecurring`). Updated header count from "17 spec files plus `tsconfig.json`" to "17 spec files, 1 shared helper, plus `tsconfig.json`".
 - **`e2e-tests/summary/03-summary-chip-and-sort.spec.ts`** — was missing from `e2e-tests.md`. Added entry documenting Issue 18 coverage: chip-checkbox tag filter UI, chronological sort labels (`Mmm YYYY` / `Mmm-Mmm YYYY`), descending sort toggle, cross-year ordering, malformed query fallback, dimension-aware sort allow-list, untagged expense exclusion, and stale tagId handling.
+
+## [2026-07-16] lint | File-checklist audit: verified 211 files, created 4 missing wiki pages, updated catalogs
+
+Completed full pass of `Notes/_file-checklist.md` against the wiki.
+
+- **Created missing individual wiki pages** (4):
+  - `Notes/wiki/src/lib/email-utils.md`
+  - `Notes/wiki/src/lib/logger.md`
+  - `Notes/wiki/tests/auth-validators.spec.md`
+  - `Notes/wiki/e2e-tests/reset-password/08-password-reset-token-url-encoding.spec.md`
+- **Updated catalog pages**:
+  - `Notes/wiki/source-code.md` — added `email-utils.ts` and `logger.ts` entries.
+  - `Notes/wiki/unit-tests.md` — updated spec count to 18, added `auth-validators.spec.ts` and `tests/tsconfig.json` entries.
+  - `Notes/wiki/e2e-tests.md` — added `expenses/22-edit-tag-chip-ui.spec.ts`, `expenses/23-list-filter-chip-unification.spec.ts`, and `reset-password/08-password-reset-token-url-encoding.spec.ts` entries.
+- **Checked off all 211 files** in `Notes/_file-checklist.md`.

@@ -1,40 +1,24 @@
-# handle-change-password.ts
+# src/routes/profile/handle-change-password.ts
 
-**Source:** `src/routes/profile/handle-change-password.ts`
+POST handler for password change from profile page.
 
-## Purpose
+## Route Registered
 
-POST handler for changing password (`POST /profile`). Requires authentication via `signedInAccess`.
+- `POST /profile` — Change password (requires sign-in)
 
-## Internal helpers
+## Flow
 
-### `isErrorWithMessage(value): value is { message: string }`
+1. Validates form via `ChangePasswordFormSchema` (currentPassword, newPassword, confirmPassword)
+2. On validation error: redirects back to profile with first error message
+3. Calls Better Auth `auth.api.changePassword` with current and new password, revoking other sessions
+4. On success: redirects to profile with "Password changed successfully" message
+5. On error: redirects back with error message (handles credential errors specifically)
 
-Type-guard arrow function used to detect better-auth thrown errors. Each `if` body is wrapped in braces per the project coding-style rule.
+## Dependencies
 
-## Export
-
-### `handleChangePassword(app): void`
-
-### Flow
-
-1. Parses request body via `c.req.parseBody()`.
-2. Validates with `ChangePasswordFormSchema` (currentPassword, newPassword, confirmPassword). On validation error, truncates at first comma and redirects to `/profile` with error (or `MESSAGES.INVALID_INPUT`).
-3. Calls `auth.api.changePassword({ body: { currentPassword, newPassword, revokeOtherSessions: true }, headers: c.req.raw.headers })`.
-4. On success → redirects to `/profile` with `'Your password has been successfully changed.'`
-5. On password-related error → redirects to `/profile` with `'Current password is incorrect. Please try again.'`
-6. On other error → redirects to `/profile` with `'An error occurred while changing your password. Please try again.'`
-
-## Cross-references
-
-- [build-profile.md](build-profile.md) — GET page
-- [../../lib/auth.md](../../lib/auth.md) — `createAuth`.
-- [../../lib/validators.md](../../lib/validators.md) — `validateRequest`, `ChangePasswordFormSchema`.
-- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`, `redirectWithError`.
-- [../../constants.md](../../constants.md) — `PATHS.PROFILE`, `STANDARD_SECURE_HEADERS`, `MESSAGES.INVALID_INPUT`.
-- [../../middleware/signed-in-access.md](../../middleware/signed-in-access.md) — auth gate.
-- [../../local-types.md](../../local-types.md) — `AuthUser`, `Bindings` types.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../lib/auth` — `createAuth`
+- `../../lib/validators` — `validateRequest`, `ChangePasswordFormSchema`
+- `../../lib/redirects` — `redirectWithMessage`, `redirectWithError`
+- `../../lib/logger` — `logInfo`, `logError`, `sanitizeError`
+- `../../middleware/signed-in-access` — auth guard
+- `../../constants` — `MESSAGES`, `PATHS`, `STANDARD_SECURE_HEADERS`

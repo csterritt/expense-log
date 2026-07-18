@@ -1,47 +1,33 @@
-# email-service.ts
+# src/lib/email-service.ts
 
-**Source:** `src/lib/email-service.ts`
+Email service for sending confirmation and password reset emails. Uses SMTP transport in test/dev environment and HTTP POST delivery in production.
 
-## Purpose
+## Functions
 
-Builds HTML/text email templates and sends them. Detects test environments (development, test, Playwright, or `globalThis.test`) and routes to a local `nodemailer` SMTP transport on port 1025; in production uses an external POST endpoint.
+### sendConfirmationEmail(env, email, name, confirmationUrl, token): Promise\<void\>
 
-## Types
+Sends an HTML + plain text confirmation email with a verification link. Escapes HTML in user name. Throws on failure.
 
-### `EmailConfig`
+### sendPasswordResetEmail(env, email, name, resetUrl, token): Promise\<void\>
 
-`{ isTestMode, smtpHost?, smtpPort?, smtpUser?, smtpPass?, emailUrl?, emailCode? }`
+Sends an HTML + plain text password reset email with a reset link. Escapes HTML in user name. Throws on failure.
 
-### `EmailTransporter`
+## Internal
 
-`{ sendMail: (options: MailOptions) => Promise<unknown> }`
+### getEmailConfig(env): EmailConfig
 
-## Internal helpers
+Determines email configuration based on environment. In test mode: SMTP to localhost:1025. In production: uses `EMAIL_SEND_URL` and `EMAIL_SEND_CODE` for HTTP POST delivery.
 
-### `getEmailConfig(env)`
+### createTransporter(env): EmailTransporter
 
-Returns `EmailConfig` based on environment. `isTestMode` is true if `NODE_ENV === 'test'`, `'development'`, `PLAYWRIGHT === '1'`, `process.argv.includes('playwright')`, or `typeof globalThis.test !== 'undefined'`.
+Creates email transporter:
+- **Test/dev**: Nodemailer SMTP transport to local MailDev server (port 1025), with test override support via `getTestSmtpConfig()`
+- **Production**: HTTP POST to `EMAIL_SEND_URL` with Bearer auth, sending JSON payload
 
-### `createTransporter(env)`
+### escapeHtml(str): string
 
-- **Test mode** — creates a `nodemailer` transport pointing at the configured host/port (defaults to `127.0.0.1:1025`)
-- **Production** — returns a fetch-based transporter that POSTs to `EMAIL_SEND_URL` with Bearer `EMAIL_SEND_CODE`
+Escapes `&`, `<`, `>`, `"` for XSS prevention in email templates.
 
-## Exports
+## Dependencies
 
-### `sendConfirmationEmail(env, email, name, confirmationUrl, token)`
-
-Sends a styled HTML confirmation email with a button link and a plain-text fallback. Subject: `'Confirm Your Email Address'`. Throws on failure.
-
-### `sendPasswordResetEmail(env, email, name, resetUrl, token)`
-
-Sends a styled HTML password-reset email with a button link. Subject: `'Reset Your Password'`. Throws on failure.
-
-## Cross-references
-
-- [send-email.md](send-email.md) — low-level SMTP transport used in other contexts
-- [test/smtp-config.md](../routes/test/smtp-config.md) — `getTestSmtpConfig` override
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `../local-types` — `Bindings`

@@ -1,26 +1,18 @@
-# redirects.tsx
+# src/lib/redirects.tsx
 
-**Source:** `src/lib/redirects.tsx`
+Redirect helpers with flash message cookies for PRG pattern.
 
-## Purpose
+## Functions
 
-Helper functions that create 303 redirect responses with flash-message cookies.
+### redirectWithMessage(c, redirectUrl, message): Response
 
-## Exports
+Sets `MESSAGE_FOUND` cookie with the message (if non-empty), then redirects (303) to `redirectUrl`.
 
-### `redirectWithMessage(c, redirectUrl, message): Response`
+### redirectWithError(c, redirectUrl, errorMessage): Response
 
-If `message.trim() !== ''`, sets the `COOKIES.MESSAGE_FOUND` cookie (via `addCookie`) then returns `c.redirect(redirectUrl, HTML_STATUS.SEE_OTHER)`.
+Sets `ERROR_FOUND` cookie with the error message, then redirects (303) to `redirectUrl`.
 
-### `redirectWithError(c, redirectUrl, errorMessage): Response`
+## Dependencies
 
-Sets the `COOKIES.ERROR_FOUND` cookie (always) then returns `c.redirect(redirectUrl, HTML_STATUS.SEE_OTHER)`.
-
-## Cross-references
-
-- [constants.md](../constants.md) — `HTML_STATUS.SEE_OTHER`, `COOKIES`
-- [cookie-support.md](cookie-support.md) — `addCookie`
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `../constants` — `COOKIES`, `HTML_STATUS`
+- `./cookie-support` — `addCookie`

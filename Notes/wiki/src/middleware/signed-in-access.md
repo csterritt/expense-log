@@ -1,24 +1,16 @@
-# signed-in-access.ts
+# src/middleware/signed-in-access.ts
 
-**Source:** `src/middleware/signed-in-access.ts`
+Middleware that restricts access to signed-in users only.
 
-## Purpose
+## Functions
 
-Protects authenticated-only routes (`/expenses`, `/categories`, `/tags`, `/summary`, `/recurring`, `/profile`, `/profile/delete-confirm`) by requiring an active Better Auth session.
+### signedInAccess: Middleware
 
-## Export
+Checks `user` and `session` from context (set by Better Auth middleware). If either is missing, redirects to sign-in page with "You must sign in to visit that page" error. On success, sets no-cache headers and calls `next()`.
 
-### `signedInAccess(c, next): Promise<Response | void>`
+## Dependencies
 
-1. Checks `c.get('user')` and `c.get('session')` (set by Better Auth middleware)
-2. If either is null → redirects to `PATHS.AUTH.SIGN_IN` with error message `'You must sign in to visit that page'`
-3. Otherwise → sets no-cache headers via `setupNoCacheHeaders`, then calls `next()`
-
-## Cross-references
-
-- [lib/setup-no-cache-headers.md](../lib/setup-no-cache-headers.md) — cache-busting headers
-- [routes/auth/better-auth-handler.md](../routes/auth/better-auth-handler.md) — middleware that sets `user` context
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `../constants` — `PATHS`
+- `../lib/redirects` — `redirectWithError`
+- `../lib/setup-no-cache-headers` — `setupNoCacheHeaders`
+- `../local-types` — `Bindings`

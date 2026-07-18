@@ -1,41 +1,29 @@
-# expense-get-handler.ts
+# src/routes/expenses/expense-get-handler.ts
 
-**Source:** `src/routes/expenses/expense-get-handler.ts`
+GET handler for the expenses list page.
 
-## Purpose
+## Functions
 
-GET handler for the expenses list page (`/expenses`). Fetches expenses, categories, and tags; applies filters; reads flash form state; and renders the full page.
+### handleExpensesGet(c): Promise\<Response\>
 
-## Flow
+1. Parses query params into filters via `parseExpenseListFilters` (description, from, to, categoryId, tagId[], tagMode)
+2. Falls back to `defaultRangeEt()` when no filter params present
+3. Fetches expenses, categories, and tags from DB
+4. Resolves tag IDs against existing tags (filters out stale IDs)
+5. Reads flash form state (sticky values + errors from PRG redirect)
+6. Renders the expenses list page with filter bar, expense form, and expense table
 
-1. Creates a DB client.
-2. Parses query parameters for filters: `description`, `from`, `to`, `categoryId`, `tagId` (array), `tagMode`.
-3. If no filter params are present, uses the default 2-month ET date range.
-4. Fetches expenses, categories, and tags.
-5. Resolves tag IDs against the database: filters out stale/unknown `tagId` values so the filter bar only shows chips for tags that still exist.
-6. Reads and clears any flash form state (for sticky values after validation errors or confirmation cancel).
-7. Renders the page via `renderExpenses`, which includes the entry form, filter bar, and expense table.
+## Dependencies
 
-## Key functions
-
-- `handleExpensesGet(c)` — Main GET handler.
-
-## Cross-references
-
-- [expense-list-renderer.md](expense-list-renderer.md) — `renderExpenses`, `renderFilterBar`, `renderExpenseTable`.
-- [expense-form.md](expense-form.md) — `renderExpenseForm` and form types.
-- [expense-form-helpers.md](expense-form-helpers.md) — `emptyState` helper.
-- [../build-layout.md](../build-layout.md) — layout wrapper.
-- [../../db/client.md](../../db/client.md) — `createDbClient`.
-- [../../lib/et-date.md](../../lib/et-date.md) — `defaultRangeEt`, `todayEt`.
-- [../../lib/expense-validators.md](../../lib/expense-validators.md) — `parseExpenseListFilters`.
-- [../../lib/form-state.md](../../lib/form-state.md) — `readAndClearFormState`.
-- [../../lib/db/expense-access.md](../../lib/db/expense-access.md) — `listExpenses`.
-- [../../lib/db/category-access.md](../../lib/db/category-access.md) — `listCategories`.
-- [../../lib/db/tag-access.md](../../lib/db/tag-access.md) — `listTags`.
-- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithError`.
-- [../../constants.md](../../constants.md) — `PATHS`.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../db/client` — `createDbClient`
+- `../../lib/db/expense-access` — `listExpenses`
+- `../../lib/db/category-access` — `listCategories`
+- `../../lib/db/tag-access` — `listTags`
+- `../../lib/expense-validators` — `parseExpenseListFilters`
+- `../../lib/form-state` — `readAndClearFormState`
+- `../../lib/et-date` — `defaultRangeEt`, `todayEt`
+- `../../lib/redirects` — `redirectWithError`
+- `../build-layout` — `useLayout`
+- `./expense-list-renderer` — `renderExpenses`
+- `./expense-form-helpers` — `emptyState`
+- `./expense-form` — `ExpenseFormPayloads`, `ExpenseFormState`

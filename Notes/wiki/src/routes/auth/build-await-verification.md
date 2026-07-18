@@ -1,41 +1,24 @@
-# build-await-verification.tsx
+# src/routes/auth/build-await-verification.tsx
 
-**Source:** `src/routes/auth/build-await-verification.tsx`
+Route builder for the "await email verification" page shown after sign-up.
 
-## Purpose
+## Route Registered
 
-Page shown after sign-up to inform the user to check their email for a verification link. Includes a resend-email button.
+- `GET /auth/await-verification` — Verification instructions page
 
-## Export
+## Features
 
-### `buildAwaitVerification(app): void`
+- Reads email from `EMAIL_ENTERED` cookie (consumed on read)
+- Shows "Check Your Email" alert with the email address
+- Tips for finding the verification email (spam folder, etc.)
+- "Resend verification email" form (posts to `RESEND_EMAIL`)
+- "Back to Sign In" link
+- No-cache headers
 
-Route: `GET /auth/await-verification`
+## Dependencies
 
-### Behavior
-
-1. Sets no-cache headers via `setupNoCacheHeaders`.
-2. Reads `EMAIL_ENTERED` cookie for the user's email via `retrieveCookie`.
-3. If no cookie → redirects to `/auth/sign-in` with empty message.
-4. Clears the cookie after reading via `removeCookie`.
-5. Renders the await-verification page.
-
-### Page content
-
-- Card with `data-testid='await-verification-page'`
-- Shows the email address (from cookie)
-- "Back to Sign In" link (`data-testid='back-to-sign-in-action'`)
-- "Resend Email" form (`POST /auth/resend-email`) — `data-testid='resend-email-action'` (only shown when email is present)
-
-## Cross-references
-
-- [handle-resend-email.md](handle-resend-email.md) — processes the resend form
-- [../build-layout.md](../build-layout.md) — layout wrapper.
-- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `retrieveCookie`, `removeCookie`.
-- [../../lib/setup-no-cache-headers.md](../../lib/setup-no-cache-headers.md) — `setupNoCacheHeaders`.
-- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`.
-- [../../constants.md](../../constants.md) — `PATHS.AUTH`, `COOKIES.EMAIL_ENTERED`, `STANDARD_SECURE_HEADERS`.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../constants` — `PATHS`, `COOKIES`, `STANDARD_SECURE_HEADERS`
+- `../../lib/cookie-support` — `retrieveCookie`, `removeCookie`
+- `../../lib/redirects` — `redirectWithMessage`
+- `../../lib/setup-no-cache-headers` — `setupNoCacheHeaders`
+- `../build-layout` — `useLayout`

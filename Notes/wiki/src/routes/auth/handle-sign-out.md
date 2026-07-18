@@ -1,32 +1,22 @@
-# handle-sign-out.ts
+# src/routes/auth/handle-sign-out.ts
 
-**Source:** `src/routes/auth/handle-sign-out.ts`
+POST handler for sign-out.
 
-## Purpose
+## Route Registered
 
-POST handler for sign-out (`POST /auth/sign-out`). Calls Better Auth to invalidate the session and clear cookies.
+- `POST /auth/sign-out` — Sign out current user
 
-## Export
+## Flow
 
-### `handleSignOut(app): void`
+1. Creates Better Auth instance
+2. Constructs a request to `/api/auth/sign-out` and calls `auth.handler`
+3. On success (200): redirects to sign-out page, preserving cookie-clearing headers from auth response
+4. On failure: manually removes `better-auth.session_token` and `better-auth.session_data` cookies, then redirects
+5. Error handling: always redirects to sign-out page
 
-### Flow
+## Dependencies
 
-1. Creates a Better Auth instance via `createAuth(c.env)`.
-2. Constructs a synthetic request to `/api/auth/sign-out` with the original headers and calls `auth.handler(authRequest)`.
-3. If the response is 200 → creates a redirect to `/auth/sign-out` with empty message, copies all `Set-Cookie` headers from the auth response.
-4. On API error or non-200 → manually clears `better-auth.session_token` and `better-auth.session_data` cookies via `removeCookie`, then redirects to `/auth/sign-out` with empty message.
-5. On outer catch → redirects to `/auth/sign-out` with `'Internal Server Error'`.
-
-## Cross-references
-
-- [build-sign-out.md](build-sign-out.md) — GET confirmation page
-- [../../lib/auth.md](../../lib/auth.md) — `createAuth`.
-- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `removeCookie`.
-- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`, `redirectWithError`.
-- [../../constants.md](../../constants.md) — `PATHS.AUTH.SIGN_OUT`, `STANDARD_SECURE_HEADERS`.
-- [../../local-types.md](../../local-types.md) — `Bindings` type.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../lib/auth` — `createAuth`
+- `../../lib/redirects` — `redirectWithError`, `redirectWithMessage`
+- `../../lib/cookie-support` — `removeCookie`
+- `../../constants` — `PATHS`, `STANDARD_SECURE_HEADERS`

@@ -1,58 +1,48 @@
-# confirm-helpers.ts
+# src/lib/db/confirm-helpers.ts
 
-**Source:** `src/lib/db/confirm-helpers.ts`
+Race-tolerant create-or-reuse helpers and shared confirmation pipeline for expense/recurring confirmation handlers.
 
-Race-tolerant create-or-reuse helpers for the confirmation handlers, plus a shared resolution pipeline for tags and categories across all confirm flows.
+## Functions
 
-## Overview
+### createOrReuseTag(db, rawName): Result\<TagRow, Error\>
 
-Both `createOrReuseTag` and `createOrReuseCategory` attempt to insert a new row. If the DB-level unique constraint fires (another request created the same name between the initial form POST and the confirmation POST), they silently look up and return the already-existing row instead of propagating the error. This makes the confirmation handler idempotent with respect to concurrent writers — consistent with the PRD's no-per-user-ownership rule where all signed-in users share the same tag and category sets.
+Attempts to create a new tag. If the DB rejects the insert due to a unique constraint (race condition), looks up and returns the existing row instead. Uses ULID for IDs.
 
-## Exports
+### createOrReuseCategory(db, rawName): Result\<CategoryRow, Error\>
 
-### `CategoryRow` / `TagRow`
+Same pattern as `createOrReuseTag` but for categories. Race-tolerant: on unique constraint violation, returns the existing row.
 
-Simple row interfaces:
-- `id: string`
-- `name: string`
+### resolveConfirmTagsAndCategory(db, tagIds, newTagsRaw, categoryName): Promise\<ResolvedConfirmItems\>
 
-### `createOrReuseTag(db, rawName)`
+Shared resolution pipeline for all three confirmation handlers (expense create, expense edit, recurring create/edit):
 
-Attempts to create a new tag with the given name. If the DB rejects the insert due to the unique-lowercase index (a race with another writer), looks up and returns the existing row instead. Returns `Result<TagRow, Error>` via `withRetry`.
+1. Fetches full tag list via `listTags`
+2. Parses `tagId[]` + `newTags` via `parseTagInputs`
+3. Looks up category by name via `findCategoryByName`
+4. If category is new, validates name via `parseNewCategoryName`
 
-### `createOrReuseCategory(db, rawName)`
-
-Attempts to create a new category with the given name. Same race-tolerant fallback pattern as `createOrReuseTag`. Returns `Result<CategoryRow, Error>` via `withRetry`.
-
-### `ResolvedConfirmItems`
-
-Discriminated union returned by `resolveConfirmTagsAndCategory`:
-- `ok: true` — contains `existingTagIds`, `newTagNames`, `rawNewTagsPreserved`, `existingCategoryId`, `newCategoryName`, `existingCategoryName`
-- `ok: false` with `kind`: `'tag-list-error' | 'tag-input-error' | 'category-lookup-error' | 'new-category-name-error'`
-
-The `tag-input-error` branch includes `fieldErrors` and `rawNewTagsPreserved` for round-tripping through `redirectWithFormErrors`.
-
-### `resolveConfirmTagsAndCategory(db, tagIds, newTagsRaw, categoryName)` (Issue 18)
-
-Shared resolution pipeline for all three confirmation handlers (expense create/edit, recurring create/edit).
-
-Steps:
-1. Fetches the full tag list via `listTags`.
-2. Parses submitted `tagId[]` + `newTags` inputs via `parseTagInputs` (Issue 18 tag-input validator).
-3. Looks up the submitted category name via `findCategoryByName`.
-4. When the category is new, validates it via `parseNewCategoryName`.
-
-Returns a discriminated union so callers can handle each failure branch and propagate errors to the correct redirect target without duplicating logic across handlers.
+Returns a discriminated union `ResolvedConfirmItems`:
+- `{ ok: true, existingTagIds, newTagNames, ... }` — success
+- `{ ok: false, kind: 'tag-list-error' }` — tag list fetch failed
+- `{ ok: false, kind: 'tag-input-error', fieldErrors, rawNewTagsPreserved }` — tag parsing failed
+- `{ ok: false, kind: 'category-lookup-error' }` — category lookup failed
+- `{ ok: false, kind: 'new-category-name-error', message }` — new category name invalid
 
 ## Consumers
 
-- `expense-confirm-post-handler.ts` — expense create confirmation.
-- `build-edit-expense.tsx` — expense edit confirmation (`POST /expenses/:id/confirm-edit-new`).
-- `build-create-recurring.tsx` — recurring create confirmation.
-- `build-edit-recurring.tsx` — recurring edit confirmation.
+- `src/routes/expenses/expense-confirm-post-handler.ts`
+- `src/routes/expenses/build-edit-expense.tsx`
+- `src/routes/recurring/build-create-recurring.tsx`
+- `src/routes/recurring/build-edit-recurring.tsx`
 
-## Cross-references
+## Dependencies
 
-- See [expense-confirm-post-handler.ts](../../routes/expenses/expense-confirm-post-handler.md) and [build-edit-expense.tsx](../../routes/expenses/build-edit-expense.md) for expense-side consumers.
-- See [build-create-recurring.tsx](../../routes/recurring/build-create-recurring.md) and [build-edit-recurring.tsx](../../routes/recurring/build-edit-recurring.md) for recurring-side consumers.
-- See [expense-confirm-handler.spec.ts](../../../../tests/expense-confirm-handler.spec.md), [recurring-confirm-handler.spec.ts](../../../../tests/recurring-confirm-handler.spec.md), and [recurring-edit-confirm-handler.spec.ts](../../../../tests/recurring-edit-confirm-handler.spec.md) for tests.
+- `drizzle-orm` — `sql`
+- `true-myth/result` — Result type
+- `ulid` — ID generation
+- `../../db/schema` — `category`, `tag`
+- `../../local-types` — `DrizzleClient`
+- `../db-helpers` — `withRetry`
+- `./tag-access` — `listTags`
+- `./category-access` — `findCategoryByName`
+- `../expense-validators` — `parseTagInputs`, `parseNewCategoryName`

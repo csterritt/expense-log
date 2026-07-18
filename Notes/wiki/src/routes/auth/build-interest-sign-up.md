@@ -1,42 +1,24 @@
-# build-interest-sign-up.tsx
+# src/routes/auth/build-interest-sign-up.tsx
 
-**Source:** `src/routes/auth/build-interest-sign-up.tsx`
+Route builder for the interest/waitlist sign-up page.
 
-## Purpose
+## Route Registered
 
-Interest/waitlist sign-up page (`/auth/interest-sign-up`). Only active in `INTEREST_SIGN_UP` mode. Allows visitors to join a waitlist by submitting their email.
+- `GET /auth/sign-up` — Waitlist page with email input form
 
-## Export
+## Features
 
-### `buildInterestSignUp(app): void`
+- Shows "not accepting new accounts" message
+- Email input form that posts to `PATHS.AUTH.INTEREST_SIGN_UP`
+- Pre-fills email from `EMAIL_ENTERED` cookie
+- "Sign In" link
+- No-cache headers
+- Redirects already-signed-in users to expenses
 
-Route: `GET /auth/interest-sign-up`
+## Dependencies
 
-### Behavior
-
-1. Authenticated users are redirected to `/expenses` with `MESSAGES.ALREADY_SIGNED_IN`.
-2. Reads `EMAIL_ENTERED` cookie via `retrieveCookie` for pre-populating the email field.
-3. Sets no-cache headers via `setupNoCacheHeaders`.
-4. Renders the interest sign-up form.
-
-### Form fields
-
-- **Email** — `type='email'`, `data-testid='interest-email-input'` (`autoFocus`, pre-populated from cookie)
-- **Submit** — `data-testid='interest-action'`
-
-### Navigation
-
-- "Sign In Instead" link — `data-testid='go-to-sign-in-action'`
-
-## Cross-references
-
-- [handle-interest-sign-up.md](handle-interest-sign-up.md) — POST handler
-- [../build-layout.md](../build-layout.md) — layout wrapper.
-- [../../lib/cookie-support.md](../../lib/cookie-support.md) — `retrieveCookie`.
-- [../../lib/setup-no-cache-headers.md](../../lib/setup-no-cache-headers.md) — `setupNoCacheHeaders`.
-- [../../lib/redirects.md](../../lib/redirects.md) — `redirectWithMessage`.
-- [../../constants.md](../../constants.md) — `PATHS.AUTH`, `COOKIES.EMAIL_ENTERED`, `MESSAGES.ALREADY_SIGNED_IN`, `STANDARD_SECURE_HEADERS`.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../constants` — `PATHS`, `STANDARD_SECURE_HEADERS`, `MESSAGES`, `COOKIES`
+- `../../lib/redirects` — `redirectWithMessage`
+- `../../lib/setup-no-cache-headers` — `setupNoCacheHeaders`
+- `../../lib/cookie-support` — `retrieveCookie`
+- `../build-layout` — `useLayout`

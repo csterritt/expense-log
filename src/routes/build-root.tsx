@@ -30,7 +30,7 @@ const renderRoot = () => {
               className='btn btn-primary'
               data-testid='visit-expenses-action'
             >
-              Protected Content
+              Your Expenses
             </a>
           </div>
         </div>

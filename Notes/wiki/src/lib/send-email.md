@@ -1,26 +1,27 @@
-# send-email.ts
+# src/lib/send-email.ts
 
-**Source:** `src/lib/send-email.ts`
+SMTP email sending via Nodemailer with retry logic. Used for OTP verification emails.
 
-## Purpose
+## Functions
 
-Lower-level email transport. Creates a Nodemailer SMTP transporter using `env.SMTP_SERVER_*` vars and sends a single email. Also provides an OTP-specific helper with retry.
+### sendEmail(env, fromAddress, toAddress, subject, content): Promise\<void\>
 
-## Exports
+Sends an HTML email via SMTP using env-configured server. Validates SMTP config (host, port, user, password). Throws on missing config or send failure.
 
-### `sendEmail(env, fromAddress, toAddress, subject, content): Promise<void>`
+### sendOtpToUserViaEmail(env, email, otp, emailAgent?): Promise\<Result\<boolean, Error\>\>
 
-Validates that `SMTP_SERVER_PORT`, `SMTP_SERVER_HOST`, `SMTP_SERVER_USER`, and `SMTP_SERVER_PASSWORD` are set. Creates a `nodemailer.createTransport` with `secure: true` (TLS), sends the mail, and logs success or throws on error.
+Sends an OTP verification code email with retry logic (`STANDARD_RETRY_OPTIONS`). Returns `Result.ok(true)` on success, `Result.err(Error)` on failure. Accepts optional `emailAgent` for dependency injection in tests.
 
-### `sendOtpToUserViaEmail(env, email, otp, emailAgent = sendEmail): Promise<Result<boolean, Error>>`
+## Internal
 
-Wraps `sendOtpToUserViaEmailActual` in `async-retry` with `STANDARD_RETRY_OPTIONS`. Sends an HTML email with the OTP code and a 15-minute expiration note from `noreply@cls.cloud` with subject `'Your Expense Log Verification Code'`. Returns `Result.ok(true)` on success, `Result.err(Error)` on final failure.
+### sendOtpToUserViaEmailActual(env, email, otp, emailAgent): Promise\<Result\<boolean, Error\>\>
 
-## Cross-references
+Actual send implementation wrapped by retry logic. Sends from `noreply@cls.cloud` with subject "Your Expense Log Verification Code".
 
-- [constants.md](../constants.md) — `STANDARD_RETRY_OPTIONS`
-- [email-service.md](email-service.md) — higher-level template functions
+## Dependencies
 
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `nodemailer` — SMTP transport
+- `async-retry` — retry logic
+- `true-myth/result` — Result type
+- `../constants` — `STANDARD_RETRY_OPTIONS`
+- `../local-types` — `Bindings`

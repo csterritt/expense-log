@@ -1,66 +1,55 @@
-# local-types.ts
+# src/local-types.ts
 
-**Source:** `src/local-types.ts`
-
-## Purpose
-
-Central TypeScript type definitions for the application. Defines Hono `Bindings`, context `Variables`, auth-related types, and utility interfaces.
+TypeScript type definitions for the application's Bindings, auth types, and Hono context.
 
 ## Types
 
-### `SignInSession`
+### Bindings
 
-Legacy session shape with `id`, `token`, `userId`, `signedIn`, `attemptCount`, `createdAt`, `updatedAt`, `expiresAt`.
+Cloudflare Worker environment bindings interface:
+- `PROJECT_DB: D1Database` — D1 database binding
+- `SIGN_UP_MODE`, `EMAIL_SEND_URL`, `EMAIL_SEND_CODE` — app config
+- `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `CLOUDFLARE_D1_TOKEN` — Cloudflare API
+- `PO_APP_ID`, `PO_USER_ID` — Pushover notifications
+- `BETTER_AUTH_SECRET` — auth secret
+- `SMTP_SERVER_HOST`, `SMTP_SERVER_PORT`, `SMTP_SERVER_USER`, `SMTP_SERVER_PASSWORD` — email SMTP
 
-### `Bindings`
+### AuthUser
 
-Hono environment bindings. Includes:
+User data from Better Auth session: `id`, `email`, `name`, `emailVerified`, `image`, `createdAt`, `updatedAt`.
 
-- `PROJECT_DB` — D1Database
-- Optional: `SIGN_UP_MODE`, `EMAIL_SEND_URL`, `EMAIL_SEND_CODE`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_DATABASE_ID`, `CLOUDFLARE_D1_TOKEN`, `PO_APP_ID`, `PO_USER_ID`, `ALTERNATE_ORIGIN`, `BETTER_AUTH_SECRET`, `NODE_ENV`, `PLAYWRIGHT`, `SMTP_SERVER_HOST`, `SMTP_SERVER_PORT`, `SMTP_SERVER_USER`, `SMTP_SERVER_PASSWORD`, `ENABLE_TEST_ROUTES`
+### AuthSession
 
-### `DrizzleClient`
+Session data from Better Auth: `id`, `userId`, `expiresAt`, `token`, `createdAt`, `updatedAt`, `ipAddress`, `userAgent`.
 
-Return type of `createDbClient`.
+### AuthSessionResponse
 
-### `AuthUser`
+Combined `{ user: AuthUser, session: AuthSession }`.
 
-Better-auth user shape: `id`, `email`, `name`, `emailVerified`, `image`, `createdAt`, `updatedAt`.
+### AppVariables
 
-### `AuthSession`
+Variables stored in Hono context: `db`, `user`, `session`, `authSession`, `signInEmail`.
 
-Better-auth session shape: `id`, `userId`, `expiresAt`, `token`, `createdAt`, `updatedAt`, `ipAddress`, `userAgent`.
+### DrizzleClient
 
-### `AuthSessionResponse`
+Type alias for `ReturnType<typeof createDbClient>`.
 
-Combined `{ user: AuthUser; session: AuthSession }`.
+### AppEnv
 
-### `AppVariables`
+`{ Bindings: Bindings, Variables: AppVariables }` — Hono environment type.
 
-Hono context variables set by middleware:
+### AppContext
 
-- `db` — DrizzleClient
-- `user` — AuthUser | null
-- `session` — AuthSession | null
-- `authSession` — AuthSessionResponse | null
-- `signInEmail` — captured from sign-in form
+`Context<AppEnv>` — typed Hono context.
 
-### `AppEnv`
+### SignInSession
 
-`{ Bindings: Bindings; Variables: AppVariables }`
+Legacy session data structure (id, token, userId, signedIn, attemptCount, timestamps).
 
-### `AppContext`
+### PushoverMessage
 
-`Context<AppEnv>` — full Hono context type.
+`{ token, user, message }` for Pushover API.
 
-### `PushoverMessage`
+### FetchResponse
 
-`{ token: string; user: string; message: string }`
-
-### `FetchResponse`
-
-Simplified fetch response interface for `pushoverNotify`.
-
----
-
-See [source-code.md](../source-code.md) for the full catalog.
+`{ headers, json(), text() }` for fetch response helpers.

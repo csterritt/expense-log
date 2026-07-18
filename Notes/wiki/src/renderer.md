@@ -1,30 +1,28 @@
-# renderer.tsx
+# src/renderer.tsx
 
-**Source:** `src/renderer.tsx`
+Hono JSX renderer that wraps all page content in a standard HTML5 document shell.
 
-## Purpose
+## Behavior
 
-Hono JSX renderer middleware. Wraps all rendered responses in a standard HTML document shell with Tailwind CSS and DaisyUI.
+Uses `hono/jsx-renderer` with `docType: true` to produce:
 
-## Export
+```html
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/style-20260718154353.css" type="text/css" />
+    <title>Expense Log</title>
+  </head>
+  <body class="min-h-screen bg-base-200">
+    <!-- page content -->
+  </body>
+</html>
+```
 
-### `renderer`
+The CSS file is a build-time generated Tailwind/DaisyUI stylesheet with a timestamped filename for cache busting.
 
-Created via `jsxRenderer()` from `hono/jsx-renderer`.
+## Usage
 
-Renders:
-
-- `<html lang='en' data-theme='light'>`
-- `<head>` with charset, viewport, and linked stylesheet (`/style-20250722184943.css`)
-- `<title>Expense Log</title>`
-- `<body className='min-h-screen bg-base-200'>` with `{children}`
-
-Configured with `{ docType: true }` to emit `<!DOCTYPE html>`.
-
-## Cross-references
-
-- [style.css.md](style.css.md) — the linked stylesheet
-
----
-
-See [source-code.md](../source-code.md) for the full catalog.
+Registered as middleware via `app.use(renderer)` in `src/index.ts`. Route handlers call `c.render()` which injects page JSX as `children`.

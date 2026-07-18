@@ -1,39 +1,21 @@
-# build-delete-confirm.tsx
+# src/routes/profile/build-delete-confirm.tsx
 
-**Source:** `src/routes/profile/build-delete-confirm.tsx`
+Route builder for the delete account confirmation page.
 
-## Purpose
+## Route Registered
 
-Account deletion confirmation page (`/profile/delete-confirm`). Requires authentication. Asks the user to confirm before permanently deleting their account. Sets no-cache headers via `setupNoCacheHeaders`.
+- `GET /profile/delete-confirm` — Delete confirmation page (requires sign-in)
 
-## Export
+## Features
 
-### `buildDeleteConfirm(app): void`
+- Warning alert: "This action cannot be undone"
+- Explanation that account and all data will be permanently deleted
+- Cancel link back to profile, confirm button posts to `PATHS.PROFILE_DELETE`
+- No-cache headers
 
-Route: `GET /profile/delete-confirm`
+## Dependencies
 
-Middleware chain:
-
-1. `secureHeaders(STANDARD_SECURE_HEADERS)`
-2. `signedInAccess`
-
-### Page content
-
-- `data-testid='delete-confirm-page'` wrapper
-- Warning alert about irreversible deletion
-- Confirmation form (`POST /profile/delete`):
-  - "Delete This Account" button — `data-testid='confirm-delete-action'`
-- "Cancel" link back to `/profile` — `data-testid='cancel-delete-action'`
-
-## Cross-references
-
-- [handle-delete-account.md](handle-delete-account.md) — POST handler
-- [build-profile.md](build-profile.md) — profile page
-- [../build-layout.md](../build-layout.md) — layout wrapper.
-- [../../middleware/signed-in-access.md](../../middleware/signed-in-access.md) — auth gate.
-- [../../lib/setup-no-cache-headers.md](../../lib/setup-no-cache-headers.md) — `setupNoCacheHeaders`.
-- [../../constants.md](../../constants.md) — `PATHS.PROFILE`, `PATHS.PROFILE_DELETE_CONFIRM`, `PATHS.PROFILE_DELETE`, `STANDARD_SECURE_HEADERS`.
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../constants` — `PATHS`, `STANDARD_SECURE_HEADERS`
+- `../../middleware/signed-in-access` — auth guard
+- `../../lib/setup-no-cache-headers` — `setupNoCacheHeaders`
+- `../build-layout` — `useLayout`

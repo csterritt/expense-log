@@ -13,18 +13,9 @@ import type { Bindings } from '../local-types'
  */
 
 export const getCurrentTime = (c: Context, ...args: (string | number | Date)[]): Date => {
-  const isTestMode = (c as Context<{ Bindings: Bindings }>).env?.NODE_ENV !== 'production'
-  if (!isTestMode) {
     if (args.length === 0) {
       return new Date()
     }
 
     return new Date(...(args as ConstructorParameters<typeof Date>))
-  }
-
-   if (args.length === 0) { 
-     return new Date() 
-   } 
-
-   return new Date(...(args as ConstructorParameters<typeof Date>)) 
-   } 
+ } 

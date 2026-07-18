@@ -1,37 +1,22 @@
-# better-auth-handler.ts
+# src/routes/auth/better-auth-handler.ts
 
-**Source:** `src/routes/auth/better-auth-handler.ts`
+Sets up Better Auth integration with Hono: the API handler and session middleware.
 
-## Purpose
+## Functions
 
-Mounts the Better Auth API handler (`/api/auth/*`) and sets up the session/user context injection middleware.
+### setupBetterAuth(app): void
 
-## Exports
+Registers `app.all('/api/auth/*')` handler that delegates to Better Auth's `auth.handler`. Creates a new auth instance per request from `c.env`.
 
-### `setupBetterAuth(app): void`
+### setupBetterAuthMiddleware(app): void
 
-Creates a catch-all route at `/api/auth/*` that delegates to Better Auth's request handler. For every request it:
+Registers `app.use('*')` middleware that calls `auth.api.getSession` to check the current session. Sets `user`, `session`, and `authSession` context variables (or nulls if no session).
 
-1. Calls `createAuth(c.env)` (fresh auth instance per request)
-2. Delegates to `auth.handler(c.req.raw)`
-3. On error, returns HTTP 500 with `'Internal Server Error'`
+## Types
 
-### `setupBetterAuthMiddleware(app): void`
+- `BetterAuthVariables` — `{ user: AuthUser | null, session: AuthSession | null, authSession: AuthSessionResponse | null }`
 
-Global middleware that runs `auth.api.getSession()` on every request and injects the result into the Hono context:
+## Dependencies
 
-- `user` — `session.user`
-- `session` — `session.session`
-- `authSession` — full `{ user, session }`
-
-When no session exists or on error, sets all three to `null` and continues. Logs `'Better Auth middleware error:'` on error.
-
-## Cross-references
-
-- [../../lib/auth.md](../../lib/auth.md) — `createAuth`
-- [../../local-types.md](../../local-types.md) — `Bindings`, `AuthUser`, `AuthSession`, `AuthSessionResponse` types
-- [../../index.md](../../index.md) — middleware chain registration order
-
----
-
-See [source-code.md](../../../source-code.md) for the full catalog.
+- `../../lib/auth` — `createAuth`
+- `../../local-types` — `Bindings`, `AuthUser`, `AuthSession`, `AuthSessionResponse`

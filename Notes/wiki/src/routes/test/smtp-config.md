@@ -1,6 +1,2 @@
-# smtp-config.ts
-
-**Source:** `src/routes/test/smtp-config.ts`
-
-## Purpose
+# src/routes/test/smtp-config.ts
 

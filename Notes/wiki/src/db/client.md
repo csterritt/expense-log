@@ -1,24 +1,14 @@
-# client.ts
+# src/db/client.ts
 
-**Source:** `src/db/client.ts`
+Drizzle ORM client factory for Cloudflare D1.
 
-## Purpose
+## Functions
 
-Factory for creating the Drizzle ORM client used to query the Cloudflare D1 database.
+### createDbClient(db: D1Database): DrizzleClient
 
-## Export
+Creates a Drizzle ORM client instance wrapping the D1 database from Cloudflare env. Passes the full schema for relational query support.
 
-### `createDbClient(db: D1Database): DrizzleClient`
+## Dependencies
 
-Returns `drizzle(db, { schema })` where `schema` is imported from `./schema`.
-
-The exported schema object is passed in so Drizzle knows about all table definitions for relational queries.
-
-## Cross-references
-
-- [schema.md](schema.md) — table definitions passed to Drizzle
-- [local-types.md](../local-types.md) — `DrizzleClient` type
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `drizzle-orm/d1` — D1-compatible Drizzle driver
+- `./schema` — all table definitions

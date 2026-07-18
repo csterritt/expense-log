@@ -1,78 +1,56 @@
-# validators.ts
+# src/lib/validators.ts
 
-**Source:** `src/lib/validators.ts`
+Valibot schemas for authentication forms and a generic `validateRequest` helper.
 
-## Purpose
+## Schemas
 
-All form input validation is done with Valibot schemas. Each schema returns a tuple `[boolean, parsedData | null, errorMessage | null]`.
+### EmailSchema
 
-## Internal helpers
+Validates email: string, 1-254 chars, matches `VALIDATION.EMAIL_PATTERN`.
 
-### `validateEmail(value)`
+### SignInSchema
 
-Trims, lowercases, and tests against `VALIDATION.EMAIL_PATTERN`.
+`{ email: EmailSchema, password: string (non-empty) }`
 
-### `validateNameCharacters(value)`
+### SignUpFormSchema
 
-Must match `/^[a-zA-Z0-9_\- ]+$/` and be non-empty after trim.
+`{ name: string (1-100 chars, alphanumeric + hyphens/underscores/spaces), email: EmailSchema, password: string (8-128 chars) }`
 
-## Exports
+### GatedSignUpFormSchema
 
-### `EmailSchema`
+`{ code: string (8-64 chars, non-empty), name, email, password }` — same name/email/password rules as SignUpFormSchema.
 
-- `string()`
-- `minLength(1)`
-- `maxLength(254)`
-- custom `validateEmail`
-
-### `InterestSignUpFormSchema`
+### InterestSignUpFormSchema
 
 `{ email: EmailSchema }`
 
-### `ForgotPasswordFormSchema`
+### ForgotPasswordFormSchema
 
 `{ email: EmailSchema }`
 
-### `SignInSchema`
-
-`{ email: EmailSchema, password: string(minLength(1)) }`
-
-### `SignUpFormSchema`
-
-`{ name, email, password }`
-
-- `name` — `1–100` chars, `validateNameCharacters`
-- `email` — `EmailSchema`
-- `password` — `8–128` chars
-
-### `GatedSignUpFormSchema`
-
-Same as `SignUpFormSchema` plus `code` (8–64 chars, non-empty).
-
-### `ResendEmailFormSchema`
+### ResendEmailFormSchema
 
 `{ email: EmailSchema }`
 
-### `ResetPasswordFormSchema`
+### ResetPasswordFormSchema
 
-`{ token, password, confirmPassword }` with a custom validator ensuring `password === confirmPassword`.
+`{ token: string (1-512 chars), password: string (8-128), confirmPassword: string (8-128) }` with cross-field validation: password must equal confirmPassword.
 
-### `ChangePasswordFormSchema`
+### ChangePasswordFormSchema
 
-`{ currentPassword, newPassword, confirmPassword, userInfo? }` with a custom validator ensuring `newPassword === confirmPassword`. `userInfo` is an optional non-negative integer string.
+`{ currentPassword: string (non-empty), newPassword: string (8-128), confirmPassword: string (8-128), userInfo?: string }` with cross-field validation: newPassword must equal confirmPassword.
 
-### `PathSignInValidationParamSchema`
+### PathSignInValidationParamSchema
 
-`{ validationSuccessful?: string('true') }` — optional param for `/auth/sign-in/:validationSuccessful?`.
+`{ validationSuccessful?: string (must be 'true') }`
 
-### `validateRequest(data, schema): [boolean, T | null, string | null]`
+## Functions
 
-Arrow function. Uses `safeParse`. On failure, joins all issue messages. Special-cases `Expected unknown` → returns `VALIDATION.EMAIL_INVALID`.
+### validateRequest(data, schema): [boolean, output | null, error | null]
 
-## Cross-references
+Generic validation helper. Returns `[true, parsedOutput, null]` on success, `[false, null, errorMessage]` on failure. Error messages are extracted from Valibot issues.
 
-- [constants.md](../constants.md) — `VALIDATION` constants
+## Dependencies
 
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `valibot` — schema validation
+- `../constants` — `VALIDATION`

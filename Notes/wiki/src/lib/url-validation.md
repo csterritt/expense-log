@@ -1,27 +1,18 @@
-# url-validation.ts
+# src/lib/url-validation.ts
 
-**Source:** `src/lib/url-validation.ts`
+URL validation to prevent open redirect vulnerabilities.
 
-## Purpose
+## Functions
 
-Prevents open-redirect vulnerabilities by validating callback URLs in email verification and similar flows.
+### validateCallbackUrl(callbackUrl, requestOrigin): string
 
-## Export
+Validates a callback URL and returns a safe redirect path. Rules:
+- Missing/empty → returns `PATHS.AUTH.SIGN_IN`
+- Protocol-relative (`//evil.com`) → returns default
+- Relative path starting with `/` (not `//`) and no backslashes → allowed
+- Absolute URL with same origin as `requestOrigin` → returns pathname + search + hash
+- Anything else → returns default
 
-### `validateCallbackUrl(callbackUrl, requestOrigin): string`
+## Dependencies
 
-Rules:
-
-1. Missing or empty → returns `PATHS.AUTH.SIGN_IN`
-2. Protocol-relative (`//evil.com`) → rejected
-3. Relative paths starting with `/` are allowed unless they contain backslashes
-4. Absolute URLs are parsed against `requestOrigin` and allowed only if the origins match; path + search + hash are returned
-5. Malformed URLs or mismatched origins → fallback `PATHS.AUTH.SIGN_IN`
-
-## Cross-references
-
-- [constants.md](../constants.md) — `PATHS`
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `../constants` — `PATHS`

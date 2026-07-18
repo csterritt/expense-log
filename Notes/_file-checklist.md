@@ -1,0 +1,211 @@
+- [x] src/renderer.tsx
+- [x] src/middleware/guard-sign-up-mode.ts
+- [x] src/middleware/signed-in-access.ts
+- [x] src/types.d.ts
+- [x] src/scheduled.ts
+- [x] src/local-types.ts
+- [x] src/components/tag-chip-checkboxes.tsx
+- [x] src/components/gated-sign-up-form.tsx
+- [x] src/constants.ts
+- [x] src/style.css
+- [x] src/lib/et-date.ts
+- [x] src/lib/sign-up-utils.ts
+- [x] src/lib/expense-validators.ts
+- [x] src/lib/email-utils.ts
+- [x] src/lib/po-notify.ts
+- [x] src/lib/email-service.ts
+- [x] src/lib/confirmation-hmac.ts
+- [x] src/lib/money.ts
+- [x] src/lib/logger.ts
+- [x] src/lib/url-validation.ts
+- [x] src/lib/generate-code.ts
+- [x] src/lib/test-routes.ts
+- [x] src/lib/recurrence.ts
+- [x] src/lib/validators.ts
+- [x] src/lib/send-email.ts
+- [x] src/lib/time-access.ts
+- [x] src/lib/db/summary-access.ts
+- [x] src/lib/db/category-access.ts
+- [x] src/lib/db/confirm-helpers.ts
+- [x] src/lib/db/auth-access.ts
+- [x] src/lib/db/tag-access.ts
+- [x] src/lib/db/expense-access.ts
+- [x] src/lib/cookie-support.ts
+- [x] src/lib/redirects.tsx
+- [x] src/lib/form-state.ts
+- [x] src/lib/auth.ts
+- [x] src/lib/setup-no-cache-headers.ts
+- [x] src/lib/db-helpers.ts
+- [x] src/db/schema.ts
+- [x] src/db/client.ts
+- [x] src/index.ts
+- [x] src/version.ts
+- [ ] src/routes/build-summary.tsx
+- [ ] src/routes/build-tags.tsx
+- [ ] src/routes/build-root.tsx
+- [ ] src/routes/test/smtp-config.ts
+- [ ] src/routes/test/run-cron.ts
+- [ ] src/routes/test/sign-up-mode.ts
+- [ ] src/routes/test/database.ts
+- [ ] src/routes/auth/handle-reset-clock.ts
+- [ ] src/routes/auth/handle-sign-out.ts
+- [ ] src/routes/auth/build-email-confirmation.tsx
+- [ ] src/routes/auth/build-sign-up.tsx
+- [ ] src/routes/auth/build-reset-password.tsx
+- [ ] src/routes/auth/build-interest-sign-up.tsx
+- [ ] src/routes/auth/build-sign-out.tsx
+- [ ] src/routes/auth/handle-reset-password.ts
+- [ ] src/routes/auth/build-sign-in.tsx
+- [ ] src/routes/auth/handle-set-clock.ts
+- [ ] src/routes/auth/handle-gated-interest-sign-up.ts
+- [ ] src/routes/auth/build-forgot-password.tsx
+- [ ] src/routes/auth/build-gated-interest-sign-up.tsx
+- [ ] src/routes/auth/build-gated-sign-up.tsx
+- [ ] src/routes/auth/build-await-verification.tsx
+- [ ] src/routes/auth/handle-interest-sign-up.ts
+- [ ] src/routes/auth/handle-forgot-password.ts
+- [ ] src/routes/auth/better-auth-handler.ts
+- [ ] src/routes/auth/better-auth-response-interceptor.ts
+- [ ] src/routes/auth/handle-sign-up.ts
+- [ ] src/routes/auth/handle-gated-sign-up.ts
+- [ ] src/routes/auth/build-waiting-for-reset.tsx
+- [ ] src/routes/auth/handle-resend-email.ts
+- [ ] src/routes/expenses/build-edit-expense.tsx
+- [ ] src/routes/expenses/build-expenses.tsx
+- [ ] src/routes/expenses/expense-confirm-post-handler.ts
+- [ ] src/routes/expenses/expense-post-handler.ts
+- [ ] src/routes/expenses/expense-form-helpers.ts
+- [ ] src/routes/expenses/expense-get-handler.ts
+- [ ] src/routes/expenses/expense-form.tsx
+- [ ] src/routes/expenses/expense-list-renderer.tsx
+- [ ] src/routes/build-404.tsx
+- [ ] src/routes/build-recurring.tsx
+- [ ] src/routes/handle-set-db-failures.ts
+- [ ] src/routes/profile/build-profile.tsx
+- [ ] src/routes/profile/handle-change-password.ts
+- [ ] src/routes/profile/handle-delete-account.ts
+- [ ] src/routes/profile/build-delete-confirm.tsx
+- [ ] src/routes/build-categories.tsx
+- [ ] src/routes/build-layout.tsx
+- [ ] src/routes/recurring/build-edit-recurring.tsx
+- [ ] src/routes/recurring/build-create-recurring.tsx
+- [ ] src/routes/recurring/recurring-form.tsx
+- [ ] tests/expense-access.spec.ts
+- [ ] tests/url-validation.spec.ts
+- [ ] tests/summary-access.spec.ts
+- [ ] tests/expense-confirm-handler.spec.ts
+- [ ] tests/recurring-confirm-handler.spec.ts
+- [ ] tests/expense-validators.spec.ts
+- [ ] tests/time-access.spec.ts
+- [ ] tests/recurring-edit-confirm-handler.spec.ts
+- [ ] tests/money.spec.ts
+- [ ] tests/scheduled.spec.ts
+- [ ] tests/po-notify.spec.ts
+- [ ] tests/db-access-retry.spec.ts
+- [ ] tests/send-email.spec.ts
+- [ ] tests/tag-chip-checkboxes.spec.ts
+- [ ] tests/recurrence.spec.ts
+- [ ] tests/tsconfig.json
+- [ ] tests/auth-validators.spec.ts
+- [ ] tests/sign-up-utils.spec.ts
+- [ ] tests/helpers/test-db.ts
+- [ ] tests/et-date.spec.ts
+- [ ] e2e-tests/sign-up/11-name-validation.spec.ts
+- [ ] e2e-tests/sign-up/09-unverified-sign-in-redirects-to-await-verification.spec.ts
+- [ ] e2e-tests/sign-up/03-can-validate-email.spec.ts
+- [ ] e2e-tests/sign-up/07-cannot-access-await-verification-without-email-cookie.spec.ts
+- [ ] e2e-tests/sign-up/10-duplicate-unverified-signup-redirects.spec.ts
+- [ ] e2e-tests/sign-up/06-resend-email-rate-limiting.spec.ts
+- [ ] e2e-tests/sign-up/04-cannot-access-private-before-verification.spec.ts
+- [ ] e2e-tests/sign-up/01-sign-up-with-good-email-and-password.spec.ts
+- [ ] e2e-tests/sign-up/05-can-resend-verification-email.spec.ts
+- [ ] e2e-tests/sign-up/08-page-navigation-buttons.spec.ts
+- [ ] e2e-tests/sign-up/02-must-validate-email.spec.ts
+- [ ] e2e-tests/gated-sign-up/05-code-consumption-semantics.spec.ts
+- [ ] e2e-tests/gated-sign-up/02-gated-signup-with-invalid-code.spec.ts
+- [ ] e2e-tests/gated-sign-up/01-gated-signup-with-valid-code.spec.ts
+- [ ] e2e-tests/gated-sign-up/03-page-navigation-buttons.spec.ts
+- [ ] e2e-tests/gated-sign-up/04-name-validation.spec.ts
+- [ ] e2e-tests/general/01-startup-initial-page.spec.ts
+- [ ] e2e-tests/general/07-expense-routes-signed-in.spec.ts
+- [ ] e2e-tests/general/06-expense-routes-require-auth.spec.ts
+- [ ] e2e-tests/general/04-test-secure-headers.spec.ts
+- [ ] e2e-tests/general/02-visit-nonexistent-page.spec.ts
+- [ ] e2e-tests/general/03-test-body-size-limit.spec.ts
+- [ ] e2e-tests/general/05-sign-in-page-elements.spec.ts
+- [ ] e2e-tests/general/08-expense-nav-links.spec.ts
+- [ ] e2e-tests/expenses/05-tags-and-inline-creation.spec.ts
+- [ ] e2e-tests/expenses/16-filter-combined-clear.spec.ts
+- [ ] e2e-tests/expenses/13-tag-management.spec.ts
+- [ ] e2e-tests/expenses/14-filter-description-dates.spec.ts
+- [ ] e2e-tests/expenses/04-inline-category-creation.spec.ts
+- [ ] e2e-tests/expenses/18-entry-tag-chip-ui.spec.ts
+- [ ] e2e-tests/expenses/02-entry-form.spec.ts
+- [ ] e2e-tests/expenses/08-no-js-fallback.spec.ts
+- [ ] e2e-tests/expenses/23-list-filter-chip-unification.spec.ts
+- [ ] e2e-tests/expenses/19-entry-new-tag-confirmation.spec.ts
+- [ ] e2e-tests/expenses/21-entry-no-js-and-broken-js.spec.ts
+- [ ] e2e-tests/expenses/22-edit-tag-chip-ui.spec.ts
+- [ ] e2e-tests/expenses/11-delete-expense.spec.ts
+- [ ] e2e-tests/expenses/03-validation-errors.spec.ts
+- [ ] e2e-tests/expenses/15-filter-category-tags.spec.ts
+- [ ] e2e-tests/expenses/20-entry-tamper-and-error.spec.ts
+- [ ] e2e-tests/expenses/07-tag-chip-picker-js.spec.ts
+- [ ] e2e-tests/expenses/16-summary-default-and-grouping.spec.ts
+- [ ] e2e-tests/expenses/17-summary-date-range-and-empty.spec.ts
+- [ ] e2e-tests/expenses/12-category-management.spec.ts
+- [ ] e2e-tests/expenses/09-edit-expense.spec.ts
+- [ ] e2e-tests/expenses/06-category-combobox-js.spec.ts
+- [ ] e2e-tests/expenses/10-edit-with-new-items.spec.ts
+- [ ] e2e-tests/expenses/01-list-rendering.spec.ts
+- [ ] e2e-tests/interest-sign-up/04-page-navigation-buttons.spec.ts
+- [ ] e2e-tests/interest-sign-up/03-navigation-and-ui-tests.spec.ts
+- [ ] e2e-tests/interest-sign-up/02-validates-email-input.spec.ts
+- [ ] e2e-tests/interest-sign-up/01-can-join-waitlist-with-valid-email.spec.ts
+- [ ] e2e-tests/profile/01-can-access-profile-page.spec.ts
+- [ ] e2e-tests/profile/06-delete-account-confirm.spec.ts
+- [ ] e2e-tests/profile/02-can-change-password.spec.ts
+- [ ] e2e-tests/profile/03-humorous-question-changes-daily.spec.ts
+- [ ] e2e-tests/profile/04-validation-errors.spec.ts
+- [ ] e2e-tests/profile/05-delete-account-cancel.spec.ts
+- [ ] e2e-tests/support/mode-helpers.ts
+- [ ] e2e-tests/support/page-verifiers.ts
+- [ ] e2e-tests/support/auth-helpers.ts
+- [ ] e2e-tests/support/navigation-helpers.ts
+- [ ] e2e-tests/support/test-helpers.ts
+- [ ] e2e-tests/support/test-data.ts
+- [ ] e2e-tests/support/workflow-helpers.ts
+- [ ] e2e-tests/support/form-helpers.ts
+- [ ] e2e-tests/support/finders.ts
+- [ ] e2e-tests/support/db-helpers.ts
+- [ ] e2e-tests/support/validation-helpers.ts
+- [ ] e2e-tests/no-sign-up/01-sign-up-routes-return-404.spec.ts
+- [ ] e2e-tests/no-sign-up/04-page-navigation-buttons.spec.ts
+- [ ] e2e-tests/no-sign-up/02-sign-up-post-requests-fail.spec.ts
+- [ ] e2e-tests/no-sign-up/03-sign-in-page-has-no-signup-link.spec.ts
+- [ ] e2e-tests/reset-password/03-complete-password-reset-flow.spec.ts
+- [ ] e2e-tests/reset-password/04-password-reset-validation-errors.spec.ts
+- [ ] e2e-tests/reset-password/07-password-reset-email-send-failure.spec.ts
+- [ ] e2e-tests/reset-password/01-can-access-forgot-password-page.spec.ts
+- [ ] e2e-tests/reset-password/02-can-request-password-reset.spec.ts
+- [ ] e2e-tests/reset-password/05-password-reset-navigation.spec.ts
+- [ ] e2e-tests/reset-password/08-password-reset-token-url-encoding.spec.ts
+- [ ] e2e-tests/reset-password/06-password-reset-rate-limiting.spec.ts
+- [ ] e2e-tests/sign-in/04-cant-visit-protected-page-signed-out.spec.ts
+- [ ] e2e-tests/sign-in/02-can-sign-in-with-known-email.spec.ts
+- [ ] e2e-tests/sign-in/03-cant-sign-in-with-wrong-password.spec.ts
+- [ ] e2e-tests/sign-in/05-sign-out-successfully.spec.ts
+- [ ] e2e-tests/sign-in/01-cant-sign-in-with-unknown-email.spec.ts
+- [ ] e2e-tests/summary/01-summary-defaults-and-controls.spec.ts
+- [ ] e2e-tests/summary/02-summary-tag-filter-and-recurring.spec.ts
+- [ ] e2e-tests/summary/03-summary-chip-and-sort.spec.ts
+- [ ] e2e-tests/recurring/04-validation.spec.ts
+- [ ] e2e-tests/recurring/07-generated-row-rendering.spec.ts
+- [ ] e2e-tests/recurring/03-delete.spec.ts
+- [ ] e2e-tests/recurring/01-list-and-create.spec.ts
+- [ ] e2e-tests/recurring/02-edit.spec.ts
+- [ ] e2e-tests/recurring/08-generated-in-queries.spec.ts
+- [ ] e2e-tests/recurring/05-cron-28th-shift.spec.ts
+- [ ] e2e-tests/recurring/09-create-tag-chip-ui.spec.ts
+- [ ] e2e-tests/recurring/10-edit-tag-chip-ui.spec.ts
+- [ ] e2e-tests/recurring/06-cron-idempotency.spec.ts

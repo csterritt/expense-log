@@ -1,62 +1,51 @@
-# et-date.ts
+# src/lib/et-date.ts
 
-**Source:** `src/lib/et-date.ts`
+America/New_York date utilities. All dates are `YYYY-MM-DD` strings. Uses `Intl.DateTimeFormat` for Cloudflare Workers compatibility.
 
-## Purpose
+## Functions
 
-`America/New_York` date helpers used by the expense feature for the default date filter range, validating `YYYY-MM-DD` inputs, and producing summary time-period labels. Built on `Intl.DateTimeFormat` so it works on Cloudflare Workers without additional dependencies. Issue 18 adds chronological sort keys (`monthChronKeyEt`, `quarterChronKeyEt`) and year-bearing labels (`monthLabelEt`, `quarterLabelEt`) for cross-year sorting.
+### todayEt(reference?): string
 
-## Exports
+Current date in ET timezone as `YYYY-MM-DD`. Accepts optional `Date` for testability.
 
-### `todayEt(reference?: Date): string`
+### defaultRangeEt(reference?): { from, to }
 
-Returns the current ET date as `YYYY-MM-DD`. Accepts an optional reference `Date` for testability (matches the injection style used by `time-access.ts`).
+Returns date range for expense list default view: `to` is today, `from` is the first of the month two months before today (in ET).
 
-### `defaultRangeEt(reference?: Date): { from: string; to: string }`
+### isValidYmd(s): boolean
 
-Returns the default date range for the expenses list:
+Validates a `YYYY-MM-DD` string is a real calendar date (checks month 1-12, day 1-31, and actual date validity via UTC Date construction).
 
-- `to` = `todayEt(reference)`
-- `from` = first of the month two months before `to` (e.g. mid-January → `YYYY-11-01` of the previous year; March 1 → January 1).
+### monthKeyEt(ymd): string
 
-### `isValidYmd(s: string): boolean`
+Returns 3-letter month abbreviation (e.g. `'Jan'`).
 
-Returns `true` iff `s` is a real calendar date formatted as `YYYY-MM-DD`. Rejects month/day overflow, invalid leap days, and malformed shapes.
+### monthLabelEt(ymd): string
 
-### `monthKeyEt(ymd: string): string` (Issue 17)
+Returns `Mmm YYYY` label (e.g. `'Jan 2026'`).
 
-Returns the capitalized three-letter month abbreviation for a `YYYY-MM-DD` ET-anchored date string (e.g. `'Jan'`). Rejects invalid dates via the same `isValidYmd` guard.
+### monthChronKeyEt(ymd): number
 
-### `monthLabelEt(ymd: string): string` (Issue 18)
+Returns `year * 100 + (month - 1)` for chronological sorting across year boundaries.
 
-Returns the `Mmm YYYY` month label for a `YYYY-MM-DD` ET-anchored date string (e.g. `'Jan 2026'`). Used by `summary-access.ts` for rendering chronological month rows.
+### quarterKeyEt(ymd): string
 
-### `monthChronKeyEt(ymd: string): number` (Issue 18)
+Returns quarter label (e.g. `'Jan-Mar'`, `'Apr-Jun'`, `'Jul-Sep'`, `'Oct-Dec'`).
 
-Returns the numeric chronological key `year * 100 + monthIndex` (0-based) for a `YYYY-MM-DD` date. Used to sort month rows across year boundaries (e.g. `Dec 2025` → `202511`, `Jan 2026` → `202600`).
+### quarterLabelEt(ymd): string
 
-### `quarterKeyEt(ymd: string): string` (Issue 17)
+Returns `Mmm-Mmm YYYY` quarter label (e.g. `'Jan-Mar 2026'`).
 
-Returns the calendar-quarter label `Mmm-Mmm` for a `YYYY-MM-DD` ET-anchored date string (one of `'Jan-Mar'`, `'Apr-Jun'`, `'Jul-Sep'`, `'Oct-Dec'`). Rejects invalid dates.
+### quarterChronKeyEt(ymd): number
 
-### `quarterLabelEt(ymd: string): string` (Issue 18)
+Returns `year * 10 + (quarter - 1)` for chronological sorting.
 
-Returns the `Mmm-Mmm YYYY` quarter label for a `YYYY-MM-DD` ET-anchored date string (e.g. `'Jan-Mar 2026'`). Used by `summary-access.ts` for rendering chronological quarter rows.
+### yearKeyEt(ymd): string
 
-### `quarterChronKeyEt(ymd: string): number` (Issue 18)
+Returns 4-digit year string (e.g. `'2026'`).
 
-Returns the numeric chronological key `year * 10 + quarterIndex` (0-based) for a `YYYY-MM-DD` date. Used to sort quarter rows across year boundaries (e.g. `Oct-Dec 2025` → `20253`, `Jan-Mar 2026` → `20260`).
+## Constants
 
-### `yearKeyEt(ymd: string): string` (Issue 17)
-
-Returns the four-digit year string for a `YYYY-MM-DD` ET-anchored date string (e.g. `'2026'`). Rejects invalid dates.
-
-## Cross-references
-
-- [routes/expenses/build-expenses.md](../routes/expenses/build-expenses.md) — calls `defaultRangeEt()` to build the listing window.
-- [db/summary-access.md](db/summary-access.md) — uses all key/label helpers to format `timePeriod` labels and chronological sort keys.
-- [tests/et-date.spec.md](../../tests/et-date.spec.md) — unit coverage including DST boundaries, leap-day edges, and the key/label helpers.
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `ET_FORMATTER` — `Intl.DateTimeFormat` with `America/New_York` timezone, `en-CA` locale (yields YYYY-MM-DD)
+- `MONTH_NAMES` — Jan-Dec abbreviations
+- `QUARTER_LABELS` — Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec

@@ -1,32 +1,19 @@
-# time-access.ts
+# src/lib/time-access.ts
 
-**Source:** `src/lib/time-access.ts`
+Time management with test-mode delta support. Allows E2E tests to simulate different dates by setting a `delta` cookie.
 
-## Purpose
+## Functions
 
-Time abstraction layer. In production, returns real `new Date()` values. In test/dev, reads a `delta` cookie to shift the clock forward or backward for deterministic rate-limiting and expiration tests.
+### getCurrentTime(c, ...args): Date
 
-## Exports
+Returns current time as a `Date`. In production: returns `new Date()` (or `new Date(...args)` if args provided). In development: adds a `delta` cookie value (milliseconds) to the current time, enabling time travel for tests.
 
-### `getCurrentTime(c, ...args): Date`
+### setCurrentDelta(c, delta): void
 
-- **Production** — returns `new Date(...args)` (or `new Date()` if no args)
-- **Test** — reads the `delta` cookie, parses it as an integer, and adds that offset to the current real time before constructing the `Date`
 
-### `setCurrentDelta(c, delta): void`
+### clearCurrentDelta(c): void
 
-Sets the `delta` cookie to the given number of milliseconds.
 
-### `clearCurrentDelta(c): void`
+## Dependencies
 
-Deletes the `delta` cookie.
-
-## Cross-references
-
-- [cookie-support.md](cookie-support.md) — `addCookie`, `removeCookie`, `retrieveCookie`
-- [routes/auth/handle-set-clock.md](../routes/auth/handle-set-clock.md) — sets the delta via a test route
-- [routes/auth/handle-reset-clock.md](../routes/auth/handle-reset-clock.md) — clears the delta
-
----
-
-See [source-code.md](../../source-code.md) for the full catalog.
+- `../local-types` — `Bindings`
