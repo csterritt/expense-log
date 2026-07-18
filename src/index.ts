@@ -133,7 +133,7 @@ app.use(async (c, next) => {
   const csrfMiddleware = csrf({
     origin: (origin: string) => {
       // return /https:\/\/expenses.cls.cloud$/.test(origin) || // PRODUCTION:UNCOMMENT
-      //  /https:\/\/expenses.cleverfox.workers.dev$/.test(origin)  // PRODUCTION:UNCOMMENT
+      //  /https:\/\/expense-log.cleverfox.workers.dev$/.test(origin)  // PRODUCTION:UNCOMMENT
       // PRODUCTION:REMOVE-NEXT-LINE
       return (
         /http:\/\/localhost(:\d+)?$/.test(origin) || // PRODUCTION:REMOVE

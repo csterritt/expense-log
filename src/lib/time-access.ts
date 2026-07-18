@@ -5,7 +5,7 @@
 import { Context } from 'hono'
 
 import { addCookie, removeCookie, retrieveCookie } from './cookie-support' // PRODUCTION:REMOVE
-import type { Bindings } from '../local-types'
+import type { Bindings } from '../local-types' // PRODUCTION:REMOVE
 
 /**
  * Returns the current time as a Date object. Use this instead of calling new Date() directly.

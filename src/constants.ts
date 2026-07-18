@@ -204,13 +204,13 @@ interface SecureHeadersConfig {
 export const STANDARD_SECURE_HEADERS: SecureHeadersConfig = {
   referrerPolicy: 'strict-origin-when-cross-origin',
   contentSecurityPolicy: {
-    // defaultSrc: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
+    // defaultSrc: ["'self'", 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
     defaultSrc: ["'self'"], // PRODUCTION:REMOVE
     baseUri: ["'self'"],
     childSrc: ["'self'"],
     connectSrc: ["'self'"],
     fontSrc: ["'self'", 'data:'],
-    // formAction: ["'self'", 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
+    // formAction: ["'self'", 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
     formAction: ["'self'"], // PRODUCTION:REMOVE
     frameAncestors: ["'self'"],
     frameSrc: ["'self'"],

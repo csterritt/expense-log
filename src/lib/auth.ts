@@ -98,7 +98,7 @@ export const createAuth = (env: Bindings) => {
       'http://localhost:3000', // PRODUCTION:REMOVE
       'http://127.0.0.1:3000', // PRODUCTION:REMOVE
       alternateOrigin, // PRODUCTION:REMOVE
-      // 'https://expenses.cls.cloud', 'https://expenses.cleverfox.workers.dev' // PRODUCTION:UNCOMMENT
+      // 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev' // PRODUCTION:UNCOMMENT
     ],
     // baseURL: 'https://expenses.cls.cloud', // PRODUCTION:UNCOMMENT
     baseURL: 'http://localhost:3000', // PRODUCTION:REMOVE
