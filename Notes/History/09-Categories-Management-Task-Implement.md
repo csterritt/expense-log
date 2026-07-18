@@ -634,7 +634,7 @@ I implemented the Issue 09 category management work through the code, unit-test,
 ## Notes
 
 - The dev server I started for Playwright validation was stopped.
-- `public/style-20260718154353.css` changed because Tailwind regenerated styles for the new category page classes.
+- `public/style-20260718172859.css` changed because Tailwind regenerated styles for the new category page classes.
 - The requested notification was sent.
 
 *Viewed [package.json](file:///home/chris/expense-log/package.json) *

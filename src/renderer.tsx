@@ -15,7 +15,7 @@ export const renderer = jsxRenderer(
         <head>
           <meta charSet='UTF-8' />
           <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-          <link rel='stylesheet' href='/style-20260718154353.css' type='text/css' />
+          <link rel='stylesheet' href='/style-20260718172859.css' type='text/css' />
           <title>Expense Log</title>
         </head>
         <body className='min-h-screen bg-base-200'>{children}</body>
