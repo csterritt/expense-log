@@ -6,6 +6,10 @@
 set -Eeuo
 
 curl -s 'http://localhost:3000' > /dev/null || ( echo 'No local server running' ; exit 1 )
+if [ $(ps auxwww | egrep -i 'tailwindcss/cli' | egrep -v 'grep' | wc -l) != 0 ] ; then
+    echo 'Tailwind CSS is running, please stop it'
+    exit 1
+fi
 ./clean-for-production.rb || exit 1
 echo clean
 jj abandon
@@ -21,6 +25,10 @@ rm -f public/index.html
 sleep 1
 curl -s 'http://localhost:3000' > public/index.html || exit 1
 sleep 1
+if [ $(wc -c < public/index.html) -eq 0 ] ; then
+    echo 'Failed to generate index.html'
+    exit 1
+fi
 jj describe -m "$msg"
 jj bookmark set dev -r @
 jj new main dev -m "$msg"
