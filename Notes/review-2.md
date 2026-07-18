@@ -164,7 +164,7 @@ A lot of DB work for a single merge operation.
 ### Code Quality
 
 - `src/local-types.ts:31`: `db?: string` — unclear what this is for alongside `PROJECT_DB: D1Database`.
-- `src/renderer.tsx:18`: CSS file hardcoded as `/style-20260718191424.css` — breaks on rebuild.
+- `src/renderer.tsx:18`: CSS file hardcoded as `/style-20260718193242.css` — breaks on rebuild.
 - `src/scheduled.ts:34`: Hardcoded log values instead of actual result counts.
 - `src/routes/expenses/expense-confirm-post-handler.ts:98`: `newCategoryName !== null` — should be `!= null` (handles undefined).
 - `src/routes/expenses/expense-form-helpers.ts:22`: `tags` property in values is vestigial and unused.

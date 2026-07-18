@@ -67,6 +67,8 @@ let paths = await globby([
   '!e2e-tests',
   '!run-dev.sh',
   '!prod_deploy.sh',
+  '!prod_deploy_git.sh',
+  '!prod_deploy_jj.sh',
   '!timestamp-build-filenames.js',
 ])
 console.log(`... found ${paths.length} files in the project`)
