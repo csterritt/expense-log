@@ -23,6 +23,8 @@ export const getCurrentTime = (c: Context, ...args: (string | number | Date)[]):
 
     return new Date(...(args as ConstructorParameters<typeof Date>))
   } // PRODUCTION:REMOVE
+// } // PRODUCTION:UNCOMMENT
+// PRODUCTION:STOP
 
   const ds = retrieveCookie(c, 'delta')
   const delta = parseInt(ds == null || ds.toString().trim() === '' ? '0' : ds)
