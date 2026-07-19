@@ -29,4 +29,4 @@ sqlite-utils insert $DB_PATH user - --pk id < tmp/user_dump.json
 sqlite-utils insert $DB_PATH expense - --pk id < tmp/expense_dump.json
 sqlite-utils insert $DB_PATH tag - --pk id < tmp/tag_dump.json
 sqlite-utils insert $DB_PATH category - --pk id < tmp/category_dump.json
-sqlite-utils insert $DB_PATH expenseTag - --pk id < tmp/expenseTag_dump.json
+sqlite-utils insert $DB_PATH expenseTag - < tmp/expenseTag_dump.json

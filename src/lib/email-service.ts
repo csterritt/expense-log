@@ -105,8 +105,11 @@ const createTransporter = (env: Bindings): EmailTransporter => {
       if (!config.emailUrl) {
         throw new Error('EMAIL_SEND_URL is not configured')
       }
+      if (!config.emailCode) {
+        throw new Error('EMAIL_SEND_CODE is not configured')
+      }
 
-      return fetch(config.emailUrl, {
+      const response = await fetch(config.emailUrl, {
         body: JSON.stringify({
           email_to: mailOptions.to,
           subject: mailOptions.subject,
@@ -120,6 +123,16 @@ const createTransporter = (env: Bindings): EmailTransporter => {
           'content-type': 'application/json;charset=UTF-8',
         },
       })
+
+      if (!response.ok) {
+        const rawBody = await response.text().catch(() => '')
+        const excerpt = rawBody.slice(0, 200).replace(/\s+/g, ' ').trim()
+        throw new Error(
+          `Email provider returned HTTP ${response.status}${excerpt ? `: ${excerpt}` : ''}`,
+        )
+      }
+
+      return response
     },
   }
 }

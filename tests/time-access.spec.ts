@@ -24,6 +24,7 @@ const makeFakeContext = () => {
   // c.req.raw.headers.get("Cookie");
   // c.header("Set-Cookie", cookie, { append: true });
   return {
+    env: { NODE_ENV: 'development' },
     req: {
       raw: {
         headers: {

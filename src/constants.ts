@@ -258,6 +258,7 @@ export const LOG_MESSAGES = {
   DB_UPDATE_ACCOUNT_TS: 'Database error updating account timestamp:',
   DB_GET_USER_WITH_ACCOUNT: 'Database error getting user with account:',
   DB_VALIDATE_SIGN_UP_CODE: 'Database error validating sign-up code:',
+  RESEND_EMAIL_ALREADY_VERIFIED: 'Resend email requested for already-verified account:',
 } as const
 
 /**
