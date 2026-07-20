@@ -51,6 +51,7 @@ import { setupBetterAuthResponseInterceptor } from './routes/auth/better-auth-re
 
 import { Bindings } from './local-types'
 import { validateEnvBindings } from './middleware/guard-sign-up-mode'
+import { isOriginAllowed } from './lib/origin-config'
 import { handleSetClock } from './routes/auth/handle-set-clock' // PRODUCTION:REMOVE
 import { handleResetClock } from './routes/auth/handle-reset-clock' // PRODUCTION:REMOVE
 import { handleSetDbFailures } from './routes/handle-set-db-failures' // PRODUCTION:REMOVE
@@ -113,12 +114,6 @@ const isTestRouteEnabledFlag = isTestRouteEnabled({
   playwright: (env as Bindings).PLAYWRIGHT, // PRODUCTION:REMOVE
 }) // PRODUCTION:REMOVE
 
-let alternateOrigin = /http:\/\/localhost(:\d+)?$/ // PRODUCTION:REMOVE
-// PRODUCTION:REMOVE-NEXT-LINE
-if (env.ALTERNATE_ORIGIN) {
-  alternateOrigin = new RegExp(env.ALTERNATE_ORIGIN) // PRODUCTION:REMOVE
-} // PRODUCTION:REMOVE
-
 // Apply middleware
 app.use(secureHeaders({ referrerPolicy: 'strict-origin-when-cross-origin' }))
 // Apply CSRF protection to all routes except test endpoints
@@ -132,13 +127,15 @@ app.use(async (c, next) => {
   // Apply CSRF protection to all other routes
   const csrfMiddleware = csrf({
     origin: (origin: string) => {
-      // return /https:\/\/expenses.cls.cloud$/.test(origin) || // PRODUCTION:UNCOMMENT
-      //  /https:\/\/expense-log.cleverfox.workers.dev$/.test(origin)  // PRODUCTION:UNCOMMENT
       // PRODUCTION:REMOVE-NEXT-LINE
-      return (
-        /http:\/\/localhost(:\d+)?$/.test(origin) || // PRODUCTION:REMOVE
-        alternateOrigin.test(origin) // PRODUCTION:REMOVE
-      ) // PRODUCTION:REMOVE
+      if (/http:\/\/localhost(:\d+)?$/.test(origin)) {
+        return true // PRODUCTION:REMOVE
+      } // PRODUCTION:REMOVE
+      // PRODUCTION:REMOVE-NEXT-LINE
+      if (/http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+        return true // PRODUCTION:REMOVE
+      } // PRODUCTION:REMOVE
+      return isOriginAllowed(c.env as Bindings)(origin)
     },
   })
 

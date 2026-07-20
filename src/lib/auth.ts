@@ -13,6 +13,7 @@ import { schema } from '../db/schema'
 import { sendConfirmationEmail, sendPasswordResetEmail } from './email-service'
 import type { Bindings } from '../local-types'
 import { DURATIONS } from '../constants'
+import { getCanonicalOrigin, getTrustedOrigins } from './origin-config'
 
 /**
  * Create and configure better-auth instance
@@ -22,12 +23,6 @@ import { DURATIONS } from '../constants'
 export const createAuth = (env: Bindings) => {
   const db: D1Database = env.PROJECT_DB
   const dbClient = createDbClient(db)
-
-  let alternateOrigin = 'http://localhost:3000/' // PRODUCTION:REMOVE
-  // PRODUCTION:REMOVE-NEXT-LINE
-  if (env.ALTERNATE_ORIGIN) {
-    alternateOrigin = env.ALTERNATE_ORIGIN.replace(/\$/, '') // PRODUCTION:REMOVE
-  } // PRODUCTION:REMOVE
 
   return betterAuth({
     database: drizzleAdapter(dbClient, {
@@ -97,11 +92,11 @@ export const createAuth = (env: Bindings) => {
     trustedOrigins: [
       'http://localhost:3000', // PRODUCTION:REMOVE
       'http://127.0.0.1:3000', // PRODUCTION:REMOVE
-      alternateOrigin, // PRODUCTION:REMOVE
-      // 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev' // PRODUCTION:UNCOMMENT
+      // PRODUCTION:REMOVE-NEXT-LINE
+      ...getTrustedOrigins(env),
     ],
-    // baseURL: 'https://expenses.cls.cloud', // PRODUCTION:UNCOMMENT
     baseURL: 'http://localhost:3000', // PRODUCTION:REMOVE
+    // baseURL: getCanonicalOrigin(), // PRODUCTION:UNCOMMENT
     redirectTo: '/expenses', // Redirect to protected page after successful sign-in
     secret: env.BETTER_AUTH_SECRET,
   })

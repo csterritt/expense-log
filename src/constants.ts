@@ -7,6 +7,8 @@
  * @module constants
  */
 
+import { STATIC_TRUSTED_ORIGINS } from './lib/origin-config'
+
 /**
  * All HTML status codes used in the app.
  * @readonly
@@ -102,7 +104,6 @@ export const COOKIES = {
     httpOnly: true,
     sameSite: 'Strict',
     // secure: true, // PRODUCTION:UNCOMMENT
-    // domain: 'expenses.cls.cloud', // PRODUCTION:UNCOMMENT
   },
 } as const
 
@@ -204,13 +205,13 @@ interface SecureHeadersConfig {
 export const STANDARD_SECURE_HEADERS: SecureHeadersConfig = {
   referrerPolicy: 'strict-origin-when-cross-origin',
   contentSecurityPolicy: {
-    // defaultSrc: ["'self'", 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
+    // defaultSrc: ["'self'", ...STATIC_TRUSTED_ORIGINS], // PRODUCTION:UNCOMMENT
     defaultSrc: ["'self'"], // PRODUCTION:REMOVE
     baseUri: ["'self'"],
     childSrc: ["'self'"],
     connectSrc: ["'self'"],
     fontSrc: ["'self'", 'data:'],
-    // formAction: ["'self'", 'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev'], // PRODUCTION:UNCOMMENT
+    // formAction: ["'self'", ...STATIC_TRUSTED_ORIGINS], // PRODUCTION:UNCOMMENT
     formAction: ["'self'"], // PRODUCTION:REMOVE
     frameAncestors: ["'self'"],
     frameSrc: ["'self'"],

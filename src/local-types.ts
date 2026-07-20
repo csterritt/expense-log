@@ -34,7 +34,7 @@ export interface Bindings {
   CLOUDFLARE_D1_TOKEN?: string
   PO_APP_ID?: string
   PO_USER_ID?: string
-  ALTERNATE_ORIGIN?: string // PRODUCTION:REMOVE
+  ALTERNATE_ORIGIN?: string
   BETTER_AUTH_SECRET?: string
   NODE_ENV?: string
   PLAYWRIGHT?: string // PRODUCTION:REMOVE
