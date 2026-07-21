@@ -13,6 +13,7 @@ import { schema } from '../db/schema'
 import { sendConfirmationEmail, sendPasswordResetEmail } from './email-service'
 import type { Bindings } from '../local-types'
 import { DURATIONS } from '../constants'
+import { getCanonicalOrigin, getTrustedOrigins } from './origin-config'
 
 /**
  * Create and configure better-auth instance
@@ -22,7 +23,6 @@ import { DURATIONS } from '../constants'
 export const createAuth = (env: Bindings) => {
   const db: D1Database = env.PROJECT_DB
   const dbClient = createDbClient(db)
-
 
   return betterAuth({
     database: drizzleAdapter(dbClient, {
@@ -90,9 +90,8 @@ export const createAuth = (env: Bindings) => {
     //   },
     // },
     trustedOrigins: [
-       'https://expenses.cls.cloud', 'https://expense-log.cleverfox.workers.dev' 
     ],
-     baseURL: 'https://expenses.cls.cloud', 
+     baseURL: getCanonicalOrigin(), 
     redirectTo: '/expenses', // Redirect to protected page after successful sign-in
     secret: env.BETTER_AUTH_SECRET,
   })

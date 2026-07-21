@@ -16,6 +16,7 @@ import {
   COOKIES,
   STANDARD_SECURE_HEADERS,
   MESSAGES,
+  MESSAGE_BUILDERS,
   LOG_MESSAGES,
 } from '../../constants'
 import { createAuth } from '../../lib/auth'
@@ -77,16 +78,9 @@ export const handleResendEmail = (app: Hono<{ Bindings: Bindings }>): void => {
 
         const userData = userWithAccount[0]
 
-        // Check if user is already verified
-        if (userData.emailVerified) {
-          return redirectWithMessage(
-            c,
-            PATHS.AUTH.SIGN_IN,
-            'Your email is already verified. You can sign in now.',
-          )
-        }
-
-        // Check rate limiting using account.updatedAt
+        // Check rate limiting using account.updatedAt (applies to all known users
+        // regardless of verification status, so attackers cannot distinguish
+        // verified from unverified accounts by observing rate-limit behavior)
         const now = Date.now()
         const lastEmailTime = userData.accountUpdatedAt ? userData.accountUpdatedAt.getTime() : 0
         const timeSinceLastEmail = now - lastEmailTime
@@ -98,25 +92,29 @@ export const handleResendEmail = (app: Hono<{ Bindings: Bindings }>): void => {
           return redirectWithError(
             c,
             PATHS.AUTH.AWAIT_VERIFICATION,
-            `Please wait ${remainingSeconds} more second${remainingSeconds !== 1 ? 's' : ''} before requesting another verification email.`,
+            MESSAGE_BUILDERS.verificationRateLimit(remainingSeconds),
           )
         }
 
-        // Use better-auth's built-in sendVerificationEmail method
-        // This ensures proper token generation and management
-        await auth.api.sendVerificationEmail({
-          body: {
-            email: email,
-            callbackURL: `${new URL(c.req.url).origin}${PATHS.AUTH.SIGN_IN}`,
-          },
-        })
+        // Only send a real verification email if the user is not yet verified.
+        // Verified users get the same generic response to avoid revealing
+        // account existence or verification status.
+        if (!userData.emailVerified) {
+          await auth.api.sendVerificationEmail({
+            body: {
+              email: email,
+              callbackURL: `${new URL(c.req.url).origin}${PATHS.AUTH.SIGN_IN}`,
+            },
+          })
 
-        // Update the account's updatedAt field to track this email send
-        const updateResult = await updateAccountTimestamp(db, userData.userId)
+          // Update the account's updatedAt field to track this email send
+          const updateResult = await updateAccountTimestamp(db, userData.userId)
 
-        if (updateResult.isErr) {
-          console.error(LOG_MESSAGES.DB_UPDATE_ACCOUNT_TS, updateResult.error)
-          // Don't fail the process if timestamp update fails
+          if (updateResult.isErr) {
+            console.error(LOG_MESSAGES.DB_UPDATE_ACCOUNT_TS, updateResult.error)
+          }
+        } else {
+          console.log(LOG_MESSAGES.RESEND_EMAIL_ALREADY_VERIFIED, email)
         }
 
         addCookie(c, COOKIES.EMAIL_ENTERED, email)
