@@ -40,6 +40,7 @@ export type ExpenseFormValues = {
   targetId?: string
   recurrence?: string
   anchorDate?: string
+  submissionKey?: string
 }
 
 /**

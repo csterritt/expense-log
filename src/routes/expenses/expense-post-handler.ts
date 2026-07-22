@@ -8,16 +8,22 @@
  */
 
 import { Context } from 'hono'
+import { Result } from 'true-myth'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
 import { findCategoryByName } from '../../lib/db/category-access'
 import { listTags } from '../../lib/db/tag-access'
 import { createExpenseWithTags } from '../../lib/db/expense-access'
+import { withIdempotency } from '../../lib/submission-idempotency'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
-import { parseExpenseCreate, parseNewCategoryName, parseTagInputs } from '../../lib/expense-validators'
+import {
+  parseExpenseCreate,
+  parseNewCategoryName,
+  parseTagInputs,
+} from '../../lib/expense-validators'
 import { redirectWithFormErrors, type ExpenseFormValues } from '../../lib/form-state'
-import { readRawBody } from './expense-form-helpers'
+import { readRawBody, requireUserId, EXPENSE_ADDED_OUTCOME } from './expense-form-helpers'
 import { renderConfirmNewItems } from './expense-form'
 import { PATHS } from '../../constants'
 
@@ -85,7 +91,12 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
       tagIds: raw.tagId,
       newTags: raw.newTags,
     }
-    return redirectWithFormErrors(c, PATHS.EXPENSES, { tags: 'One or more selected tags no longer exist.' }, rawValues)
+    return redirectWithFormErrors(
+      c,
+      PATHS.EXPENSES,
+      { tags: 'One or more selected tags no longer exist.' },
+      rawValues,
+    )
   }
 
   const lookup = await findCategoryByName(db, validated.value.category)
@@ -101,17 +112,30 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
 
   if (!anyNew) {
     // Everything matches — create the expense (and link tags) directly.
-    const createResult = await createExpenseWithTags(db, {
-      description: validated.value.description,
-      amountCents: validated.value.amountCents,
-      date: validated.value.date,
-      categoryId: lookup.value!.id,
-      tagIds: existingTagIds,
+    // Route the commit through the idempotency ledger so a replayed POST
+    // carrying the same submissionKey reproduces the redirect without a
+    // second write.
+    const outcome = await withIdempotency(db, {
+      key: raw.submissionKey,
+      userId: requireUserId(c),
+      run: async () => {
+        const createResult = await createExpenseWithTags(db, {
+          description: validated.value.description,
+          amountCents: validated.value.amountCents,
+          date: validated.value.date,
+          categoryId: lookup.value!.id,
+          tagIds: existingTagIds,
+        })
+        if (createResult.isErr) {
+          return Result.err(createResult.error)
+        }
+        return Result.ok(EXPENSE_ADDED_OUTCOME)
+      },
     })
-    if (createResult.isErr) {
+    if (outcome.isErr) {
       return redirectWithError(c, PATHS.EXPENSES, 'Failed to save expense. Please try again.')
     }
-    return redirectWithMessage(c, PATHS.EXPENSES, 'Expense added.')
+    return redirectWithMessage(c, outcome.value.path, outcome.value.message)
   }
 
   // Something is new — validate the new-category name when applicable.
@@ -152,6 +176,7 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
     category: raw.category,
     tagIds: existingTagIds,
     newTags: newTagNames.join(','),
+    submissionKey: raw.submissionKey,
   }
 
   return c.render(

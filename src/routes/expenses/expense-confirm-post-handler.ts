@@ -8,14 +8,16 @@
  */
 
 import { Context } from 'hono'
+import { Result } from 'true-myth'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { createManyAndExpense } from '../../lib/db/expense-access'
+import { withIdempotency } from '../../lib/submission-idempotency'
 import { resolveConfirmTagsAndCategory } from '../../lib/db/confirm-helpers'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import { parseExpenseCreate, type FieldErrors } from '../../lib/expense-validators'
 import { redirectWithFormErrors, type ExpenseFormValues } from '../../lib/form-state'
-import { readRawBody } from './expense-form-helpers'
+import { readRawBody, requireUserId, EXPENSE_ADDED_OUTCOME } from './expense-form-helpers'
 import { PATHS } from '../../constants'
 
 /**
@@ -82,24 +84,40 @@ export const handleExpensesConfirmPost = async (c: Context<{ Bindings: Bindings 
     }
   }
 
-  const { existingTagIds, newTagNames, existingCategoryId, newCategoryName } = resolved as Extract<typeof resolved, { ok: true }>
+  const { existingTagIds, newTagNames, existingCategoryId, newCategoryName } = resolved as Extract<
+    typeof resolved,
+    { ok: true }
+  >
 
-  const createResult = await createManyAndExpense(db, {
-    newCategoryName: newCategoryName ?? null,
-    existingCategoryId: existingCategoryId ?? null,
-    newTagNames,
-    existingTagIds,
-    date: validated.value.date,
-    description: validated.value.description,
-    amountCents: validated.value.amountCents,
+  // Route the commit through the idempotency ledger so a replayed confirm
+  // POST carrying the same submissionKey reproduces the redirect without a
+  // second write.
+  const outcome = await withIdempotency(db, {
+    key: raw.submissionKey,
+    userId: requireUserId(c),
+    run: async () => {
+      const createResult = await createManyAndExpense(db, {
+        newCategoryName: newCategoryName ?? null,
+        existingCategoryId: existingCategoryId ?? null,
+        newTagNames,
+        existingTagIds,
+        date: validated.value.date,
+        description: validated.value.description,
+        amountCents: validated.value.amountCents,
+      })
+      if (createResult.isErr) {
+        return Result.err(createResult.error)
+      }
+      return Result.ok(EXPENSE_ADDED_OUTCOME)
+    },
   })
-  if (createResult.isErr) {
+  if (outcome.isErr) {
     const errs: FieldErrors =
       newCategoryName !== null
-        ? { category: createResult.error.message }
-        : { tags: createResult.error.message }
+        ? { category: outcome.error.message }
+        : { tags: outcome.error.message }
     return redirectWithFormErrors(c, PATHS.EXPENSES, errs, rawValues)
   }
 
-  return redirectWithMessage(c, PATHS.EXPENSES, 'Expense added.')
+  return redirectWithMessage(c, outcome.value.path, outcome.value.message)
 }

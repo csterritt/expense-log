@@ -6,7 +6,16 @@
 // This consolidates the duplicated createTestDb from multiple test files
 
 import { drizzle } from 'drizzle-orm/bun-sqlite'
-import { category, expense, expenseTag, recurring, recurringTag, tag, schema } from '../../src/db/schema'
+import {
+  category,
+  expense,
+  expenseTag,
+  recurring,
+  recurringTag,
+  tag,
+  user,
+  schema,
+} from '../../src/db/schema'
 import type { DrizzleClient } from '../../src/local-types'
 type RunnableQuery = {
   run: () => unknown
@@ -24,6 +33,12 @@ export const createTestDb = async (): Promise<TestDb> => {
   const { Database } = bunSqlite
   const sqlite = new Database(':memory:')
   sqlite.run('PRAGMA foreign_keys = ON')
+  sqlite.run(
+    'CREATE TABLE user (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, emailVerified INTEGER NOT NULL DEFAULT 0, image TEXT, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
+  )
+  sqlite.run(
+    'CREATE TABLE submissionKey (key TEXT PRIMARY KEY, userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, outcome TEXT NOT NULL, createdAt INTEGER NOT NULL)',
+  )
   sqlite.run(
     'CREATE TABLE category (id TEXT PRIMARY KEY, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)',
   )
@@ -57,6 +72,23 @@ export const createTestDb = async (): Promise<TestDb> => {
 }
 
 // Common seed helpers
+export const seedUser = async (
+  db: TestDb,
+  id: string,
+  name: string = id,
+  email: string = `${id}@example.com`,
+): Promise<void> => {
+  const now = new Date()
+  await db.insert(user).values({
+    id,
+    name,
+    email,
+    emailVerified: true,
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
 export const seedCategory = async (db: TestDb, id: string, name: string): Promise<void> => {
   const now = new Date()
   await db.insert(category).values({ id, name, createdAt: now, updatedAt: now })
@@ -90,7 +122,11 @@ export const seedExpense = async (
   })
 }
 
-export const seedExpenseTag = async (db: TestDb, expenseId: string, tagId: string): Promise<void> => {
+export const seedExpenseTag = async (
+  db: TestDb,
+  expenseId: string,
+  tagId: string,
+): Promise<void> => {
   await db.insert(expenseTag).values({ expenseId, tagId })
 }
 
