@@ -65,6 +65,7 @@ The main ideas here are:
   - There should be a database constraint to ensure that the category or tag is only created once.
   - The user should not see an error, but should see the existing category or tag selected.
 - User submitted data should never be trusted, but validated and sanitized. Browsers can be tricked, and we don't want to be vulnerable to attacks.
+- Submission of form data to the server can fail, and when it does, the user is redirected to 'ErrorPage.html'. Please set up optional javascript to do the submission and catch this, and try exponential backoff to retry the submission. If it succeeds, redirect to the normal success message (or recreate it). If it fails after a five attempts, show a more descriptive error message on the form page, with the values filled in so the user can retry later. 
 
 Example data:
 

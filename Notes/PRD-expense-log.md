@@ -15,6 +15,7 @@ When the feature is complete, any signed-in user can:
 - View summaries on a dedicated page: pick a group-by dimension (`Time only`, `Category`, `Tag`, or `Category + Tag`), a time-period granularity (`Month`, `Quarter`, or `Year`), an optional tag filter (AND when more than one), and an optional date range.
 - Edit or delete any expense, category, or tag — subject to referential-integrity guards.
 - Define **recurring expenses** (monthly, quarterly, yearly) that auto-materialize into the expense list on their schedule via a nightly cron, without the user having to re-enter them.
+- Submit any data form resiliently: if a submission fails because of a transient network problem, a server (5xx) error, a request timeout, or the host's fallback `ErrorPage.html` response, the browser silently retries with exponential backoff instead of dumping the user on an error page — landing on the normal success page when a retry succeeds, or showing a clear, recoverable error on the form (with every value still filled in) once it has exhausted its retries.
 
 All data is shared across all signed-in users: everyone sees everyone else's expenses, categories, tags, and recurring templates. The feature reuses the existing auth, database, email, and styling (Tailwind + DaisyUI) systems. It is US-English, USD-only, and all date logic is anchored to `America/New_York`.
 
@@ -122,6 +123,19 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 71. As a signed-in user, if cron execution fails, I want a Pushover notification sent (when configured) and the error logged, so that I find out quickly.
 72. As a signed-in user, I want the same validation rules on the recurring-template form as on the expense form (description ≤ 200, amount > 0 with ≤ 2 decimals, category required, tag/category names ≤ 20 chars, anchor date must be a valid `YYYY-MM-DD`), so that templates can't produce invalid expenses.
 
+### Resilient submission
+
+73. As a signed-in user submitting any data form (expense, category, tag, or recurring template — create, edit, delete, merge, or confirmation), I want the submission sent in the background when JavaScript is available, so that a transient failure does not immediately throw me onto an error page.
+74. As a signed-in user, if a submission fails because of a network/transport error, a server error (HTTP 5xx), a client-side timeout, or the host's fallback `ErrorPage.html` response (which arrives as an HTTP 200 because our Worker never ran), I want the app to detect that failure and automatically retry, so that momentary problems recover without my involvement.
+75. As a signed-in user, I want retries to use exponential backoff with a capped delay and jitter, up to a total of five attempts (the initial attempt plus four retries), so that the server is not hammered and brief outages are ridden out.
+76. As a signed-in user, when a retry finally succeeds, I want to land on the normal post-submit page with the usual success message, exactly as if the first attempt had worked, so that success looks identical whether or not a retry was needed.
+77. As a signed-in user, if all five attempts fail, I want to stay on the form with a clear, descriptive error message and every field value (including tag-chip selections, new-tag text, and new-category text) still filled in, so that I can retry later without re-entering anything.
+78. As a signed-in user, I do not want a background retry to create duplicate rows if an earlier attempt actually committed on the server but its response was lost, so that retrying never double-books an expense, category, tag, or recurring template.
+79. As a signed-in user, I want ordinary validation and conflict errors (which this app surfaces by re-rendering the form via a redirect) to appear immediately without any retry, so that fixing a typo is never delayed by backoff.
+80. As a signed-in user with JavaScript disabled, I want form submission to keep working natively, accepting that a genuine infrastructure failure will still land me on the host's `ErrorPage.html` (the same behaviour as today), so that the app degrades gracefully.
+81. As a signed-in user, while a submission and its retries are in flight, I want the submit control disabled with a subtle "submitting…" affordance, so that I don't fire duplicate submissions by clicking again.
+82. As a signed-in user, I never want a retry to fire for a response the server deliberately rendered — a confirmation page, a validation re-render, or a normal success redirect — so that only genuine infrastructure failures are retried.
+
 ## Implementation Decisions
 
 ### Data model (new tables)
@@ -133,6 +147,7 @@ All data is shared across all signed-in users: everyone sees everyone else's exp
 - **`recurring`**: `id` (ULID, PK), `description` (text, ≤ 200 chars), `amountCents` (integer, > 0), `categoryId` (FK → `category.id`, `ON DELETE RESTRICT`), `recurrence` (text, one of `'monthly' | 'quarterly' | 'yearly'`), `anchorDate` (text, `YYYY-MM-DD`), `createdAt`, `updatedAt`.
 - **`recurringTag`**: join table for a recurring template's tags, `recurringId` (FK → `recurring.id`, `ON DELETE CASCADE`), `tagId` (FK → `tag.id`, `ON DELETE RESTRICT`), PK `(recurringId, tagId)`.
 - **Dedupe constraint**: unique index on `expense(recurringId, occurrenceDate)` where `recurringId IS NOT NULL`, guaranteeing the cron can never double-insert.
+- **`submissionKey`** (idempotency ledger for resilient submits): `key` (ULID, PK — server-generated per form render, echoed back by the client and reused across retries), `userId` (FK → the auth `user` table, `ON DELETE CASCADE`), `outcome` (text — the canonical post-submit redirect target plus its flash message, enough to replay the original result), `createdAt`. A committing mutation records its `key` inside the same transaction as the write; a replayed submission carrying an already-recorded `key` returns the stored `outcome` instead of writing again. Rows older than a short TTL (e.g. 24h) are pruned opportunistically.
 
 All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle migration.
 
@@ -199,6 +214,8 @@ All schema changes are made in `src/db/schema.ts` and accompanied by a Drizzle m
 - Client-side validation via HTML attributes (`required`, `maxlength`, `pattern`, `min`).
 - Form inputs use `value` (not `defaultValue`) for pre-population on edit and on re-render after validation errors.
 - Post-redirect-get on successful create/update/delete.
+- Every mutation form carries a hidden, server-generated `submissionKey` (ULID) used for idempotent retries (see *Resilient form submission* below).
+- Native submission is progressively enhanced by the resilient-submit module; with JS off, forms post natively and a true infrastructure failure lands on the host's `ErrorPage.html`, exactly as today.
 
 ### Tag input contract (server-authoritative)
 
@@ -231,9 +248,28 @@ The UI is never trusted; every handler revalidates. The contract applies uniform
 - **Asset 404 tolerance**: removing `public/js/tag-chip-picker.js` must not produce a 404 from any rendered page; all `<script>` references to it are removed in the same change.
 - **Logging scope**: validation errors are not logged as server errors. Unexpected server errors in post/confirm handlers log route, error class, and stack — but never raw form bodies, full query strings, expense descriptions, amounts, or tag names. (Data is shared across signed-in users; logs may have broader exposure.)
 
+### Resilient form submission (client retry + server idempotency)
+
+- **Applies to**: every signed-in mutation form — expense create/edit/delete and the new-item confirmation, category create/rename/merge/delete, tag create/rename/merge/delete, and recurring create/edit/delete. Auth forms (sign-in, sign-up, password reset) are out of scope.
+- **Progressive enhancement, not a rewrite**: forms keep their native `method="post"` `action` and continue to work with JS off. A small vanilla-JS module intercepts `submit` via event delegation on `document` (so it survives the DOM swaps described below), serializes the form with `FormData`, and sends it with `fetch` (`credentials: 'same-origin'`, `redirect: 'follow'`), preserving the existing CSRF behavior.
+- **Failure classification (what triggers a retry)** — an attempt is *retryable* when, and only when:
+  - the `fetch` promise rejects (network/transport error), or
+  - the attempt exceeds a client-side timeout (an `AbortController` fires), or
+  - the final response status is `>= 500`, or
+  - the final response is the host's fallback error page — detected by the response URL resolving to the known `ErrorPage.html` path (case-insensitive `pathname` match). The platform serves this page with an HTTP 200 when the Worker crashes or is unreachable; because it is produced by the host and not our Worker, the client cannot rely on a status code or a cooperating header for this case, so the response *identity* is the signal.
+  - Everything else is *terminal* and never retried, including a 2xx confirmation page, a 303 redirect the fetch followed to a success or validation re-render, and any 4xx. Since this app surfaces validation and conflict errors via post-redirect-get (a 303 back to the form with a flash / field-error cookie), those look like ordinary successful navigations to the client and are shown immediately.
+- **Backoff schedule**: exponential with a base delay, ×2 growth, full jitter, and a hard cap; a maximum of **five total attempts** (one initial + four retries). Delays are file-level constants following the project's `// PRODUCTION:UNCOMMENT` (real) / `// PRODUCTION:REMOVE` (tiny, for tests) convention so e2e runs stay fast. The attempt/delay schedule and the failure-classification predicate are factored into a pure function for unit testing.
+- **Success handling**: on a terminal, non-error response the module takes the already-fetched final HTML (`response.text()`) and swaps it into the document (replacing the DOM and updating history to `response.url`). Because the fetch followed the 303 and the server rendered the final GET — including reading-and-clearing the flash cookie into that HTML — the user sees the normal success message without a second browser navigation that would consume an already-cleared flash. The same swap transparently renders a validation re-render or the new-item confirmation page; the delegated submit handler then governs the confirmation form too.
+- **Exhaustion handling**: after the fifth failed attempt the module stops, re-enables the submit control, and reveals a descriptive, recoverable error banner on the form (`data-testid` per project convention). No navigation occurs, so every entered value — text fields, selected tag chips, new-tag text, new-category text — remains exactly as the user left it, ready for a manual retry later.
+- **In-flight UX**: the submit control is disabled and shows a "submitting…" state for the duration of a submission and its retries, preventing duplicate user-initiated submits.
+- **Idempotency (no duplicate writes on retry)**: each form render embeds a server-generated `submissionKey` (ULID) in a hidden field; the client sends the *same* key on every retry of a given submission. The committing handler records the key in the `submissionKey` ledger inside the same transaction as the write. If a replayed request arrives with a key that is already recorded (the first attempt committed but its response was lost), the handler skips the write and replays the stored outcome (the original success redirect) instead of inserting a second row. A key tied to a submission that failed validation (no commit) is never recorded, so the user may correct and resubmit freely. For the two-step expense-create flow the key is round-tripped through the confirmation page's hidden field and is recorded only by the committing confirm handler. An absent or malformed key falls back to running the mutation once without dedupe — it never blocks a legitimate submit.
+- **Detection constant**: the `ErrorPage.html` path is a shared constant referenced by both the client module and the tests, so the identity check has a single source of truth.
+- **Error-handling parity**: the resilient layer only ever retries the infrastructure-failure class already defined in the *Error-handling distinction* contract above; it never masks or retries genuine validation / conflict errors, which remain terminal 303 re-renders.
+
 ### Client JS (progressive enhancement)
 
 - Add a small vanilla-JS bundle served as a static asset that enhances:
+  - **Resilient submit**: intercepts submits on mutation forms and applies the retry / backoff / idempotency behavior described under *Resilient form submission*; absent JS, forms submit natively.
   - **Category combobox**: `<input list>` + custom dropdown listing existing categories filtered by typed text, with a "Create 'foo'" affordance; falls back to a plain text input when JS is off.
   - **Tag chip-checkbox block**: every existing tag is rendered server-side as a labeled checkbox styled as a chip, alphabetically sorted (case-insensitive) and wrapping to the viewport. Toggling a chip toggles its underlying checkbox; the form submits the standard checkbox name/value pairs. On the entry and recurring-template forms (only), an additional small text input next to the block lets the user add one or more new tag names (comma- or whitespace-separated); JS optimistically renders them as already-selected chips, and the server-side confirmation page handles them via the same inline-create flow used for new categories. The block degrades gracefully without JS: the checkboxes work natively, and the new-tag text input is submitted as-is to the same confirmation flow.
 - Without JS, both inputs still submit names; the server-side confirmation page handles unknown-name creation identically for both paths.
@@ -339,15 +375,29 @@ The UI is never trusted; every handler revalidates. The contract applies uniform
   - **Interface**: vanilla-JS auto-init on DOM elements with specific `data-*` attributes; degrades gracefully when absent (native checkboxes continue to work, the new-tag text input flows through the confirmation page).
   - **Tested**: via Playwright e2e only.
 
+- **`resilient-submit` client module** (`public/js/resilient-submit.js`)
+  - **Responsibility**: Progressive enhancement of every signed-in mutation form: intercept submit via document-level delegation, submit via `fetch`, classify failures, retry with capped-jittered exponential backoff (five total attempts), swap in the server's final HTML on success, and reveal a recoverable inline error with all values preserved on exhaustion.
+  - **Interface**: auto-inits on forms marked with a `data-*` attribute; reads the hidden `submissionKey` and reuses it across retries; references the shared `ErrorPage.html` path constant for host-error detection; no-op (native submission) when JS is absent.
+  - **Failure modes surfaced**: transient (retried silently), exhausted (inline recoverable error), terminal-non-error (rendered as-is).
+  - **Tested**: via Playwright e2e (network interception for transport failure, 5xx via the forced-DB-error hook, and a 200 `ErrorPage.html` response) plus a unit test of the pure backoff/attempt-schedule and classification function.
+
+- **`submission-idempotency` module** (`src/lib/submission-idempotency.ts`)
+  - **Responsibility**: Record a committing mutation's `submissionKey` within the write transaction and detect replays. Given a key and a unit of work, either run the work (recording the key + its outcome) or, on a duplicate key, return the previously recorded outcome without repeating the write.
+  - **Interface**: `withIdempotency(db, { key, userId, run }): Promise<Result<Outcome, RepoError>>` — `run` performs the mutation and returns the outcome to persist; a duplicate key short-circuits to the stored outcome; an absent/invalid key runs once without dedupe.
+  - **Tested**: yes (integration: fresh key commits once; replayed key returns the stored outcome and inserts nothing; a validation-failed key leaves no ledger row).
+
 ## Testing Decisions
 
 - Tests assert external behavior, not implementation details.
 - **Playwright e2e**: full coverage of entry, list, filter, summary, CRUD for categories and tags, progressive-enhancement paths (JS on and off for at least one smoke test per enhanced input), and all major failure modes (validation errors, delete-blocked, merge-on-rename).
+- **Resilient submit e2e**: using Playwright network interception plus the forced-DB-error and set-clock hooks, verify that a transport failure followed by success lands on the normal success page; that a 200 `ErrorPage.html` response is treated as a failure and retried; that five consecutive failures show the recoverable inline error with all values (including chips, new-tag text, and new-category text) preserved; that a validation error is shown immediately with no retry; that a replayed submission (same idempotency key) does not create a duplicate row; and that forms still submit with JavaScript disabled.
 - **Unit tests**:
   - `money`: parsing and formatting table tests (including malformed inputs).
   - `et-date`: boundary tests around DST transitions, month boundaries, and the month/quarter/year key formatters (including quarter-label casing).
   - `recurrence`: occurrence-date tables covering Monthly/Quarterly/Yearly with anchors on days 1, 15, 28, 29, 30, 31; Feb 29 yearly anchors in leap and non-leap years; catch-up across multiple missed periods; first-occurrence rule for newly created templates.
   - `expense-validators`: schema pass/fail tables, including the recurring-template schema.
+  - `resilient-submit`: the pure attempt/delay schedule (five attempts, ×2 growth, jitter bounds, cap) and the failure-classification predicate (network / timeout / 5xx / `ErrorPage.html` → retry; 2xx / 303 / 4xx → terminal).
+  - `submission-idempotency`: fresh-key commit, duplicate-key replay (no second write), and no ledger row on validation failure.
   - `expense-repo`: CRUD, referential integrity, merge-on-rename, AND/OR tag filtering, summary aggregation math across all four dimensions and all three granularities (covering by-tag double-counting, AND tag-filter narrowing, sort toggling, **chronological** time-period ordering by internal `(year, monthIndex|quarterIndex)` key for Month and Quarter granularities — verifying that `Apr 2026` follows `Jan 2026`/`Feb 2026`/`Mar 2026`, that `Apr-Jun 2026` follows `Jan-Mar 2026`, and that `Dec 2025` precedes `Jan 2026` regardless of label alphabetical order; that Month/Quarter rows from different years remain distinct; that ties on a clicked `count`/`total`/`category`/`tag` column break on the default group/time ordering; empty-result handling; that only materialized recurring rows participate; and that malformed query parameters fall back to defaults rather than erroring), server-side dedupe and existence-validation of submitted `tagId` values, `newTags` normalization (split, trim, lowercase, drop empty, dedupe, reject > 20 chars, raw-length and token-count caps), collision handling between `tagId` and `newTags`, confirmation-time race resolution (concurrent tag creation), `materializeRecurring` idempotency and catch-up, `ON DELETE SET NULL` behavior when a template is deleted.
 - **Prior art**: existing Playwright tests under `e2e-tests/` and helpers in `e2e-tests/support/` are the reference for navigation, form submission, and validation assertions. Reuse helpers where available; add new helpers for expense/category/tag forms in the same style.
 
@@ -361,6 +411,8 @@ The UI is never trusted; every handler revalidates. The contract applies uniform
 - Multi-currency support; only USD.
 - Mobile-native app; web-browser only.
 - Offline support / PWA.
+- Offline submission queueing or Service Worker background sync; resilient retries run only while the page stays open.
+- Resilient-submit retry on auth forms (sign-in, sign-up, password reset) — the enhancement covers signed-in data forms only.
 - Internationalization; US English only.
 - Per-user ownership, access control beyond signed-in/not, or admin roles.
 - Audit fields (createdBy / updatedBy) on any row.
