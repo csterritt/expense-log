@@ -8,8 +8,30 @@
  */
 
 import { Context } from 'hono'
-import { Bindings } from '../../local-types'
+import { Bindings, AuthUser } from '../../local-types'
+import { PATHS } from '../../constants'
+import type { SubmissionOutcome } from '../../lib/submission-idempotency'
 import type { ExpenseFormState } from './expense-form'
+
+/**
+ * The canonical success outcome for a committed expense create — the
+ * post-redirect-get target plus its flash message. Shared by the direct-create
+ * and confirm-create handlers so a replayed submit reproduces the same result.
+ */
+export const EXPENSE_ADDED_OUTCOME: SubmissionOutcome = {
+  path: PATHS.EXPENSES,
+  message: 'Expense added.',
+}
+
+/**
+ * Read the signed-in user's id from the request context. Callers are behind
+ * the `signedInAccess` middleware, so `user` is guaranteed present.
+ *
+ * @param c - The Hono context
+ * @returns The signed-in user's id
+ */
+export const requireUserId = (c: Context<{ Bindings: Bindings }>): string =>
+  (c.get('user') as AuthUser).id
 
 /**
  * Creates an empty expense form state with default values.
@@ -19,7 +41,15 @@ import type { ExpenseFormState } from './expense-form'
  */
 export const emptyState = (today: string): ExpenseFormState => ({
   fieldErrors: {},
-  values: { description: '', amount: '', date: today, category: '', tags: '', tagIds: [], newTags: '' },
+  values: {
+    description: '',
+    amount: '',
+    date: today,
+    category: '',
+    tags: '',
+    tagIds: [],
+    newTags: '',
+  },
 })
 
 /**
@@ -45,5 +75,6 @@ export const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
     tagId,
     newTags: typeof form.newTags === 'string' ? form.newTags : '',
     action: typeof form.action === 'string' ? form.action : '',
+    submissionKey: typeof form.submissionKey === 'string' ? form.submissionKey : '',
   }
 }

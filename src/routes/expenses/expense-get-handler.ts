@@ -8,6 +8,7 @@
  */
 
 import { Context } from 'hono'
+import { ulid } from 'ulid'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
@@ -42,7 +43,11 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
     tagId: rawTagId !== undefined && rawTagId.length > 0 ? rawTagId : rawQ['tagId'],
     tagMode: rawQ['tagMode'],
   }
-  const { hasFilterParams, filters, fieldErrors: filterErrors } = parseExpenseListFilters(rawFilters)
+  const {
+    hasFilterParams,
+    filters,
+    fieldErrors: filterErrors,
+  } = parseExpenseListFilters(rawFilters)
 
   const activeFilters = hasFilterParams
     ? filters
@@ -50,27 +55,15 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
 
   const expensesResult = await listExpenses(db, activeFilters)
   if (expensesResult.isErr) {
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_IN,
-      'Failed to load expenses. Please try again.',
-    )
+    return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Failed to load expenses. Please try again.')
   }
   const categoriesResult = await listCategories(db)
   if (categoriesResult.isErr) {
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_IN,
-      'Failed to load expenses. Please try again.',
-    )
+    return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Failed to load expenses. Please try again.')
   }
   const tagsResult = await listTags(db)
   if (tagsResult.isErr) {
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_IN,
-      'Failed to load expenses. Please try again.',
-    )
+    return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Failed to load expenses. Please try again.')
   }
   const allTagIds = new Set(tagsResult.value.map((row) => row.id))
   const resolvedTagIds = activeFilters.tagIds.filter((id) => allTagIds.has(id))
@@ -82,6 +75,9 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
   }
   const today = todayEt()
   const flash = readAndClearFormState(c)
+  // Mint a fresh server-generated submission key per rendered page so the
+  // entry form (and any confirm round-trip) can dedupe replayed submits.
+  const submissionKey = ulid()
   const state: ExpenseFormState = flash
     ? {
         fieldErrors: flash.fieldErrors ?? {},
@@ -92,9 +88,10 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
           category: flash.values.category ?? '',
           tagIds: flash.values.tagIds ?? [],
           newTags: flash.values.newTags ?? '',
+          submissionKey,
         },
       }
-    : emptyState(today)
+    : { ...emptyState(today), values: { ...emptyState(today).values, submissionKey } }
   return c.render(
     useLayout(
       c,

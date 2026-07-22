@@ -12,11 +12,7 @@
  *
  * @module routes/expenses/expense-form
  */
-import {
-  categoryNameMax,
-  descriptionMax,
-  type FieldErrors,
-} from '../../lib/expense-validators'
+import { categoryNameMax, descriptionMax, type FieldErrors } from '../../lib/expense-validators'
 import type { ExpenseFormValues } from '../../lib/form-state'
 import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
 
@@ -71,6 +67,7 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
       data-testid='expense-form'
       noValidate
     >
+      <input type='hidden' name='submissionKey' value={values.submissionKey ?? ''} />
       <div className='flex flex-col md:col-span-2'>
         <label className='label' htmlFor='expense-form-description'>
           <span className='label-text'>Description</span>
@@ -273,6 +270,7 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
           <input type='hidden' name='tagId' value={id} />
         ))}
         <input type='hidden' name='newTags' value={values.newTags ?? ''} />
+        <input type='hidden' name='submissionKey' value={values.submissionKey ?? ''} />
         <button
           type='submit'
           name='action'
