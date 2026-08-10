@@ -409,6 +409,26 @@ describe('listExpenses filters (Issue 11)', () => {
     }
   })
 
+  it('returns tag data for more expenses than D1 permits query parameters', async () => {
+    const db = await createTestDb()
+    await seedCategory(db, 'cat-1', 'food')
+    await seedTag(db, 'tag-1', 'work')
+    for (let i = 0; i <= 100; i += 1) {
+      const id = `expense-${i}`
+      await seedExpenseFull(db, id, 'cat-1', '2024-03-01', `expense ${i}`)
+      await seedExpenseTag(db, id, 'tag-1')
+    }
+
+    const result = await listExpenses(db, {})
+    assert.strictEqual(result.isOk, true)
+    if (result.isOk) {
+      assert.strictEqual(result.value.length, 101)
+      assert.ok(
+        result.value.every((row) => row.tagNames.length === 1 && row.tagNames[0] === 'work'),
+      )
+    }
+  })
+
   it('filters by from date (open-to)', async () => {
     const db = await createTestDb()
     await seedCategory(db, 'cat-1', 'food')

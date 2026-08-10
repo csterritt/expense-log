@@ -14,17 +14,17 @@ fi
 echo clean
 jj abandon
 msg=$(./update-version.rb)
-rm -f public/index.html
-sleep 1
-curl -s 'http://localhost:3000' > public/index.html || exit 1
-sleep 1
+# rm -f public/index.html
+# sleep 1
+# curl -s 'http://localhost:3000' > public/index.html || exit 1
+# sleep 1
 rm -f public/style-*.css
 npx @tailwindcss/cli -i ./src/style.css -o public/style-$(date '+%Y%m%d%H%M%S').css
 node ./timestamp-build-filenames.js
-rm -f public/index.html
-sleep 1
-curl -s 'http://localhost:3000' > public/index.html || exit 1
-sleep 1
+# rm -f public/index.html
+# sleep 1
+# curl -s 'http://localhost:3000' > public/index.html || exit 1
+# sleep 1
 if [ $(wc -c < public/index.html) -eq 0 ] ; then
     echo 'Failed to generate index.html'
     exit 1
