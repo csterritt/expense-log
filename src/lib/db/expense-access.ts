@@ -158,30 +158,20 @@ const listExpensesActual = async (
           .where(inArray(expenseTag.tagId, activeTagIds))
           .groupBy(expenseTag.expenseId)
           .having(sql`count(distinct ${expenseTag.tagId}) = ${activeTagIds.length}`)
-        const subqueryRows = await expensesWithAllTags
-        if (subqueryRows.length === 0) {
-          return Result.ok([])
-        }
-        const matchingIds = subqueryRows.map((r) => r.expenseId)
-        conditions.push(inArray(expense.id, matchingIds))
+        conditions.push(inArray(expense.id, expensesWithAllTags))
       } else {
         // OR (default): expense must have at least one of the listed tags.
-        const orSubquery = db
+        const expensesWithAnyTag = db
           .select({ expenseId: expenseTag.expenseId })
           .from(expenseTag)
           .where(inArray(expenseTag.tagId, activeTagIds))
-        const orRows = await orSubquery
-        if (orRows.length === 0) {
-          return Result.ok([])
-        }
-        const matchingIds = [...new Set(orRows.map((r) => r.expenseId))]
-        conditions.push(inArray(expense.id, matchingIds))
+        conditions.push(inArray(expense.id, expensesWithAnyTag))
       }
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
-    const rows = await db
+    const joinedRows = await db
       .select({
         id: expense.id,
         date: expense.date,
@@ -189,48 +179,40 @@ const listExpensesActual = async (
         amountCents: expense.amountCents,
         categoryName: category.name,
         recurringId: expense.recurringId,
+        tagName: tag.name,
       })
       .from(expense)
       .innerJoin(category, eq(category.id, expense.categoryId))
+      .leftJoin(expenseTag, eq(expenseTag.expenseId, expense.id))
+      .leftJoin(tag, eq(tag.id, expenseTag.tagId))
       .where(whereClause)
       .orderBy(desc(expense.date), asc(sql`lower(${expense.description})`))
 
-    if (rows.length === 0) {
-      return Result.ok([])
-    }
-
-    const tagsByExpenseId = new Map<string, string[]>()
-    const expenseIds = rows.map((r) => r.id)
-    const tagRows = await db
-      .select({ expenseId: expenseTag.expenseId, tagName: tag.name })
-      .from(expenseTag)
-      .innerJoin(tag, eq(tag.id, expenseTag.tagId))
-      .where(inArray(expenseTag.expenseId, expenseIds))
-
-    for (const row of tagRows) {
-      const bucket = tagsByExpenseId.get(row.expenseId)
-      if (bucket) {
-        bucket.push(row.tagName)
-      } else {
-        tagsByExpenseId.set(row.expenseId, [row.tagName])
-      }
-    }
-
-    return Result.ok(
-      rows.map((row) => {
-        const tags = (tagsByExpenseId.get(row.id) ?? []).slice()
-        tags.sort((a, b) => a.localeCompare(b))
-        return {
+    const expensesById = new Map<string, ExpenseRow>()
+    for (const row of joinedRows) {
+      let expenseRow = expensesById.get(row.id)
+      if (!expenseRow) {
+        expenseRow = {
           id: row.id,
           date: row.date,
           description: row.description,
           categoryName: row.categoryName,
           amountCents: row.amountCents,
-          tagNames: tags,
+          tagNames: [],
           recurringId: row.recurringId ?? null,
         }
-      }),
-    )
+        expensesById.set(row.id, expenseRow)
+      }
+      if (row.tagName !== null) {
+        expenseRow.tagNames.push(row.tagName)
+      }
+    }
+
+    const rows = Array.from(expensesById.values())
+    for (const row of rows) {
+      row.tagNames.sort((a, b) => a.localeCompare(b))
+    }
+    return Result.ok(rows)
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
   }
