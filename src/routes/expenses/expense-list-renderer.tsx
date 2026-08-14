@@ -285,6 +285,7 @@ export const renderExpenses = (
       )}
       <script src='/js/category-combobox.js' defer></script>
       <script src='/js/tag-chip-checkboxes.js' defer></script>
+      <script src='/js/resilient-submit.js' defer></script>
     </div>
   )
 }

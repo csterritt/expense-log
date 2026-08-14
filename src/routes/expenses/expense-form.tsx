@@ -12,6 +12,7 @@
  *
  * @module routes/expenses/expense-form
  */
+import { PATHS } from '../../constants'
 import { categoryNameMax, descriptionMax, type FieldErrors } from '../../lib/expense-validators'
 import type { ExpenseFormValues } from '../../lib/form-state'
 import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
@@ -65,6 +66,8 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
       action={action}
       className='mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-start'
       data-testid='expense-form'
+      data-resilient-submit
+      data-resilient-submit-target={PATHS.EXPENSES}
       noValidate
     >
       <input type='hidden' name='submissionKey' value={values.submissionKey ?? ''} />
@@ -254,6 +257,8 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
         action={action}
         className='flex gap-3'
         data-testid={`${prefix}-form`}
+        data-resilient-submit={isRecurring ? undefined : ''}
+        data-resilient-submit-target={isRecurring ? undefined : PATHS.EXPENSES}
         noValidate
       >
         <input type='hidden' name='description' value={values.description ?? ''} />
@@ -290,6 +295,7 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
           Cancel
         </button>
       </form>
+      {!isRecurring && <script src='/js/resilient-submit.js' defer></script>}
     </div>
   )
 }

@@ -9,7 +9,7 @@
 import { Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
 
-import { ALLOW_SCRIPTS_SECURE_HEADERS, PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
+import { ALLOW_SCRIPTS_SECURE_HEADERS, PATHS } from '../../constants'
 import { Bindings } from '../../local-types'
 import { signedInAccess } from '../../middleware/signed-in-access'
 import { handleExpensesGet } from './expense-get-handler'
@@ -28,14 +28,14 @@ export const buildExpenses = (app: Hono<{ Bindings: Bindings }>): void => {
 
   app.post(
     PATHS.EXPENSES,
-    secureHeaders(STANDARD_SECURE_HEADERS),
+    secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     handleExpensesPost,
   )
 
   app.post(
     CONFIRM_CREATE_NEW_PATH,
-    secureHeaders(STANDARD_SECURE_HEADERS),
+    secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     handleExpensesConfirmPost,
   )

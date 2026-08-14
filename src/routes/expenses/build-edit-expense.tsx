@@ -109,6 +109,7 @@ const renderEditPage = (props: EditFormProps) => {
       </div>
       <script src='/js/category-combobox.js' defer></script>
       <script src='/js/tag-chip-checkboxes.js' defer></script>
+      <script src='/js/resilient-submit.js' defer></script>
     </div>
   )
 }
@@ -245,7 +246,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
   // ---------- POST /expenses/:id/edit ----------
   app.post(
     '/expenses/:id/edit',
-    secureHeaders(STANDARD_SECURE_HEADERS),
+    secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const id = requireId(c)
@@ -382,7 +383,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
   // ---------- POST /expenses/:id/confirm-edit-new ----------
   app.post(
     '/expenses/:id/confirm-edit-new',
-    secureHeaders(STANDARD_SECURE_HEADERS),
+    secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const id = requireId(c)
