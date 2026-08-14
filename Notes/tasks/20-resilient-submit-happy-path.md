@@ -47,7 +47,17 @@ Read and follow `Notes/skills/code-writing/always-do-red-green.md`. Refactors mu
 
 ---
 
-### 5. Human review: JS-on / JS-off verification
+### 5. Code walkthrough
+
+**Type**: CODE WALKTHROUGH
+**Output**: A new directory under `Notes/walkthroughs/20-resilient-submit-happy-path/code-walkthrough` containing the showboat-generated walkthrough files.
+**Depends on**: 4
+
+Run `uvx showboat --help` for usage details. Create a new directory `Notes/walkthroughs/20-resilient-submit-happy-path/code-walkthrough` and generate the walkthrough of the Task 20 implementation there. The walkthrough should cover the `resilient-submit.js` script, the `data-*` attribute name, and the delegated listener setup.
+
+---
+
+### 6. Human review: JS-on / JS-off verification
 
 **Type**: REVIEW  
 **Output**: A human confirms the manual checks in the issue: valid submit shows the success message via DOM swap; confirmation page renders in place and its buttons flow through the handler; double-click fires once; JS-off native submission behaves as before.  

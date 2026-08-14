@@ -540,3 +540,23 @@ Completed full pass of `Notes/_file-checklist.md` against the wiki.
   - `Notes/wiki/unit-tests.md` — updated spec count to 18, added `auth-validators.spec.ts` and `tests/tsconfig.json` entries.
   - `Notes/wiki/e2e-tests.md` — added `expenses/22-edit-tag-chip-ui.spec.ts`, `expenses/23-list-filter-chip-unification.spec.ts`, and `reset-password/08-password-reset-token-url-encoding.spec.ts` entries.
 - **Checked off all 211 files** in `Notes/_file-checklist.md`.
+
+## [2026-08-14] ingest | Issue 19: Submission idempotency ledger + server dedupe backbone
+
+Documented the Issue 19 implementation: the `submissionKey` ledger table, the `withIdempotency` helper (fresh vs. replayed vs. malformed key, transaction guarantee, TTL prune), the hidden `submissionKey` field round-tripped through the entry/confirm forms, and the two committing expense handlers routed through the ledger.
+
+**New wiki pages:**
+
+- `Notes/wiki/idempotency-ledger.md` — concept page documenting the `submissionKey` ledger table, the `withIdempotency` contract (four-branch table, transaction guarantee, corrupt-stored-value defense, TTL prune), the key lifecycle (GET mint → entry form → confirm round-trip → POST extract → commit), which handlers use it, key design decisions, and cross-links to the issue, PRD, and code walkthrough.
+- `Notes/wiki/src/lib/submission-idempotency.md` — source-file page for `src/lib/submission-idempotency.ts`: `LEDGER_TTL_MS`, `ULID_PATTERN`, `SubmissionOutcome` / `WithIdempotencyArgs` types, `withIdempotency` four-branch contract, `pruneStaleLedgerRows`, internal helpers, dependencies, consumers, tests.
+
+**Wiki pages updated:**
+
+- `Notes/wiki/src/db/schema.md` — added `submissionKey` table (Issue 19: `key` PK, `userId` FK→user cascade, `outcome` JSON text, `createdAt` timestamp; migration `drizzle/0005_perpetual_carnage.sql`); added `SubmissionKey` / `NewSubmissionKey` to inferred type exports.
+- `Notes/wiki/src/routes/expenses/expense-post-handler.md` — documented direct-create commit routed through `withIdempotency` wrapping `createExpenseWithTags`; added Idempotency section; added `submission-idempotency`, `result`, `requireUserId`/`EXPENSE_ADDED_OUTCOME` dependencies.
+- `Notes/wiki/src/routes/expenses/expense-confirm-post-handler.md` — documented confirm-create commit routed through `withIdempotency` wrapping `createManyAndExpense`; added Idempotency section; added `submission-idempotency`, `result`, `requireUserId`/`EXPENSE_ADDED_OUTCOME` dependencies.
+- `Notes/wiki/src/routes/expenses/expense-form-helpers.md` — documented `EXPENSE_ADDED_OUTCOME` shared constant, `submissionKey` field in `readRawBody`, and `requireUserId` helper; added `submission-idempotency` (type), `constants`, `hono` dependencies.
+- `Notes/wiki/src/routes/expenses/expense-get-handler.md` — documented per-GET-render ULID mint threaded into form state; added `ulid` dependency.
+- `Notes/wiki/src/routes/expenses/expense-form.md` — documented hidden `submissionKey` input on entry form and round-trip through `renderConfirmNewItems`.
+- `Notes/wiki/unit-tests.md` — added `submission-idempotency.spec.ts` entry; spec count now 19.
+- `Notes/wiki/index.md` — added new "Concept pages" section with `idempotency-ledger.md`; added `submission-idempotency.ts` to lib/ source list; updated unit-test count to 19.

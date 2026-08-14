@@ -37,10 +37,20 @@ Read and follow `Notes/skills/code-writing/always-do-red-green.md`. Refactors mu
 
 ---
 
-### 4. Human review: full-form exhaustion verification
+### 4. Code walkthrough
+
+**Type**: CODE WALKTHROUGH
+**Output**: A new directory under `Notes/walkthroughs/23-resilient-submit-exhaustion-ux/code-walkthrough` containing the showboat-generated walkthrough files.
+**Depends on**: 3
+
+Run `uvx showboat --help` for usage details. Create a new directory `Notes/walkthroughs/23-resilient-submit-exhaustion-ux/code-walkthrough` and generate the walkthrough of the Task 23 implementation there. The walkthrough should cover the exhaustion logic and how it's used in the retry loop.
+
+---
+
+### 5. Human review: full-form exhaustion verification
 
 **Type**: REVIEW  
 **Output**: A human confirms the manual checks in the issue: with the POST failing on every attempt, a fully-filled form (including chips, new-tag, and new-category text) shows the error banner, keeps the submit control enabled, preserves every value, and succeeds on a manual resubmit after the failure is cleared.  
-**Depends on**: 3
+**Depends on**: 4
 
 ---

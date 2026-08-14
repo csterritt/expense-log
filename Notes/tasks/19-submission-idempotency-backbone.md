@@ -85,7 +85,17 @@ Read and follow `Notes/skills/code-writing/always-do-red-green.md`. Refactors mu
 
 ---
 
-### 9. Human review: server-side replay verification
+### 9. Code walkthrough
+
+**Type**: CODE WALKTHROUGH
+**Output**: A new directory under `Notes/walkthroughs/19-submission-idempotency-backbone/code-walkthrough` containing the showboat-generated walkthrough files.
+**Depends on**: 7
+
+Run `uvx showboat --help` for usage details. Create a new directory `Notes/walkthroughs/19-submission-idempotency-backbone/code-walkthrough` and generate the walkthrough of the Task 19 implementation there. The walkthrough should cover the `submissionKey` ledger table, the `withIdempotency` contract (fresh vs. replayed vs. malformed key, transaction guarantee, TTL prune), and which handlers use it.
+
+---
+
+### 10. Human review: server-side replay verification
 
 **Type**: REVIEW  
 **Output**: A human confirms the manual checks in the issue: submit a valid expense and note the `submissionKey`; replay the exact POST via curl and confirm no second row and the original success redirect; submit a validation-failing expense and confirm no ledger row plus normal resubmission with the same key.  

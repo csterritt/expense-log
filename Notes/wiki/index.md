@@ -8,6 +8,10 @@ Content-oriented catalog of all wiki pages for the `expense-log` project.
 - [Wiki Rules](wiki-rules.md) — the LLM Wiki pattern and philosophy.
 - [Wiki Agent Schema](AGENTS.md) — schema and conventions for maintaining this wiki.
 
+## Concept pages
+
+- [Idempotency Ledger](idempotency-ledger.md) — the `submissionKey` ledger table, the `withIdempotency` contract (fresh vs. replayed vs. malformed key, transaction guarantee, TTL prune), and which handlers use it (Issue 19).
+
 ## Catalogs
 
 - [Source Code](source-code.md) — catalog of all source files under `src/`.
@@ -45,6 +49,7 @@ Content-oriented catalog of all wiki pages for the `expense-log` project.
 - [money.ts](src/lib/money.md) — money formatting and parsing.
 - [po-notify.ts](src/lib/po-notify.md) — Pushover notifications.
 - [recurrence.ts](src/lib/recurrence.md) — recurrence date arithmetic.
+- [submission-idempotency.ts](src/lib/submission-idempotency.md) — `withIdempotency` helper and submission idempotency ledger backbone (Issue 19).
 - [redirects.tsx](src/lib/redirects.md) — redirect helpers with flash cookies.
 - [send-email.ts](src/lib/send-email.md) — SMTP email sending with retry.
 - [setup-no-cache-headers.ts](src/lib/setup-no-cache-headers.md) — no-cache header setter.
@@ -152,4 +157,4 @@ See [E2E Tests catalog](e2e-tests.md) for the full list of 44+ spec files organi
 
 ## Unit test pages
 
-See [Unit Tests catalog](unit-tests.md) for the full list of 18 spec files.
+See [Unit Tests catalog](unit-tests.md) for the full list of 19 spec files.

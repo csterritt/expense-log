@@ -85,10 +85,20 @@ Read and follow `Notes/skills/code-writing/always-do-red-green.md`. Refactors mu
 
 ---
 
-### 9. Human review: per-family verification
+### 9. Code walkthrough
+
+**Type**: CODE WALKTHROUGH
+**Output**: A new directory under `Notes/walkthroughs/24-resilient-submit-rollout-all-forms/code-walkthrough` containing the showboat-generated walkthrough files.
+**Depends on**: 8
+
+Run `uvx showboat --help` for usage details. Create a new directory `Notes/walkthroughs/24-resilient-submit-rollout-all-forms/code-walkthrough` and generate the walkthrough of the Task 24 implementation there. The walkthrough should cover the rollout process and how it's applied to all form families.
+
+---
+
+### 10. Human review: per-family verification
 
 **Type**: REVIEW  
 **Output**: A human confirms the manual checks in the issue: for each form family, a transient failure then success yields the normal outcome, and a same-key committing replay produces no duplicate row/merge/delete side effect.  
-**Depends on**: 8
+**Depends on**: 9
 
 ---

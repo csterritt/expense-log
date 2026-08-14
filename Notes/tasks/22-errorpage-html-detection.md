@@ -47,10 +47,20 @@ Read and follow the project coding standards in `Notes/skills/AGENTS.md`.
 
 ---
 
-### 5. Human review: devtools-override verification
+### 5. Code walkthrough
+
+**Type**: CODE WALKTHROUGH
+**Output**: A new directory under `Notes/walkthroughs/22-errorpage-html-detection/code-walkthrough` containing the showboat-generated walkthrough files.
+**Depends on**: 4
+
+Run `uvx showboat --help` for usage details. Create a new directory `Notes/walkthroughs/22-errorpage-html-detection/code-walkthrough` and generate the walkthrough of the Task 22 implementation there. The walkthrough should cover the `ErrorPage.html` detection logic and how it's used in the retry loop.
+
+---
+
+### 6. Human review: devtools-override verification
 
 **Type**: REVIEW  
 **Output**: A human confirms the manual checks in the issue: overriding the POST to resolve to a 200 `ErrorPage.html` causes a retry (not an error-page swap); clearing the override mid-backoff lands on the normal success page.  
-**Depends on**: 4
+**Depends on**: 5
 
 ---

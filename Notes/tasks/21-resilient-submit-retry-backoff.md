@@ -57,10 +57,20 @@ Read and follow `Notes/skills/code-writing/always-do-red-green.md`. Refactors mu
 
 ---
 
-### 6. Human review: forced-5xx retry verification
+### 6. Code walkthrough
+
+**Type**: CODE WALKTHROUGH
+**Output**: A new directory under `Notes/walkthroughs/21-resilient-submit-retry-backoff/code-walkthrough` containing the showboat-generated walkthrough files.
+**Depends on**: 5
+
+Run `uvx showboat --help` for usage details. Create a new directory `Notes/walkthroughs/21-resilient-submit-retry-backoff/code-walkthrough` and generate the walkthrough of the Task 21 implementation there. The walkthrough should cover the retry loop, the classifier, and the timeout wrapper.
+
+---
+
+### 7. Human review: forced-5xx retry verification
 
 **Type**: REVIEW  
 **Output**: A human confirms the manual checks in the issue: a forced 5xx is retried with growing delays and recovers to the success page once cleared; a validation error appears immediately with no backoff delay.  
-**Depends on**: 5
+**Depends on**: 6
 
 ---
