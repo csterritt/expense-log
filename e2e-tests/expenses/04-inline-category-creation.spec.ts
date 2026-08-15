@@ -41,6 +41,8 @@ const submitEntryForm = async (page: any) => {
   await page.getByTestId('expense-form-create').click()
 }
 
+test.use({ javaScriptEnabled: false })
+
 test.describe('Inline category creation (no-JS path)', () => {
   test(
     'unmatched name renders the consolidated confirmation page',

@@ -48,7 +48,7 @@ test.describe('JS-disabled fallback (Issue 5/6 server flow untouched)', () => {
       await expect(page.getByTestId('expense-form-category')).toHaveAttribute('type', 'text')
 
       // All-existing submission: toggle the groceries chip and submit.
-      await page.getByTestId('tag-chip-groceries').click()
+      await page.getByTestId('expense-form').getByTestId('tag-chip-groceries').click()
       await page.getByTestId('expense-form-description').fill('Plain submit')
       await page.getByTestId('expense-form-amount').fill('3.50')
       await page.getByTestId('expense-form-date').fill(todayEt())

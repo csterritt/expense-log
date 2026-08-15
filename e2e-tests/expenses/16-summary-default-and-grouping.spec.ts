@@ -10,14 +10,15 @@ const signInAndGoToSummary = async (page: any) => {
   await page.goto(BASE_URLS.SUMMARY)
 }
 
-test.describe('Summary page placeholder', () => {
+test.describe('Summary page', () => {
   test(
-    'shows coming soon message',
+    'renders summary controls',
     testWithDatabase(async ({ page }) => {
       await signInAndGoToSummary(page)
 
       await expect(page.getByTestId('summary-page')).toBeVisible()
-      await expect(page.locator('text=Summary coming soon')).toBeVisible()
+      await expect(page.getByTestId('summary-dimension')).toBeVisible()
+      await expect(page.getByTestId('summary-granularity')).toBeVisible()
     }),
   )
 })

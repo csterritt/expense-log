@@ -56,6 +56,8 @@ const submit = async (page: any) => {
   await page.waitForURL(BASE_URLS.EXPENSES)
 }
 
+test.use({ javaScriptEnabled: false })
+
 test.describe('Expense entry form: field-level validation errors', () => {
   test(
     'empty description: error shown, other fields preserved',

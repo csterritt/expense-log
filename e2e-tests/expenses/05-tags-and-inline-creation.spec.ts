@@ -61,7 +61,7 @@ test.describe('Tags (chip-checkbox) + inline tag creation', () => {
       await signInAndGoToExpenses(page)
 
       // Toggle the groceries chip (existing tag).
-      await page.getByTestId('tag-chip-groceries').click()
+      await page.getByTestId('expense-form').getByTestId('tag-chip-groceries').click()
 
       await fillEntryForm(page, {
         description: 'Weekly shop',
@@ -125,7 +125,7 @@ test.describe('Tags (chip-checkbox) + inline tag creation', () => {
       await expect(rentRow.getByTestId('expense-row-tags')).toHaveText('rent, utilities')
 
       // Second submission — rent chip should now be available, select it. No confirmation.
-      await page.getByTestId('tag-chip-rent').click()
+      await page.getByTestId('expense-form').getByTestId('tag-chip-rent').click()
       await fillEntryForm(page, {
         description: 'Snacks',
         amount: '7.00',

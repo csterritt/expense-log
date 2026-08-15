@@ -37,8 +37,11 @@ test.describe('Tag chip-checkbox (JS-on)', () => {
       await signInAndGoToExpenses(page)
 
       // Click the groceries chip to select it.
-      await page.getByTestId('tag-chip-groceries').click()
-      const groceriesInput = page.getByTestId('tag-chip-groceries').locator('input[type="checkbox"]')
+      const expenseForm = page.getByTestId('expense-form')
+      await expenseForm.getByTestId('tag-chip-groceries').click()
+      const groceriesInput = expenseForm
+        .getByTestId('tag-chip-groceries')
+        .locator('input[type="checkbox"]')
       await expect(groceriesInput).toBeChecked()
 
       // Type a new tag name in the free-text field.
@@ -83,8 +86,9 @@ test.describe('Tag chip-checkbox (JS-on)', () => {
       await signInAndGoToExpenses(page)
 
       // Select both chips and submit with an invalid amount.
-      await page.getByTestId('tag-chip-groceries').click()
-      await page.getByTestId('tag-chip-rent').click()
+      const expenseForm = page.getByTestId('expense-form')
+      await expenseForm.getByTestId('tag-chip-groceries').click()
+      await expenseForm.getByTestId('tag-chip-rent').click()
 
       await page.getByTestId('expense-form-description').fill('Round trip')
       await page.getByTestId('expense-form-amount').fill('not-a-number')
@@ -94,8 +98,10 @@ test.describe('Tag chip-checkbox (JS-on)', () => {
 
       // After the validation-error redirect both chips should still be checked.
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('not-a-number')
-      const groceriesInput = page.getByTestId('tag-chip-groceries').locator('input[type="checkbox"]')
-      const rentInput = page.getByTestId('tag-chip-rent').locator('input[type="checkbox"]')
+      const groceriesInput = expenseForm
+        .getByTestId('tag-chip-groceries')
+        .locator('input[type="checkbox"]')
+      const rentInput = expenseForm.getByTestId('tag-chip-rent').locator('input[type="checkbox"]')
       await expect(groceriesInput).toBeChecked()
       await expect(rentInput).toBeChecked()
     }),

@@ -61,10 +61,10 @@ test.describe('Expense filter bar — combined filters and Clear', () => {
   )
 
   test(
-    'Clear filters link is absent on first load',
+    'Clear filters link is shown for the default date window',
     testWithDatabase(async ({ page }) => {
       await signInAndGoToExpenses(page)
-      await expect(page.getByTestId('filter-clear')).toHaveCount(0)
+      await expect(page.getByTestId('filter-clear')).toHaveCount(1)
     }),
   )
 
@@ -124,9 +124,9 @@ test.describe('Expense filter bar — combined filters and Clear', () => {
       await page.waitForURL(BASE_URLS.EXPENSES)
 
       await expect(page.getByTestId('filter-description')).toHaveValue('')
-      await expect(page.getByTestId('filter-from')).toHaveValue('')
-      await expect(page.getByTestId('filter-to')).toHaveValue('')
-      await expect(page.getByTestId('filter-clear')).toHaveCount(0)
+      await expect(page.getByTestId('filter-from')).not.toHaveValue('2024-01-01')
+      await expect(page.getByTestId('filter-to')).not.toHaveValue('2024-12-31')
+      await expect(page.getByTestId('filter-clear')).toHaveCount(1)
     }),
   )
 
