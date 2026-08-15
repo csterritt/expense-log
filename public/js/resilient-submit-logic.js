@@ -8,6 +8,7 @@
  */
 
 export const MAX_ATTEMPTS = 5
+export const ERROR_PAGE_PATH = '/ErrorPage.html'
 // export const RETRY_BASE_DELAY_MS = 500 // PRODUCTION:UNCOMMENT
 export const RETRY_BASE_DELAY_MS = 10 // PRODUCTION:REMOVE
 // export const RETRY_CAP_DELAY_MS = 2_000 // PRODUCTION:UNCOMMENT
@@ -30,8 +31,14 @@ export const getRetryDelay = (retryIndex, random = Math.random) => {
 /**
  * Determines whether an attempt failed due to transient infrastructure.
  *
- * @param {{ type: 'rejected' | 'timeout' } | { type: 'response', status: number }} attempt
+ * @param {{ type: 'rejected' | 'timeout' } | { type: 'response', status: number, url?: string }} attempt
+ * @param {string} errorPagePath Path of the host-served fallback error page.
  * @returns {boolean} Whether the submission should be retried.
  */
-export const isRetryableAttempt = (attempt) =>
-  attempt.type === 'rejected' || attempt.type === 'timeout' || attempt.status >= 500
+export const isRetryableAttempt = (attempt, errorPagePath = ERROR_PAGE_PATH) =>
+  attempt.type === 'rejected' ||
+  attempt.type === 'timeout' ||
+  attempt.status >= 500 ||
+  (attempt.type === 'response' &&
+    Boolean(attempt.url) &&
+    new URL(attempt.url).pathname.toLowerCase() === errorPagePath.toLowerCase())

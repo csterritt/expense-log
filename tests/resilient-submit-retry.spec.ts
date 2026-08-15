@@ -2,6 +2,7 @@ import { describe, it } from 'bun:test'
 import assert from 'node:assert'
 
 import {
+  ERROR_PAGE_PATH,
   getRetryDelay,
   isRetryableAttempt,
   MAX_ATTEMPTS,
@@ -34,12 +35,28 @@ describe('resilient submit retry policy', () => {
     }
   })
 
-  it('retries transport errors, timeouts, and 5xx responses only', () => {
+  it('retries transient errors, host error pages, and 5xx responses', () => {
     assert.strictEqual(isRetryableAttempt({ type: 'rejected' }), true)
     assert.strictEqual(isRetryableAttempt({ type: 'timeout' }), true)
     assert.strictEqual(isRetryableAttempt({ type: 'response', status: 500 }), true)
     assert.strictEqual(isRetryableAttempt({ type: 'response', status: 503 }), true)
+    assert.strictEqual(
+      isRetryableAttempt({
+        type: 'response',
+        status: 200,
+        url: `https://expense-log.example${ERROR_PAGE_PATH.toUpperCase()}`,
+      }),
+      true,
+    )
 
+    assert.strictEqual(
+      isRetryableAttempt({
+        type: 'response',
+        status: 200,
+        url: 'https://expense-log.example/expenses',
+      }),
+      false,
+    )
     assert.strictEqual(isRetryableAttempt({ type: 'response', status: 200 }), false)
     assert.strictEqual(isRetryableAttempt({ type: 'response', status: 303 }), false)
     assert.strictEqual(isRetryableAttempt({ type: 'response', status: 400 }), false)

@@ -13,6 +13,7 @@
 
 import {
   ATTEMPT_TIMEOUT_MS,
+  ERROR_PAGE_PATH,
   getRetryDelay,
   isRetryableAttempt,
   MAX_ATTEMPTS,
@@ -97,7 +98,12 @@ const send = async (form, submitter) => {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     const result = await sendAttempt(form, submitter)
     if (result.type === 'response') {
-      if (!isRetryableAttempt({ type: 'response', status: result.response.status })) {
+      if (
+        !isRetryableAttempt(
+          { type: 'response', status: result.response.status, url: result.response.url },
+          ERROR_PAGE_PATH,
+        )
+      ) {
         swapResponsePage(await result.response.text(), result.response.url)
         return
       }
@@ -105,9 +111,9 @@ const send = async (form, submitter) => {
 
     const failure =
       result.type === 'response'
-        ? { type: 'response', status: result.response.status }
+        ? { type: 'response', status: result.response.status, url: result.response.url }
         : { type: result.type }
-    if (!isRetryableAttempt(failure) || attempt === MAX_ATTEMPTS - 1) {
+    if (!isRetryableAttempt(failure, ERROR_PAGE_PATH) || attempt === MAX_ATTEMPTS - 1) {
       throw new Error('[resilient-submit] submission failed')
     }
     await wait(getRetryDelay(attempt))
