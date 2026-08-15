@@ -61,6 +61,20 @@ const swapResponsePage = (html, url) => {
 
 const wait = (delay) => new Promise((resolve) => window.setTimeout(resolve, delay))
 
+const clearExhaustionError = (form) => {
+  form.querySelector('[data-testid="expense-form-exhaustion-error"]')?.remove()
+}
+
+const showExhaustionError = (form) => {
+  clearExhaustionError(form)
+  const banner = document.createElement('div')
+  banner.className = 'alert alert-error md:col-span-5'
+  banner.dataset.testid = 'expense-form-exhaustion-error'
+  banner.setAttribute('role', 'alert')
+  banner.textContent = 'Your submission could not be completed. Please try again later.'
+  form.prepend(banner)
+}
+
 const sendAttempt = async (form, submitter) => {
   const controller = new AbortController()
   let timedOut = false
@@ -105,19 +119,16 @@ const send = async (form, submitter) => {
         )
       ) {
         swapResponsePage(await result.response.text(), result.response.url)
-        return
+        return true
       }
     }
 
-    const failure =
-      result.type === 'response'
-        ? { type: 'response', status: result.response.status, url: result.response.url }
-        : { type: result.type }
-    if (!isRetryableAttempt(failure, ERROR_PAGE_PATH) || attempt === MAX_ATTEMPTS - 1) {
-      throw new Error('[resilient-submit] submission failed')
+    if (attempt === MAX_ATTEMPTS - 1) {
+      return false
     }
     await wait(getRetryDelay(attempt))
   }
+  return false
 }
 
 const handleSubmit = (event) => {
@@ -128,9 +139,15 @@ const handleSubmit = (event) => {
 
   event.preventDefault()
   inFlight = true
+  clearExhaustionError(form)
   const submitter = event.submitter
   const restore = setSubmitting(findSubmitControl(form, submitter))
   void send(form, submitter)
+    .then((submitted) => {
+      if (!submitted) {
+        showExhaustionError(form)
+      }
+    })
     .catch((error) => {
       console.error('[resilient-submit] submission failed:', error)
     })
