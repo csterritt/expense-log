@@ -14,11 +14,7 @@ import type { ExpenseRow } from '../../lib/db/expense-access'
 import { formatCents } from '../../lib/money'
 import type { FieldErrors, ParsedExpenseListFilters } from '../../lib/expense-validators'
 import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
-import {
-  renderExpenseForm,
-  type ExpenseFormPayloads,
-  type ExpenseFormState,
-} from './expense-form'
+import { renderExpenseForm, type ExpenseFormPayloads, type ExpenseFormState } from './expense-form'
 
 /**
  * Renders the filter bar for the expenses list.
@@ -146,11 +142,7 @@ export const renderFilterBar = (
                 </label>
               </span>
             </div>
-            <TagChipCheckboxes
-              tags={tags}
-              selectedTagIds={activeTagIds}
-              allowNewTags={false}
-            />
+            <TagChipCheckboxes tags={tags} selectedTagIds={activeTagIds} allowNewTags={false} />
             {filterErrors.tags && (
               <p className='text-error text-sm mt-1' data-testid='filter-tags-error'>
                 {filterErrors.tags}
@@ -160,19 +152,11 @@ export const renderFilterBar = (
         )}
 
         <div className='mt-4 flex gap-2'>
-          <button
-            type='submit'
-            className='btn btn-primary btn-sm'
-            data-testid='filter-submit'
-          >
+          <button type='submit' className='btn btn-primary btn-sm' data-testid='filter-submit'>
             Filter
           </button>
           {hasAnyFilter && (
-            <a
-              href={PATHS.EXPENSES}
-              className='btn btn-ghost btn-sm'
-              data-testid='filter-clear'
-            >
+            <a href={PATHS.EXPENSES} className='btn btn-ghost btn-sm' data-testid='filter-clear'>
               Clear filters
             </a>
           )}
@@ -285,7 +269,7 @@ export const renderExpenses = (
       )}
       <script src='/js/category-combobox.js' defer></script>
       <script src='/js/tag-chip-checkboxes.js' defer></script>
-      <script src='/js/resilient-submit.js' defer></script>
+      <script src='/js/resilient-submit.js' type='module'></script>
     </div>
   )
 }

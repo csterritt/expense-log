@@ -1,3 +1,13 @@
 {
-  "extends": "../tsconfig.json"
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["bun-types", "node"]
+  },
+  "include": [
+    "../worker-configuration.d.ts",
+    "../public/js/**/*.d.ts",
+    "../src/**/*.ts",
+    "../src/**/*.tsx",
+    "**/*.ts"
+  ]
 }

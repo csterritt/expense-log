@@ -295,7 +295,7 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
           Cancel
         </button>
       </form>
-      {!isRecurring && <script src='/js/resilient-submit.js' defer></script>}
+      {!isRecurring && <script src='/js/resilient-submit.js' type='module'></script>}
     </div>
   )
 }

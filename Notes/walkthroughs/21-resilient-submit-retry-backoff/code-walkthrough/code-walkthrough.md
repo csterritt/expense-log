@@ -1,47 +1,63 @@
+# Issue 21: Resilient Submit Retry and Backoff — Code Walkthrough
+
+*2026-08-14T19:29:47Z by Showboat 0.6.1*
+<!-- showboat-id: de271c31-5f25-470f-bdbb-b221dd029aa4 -->
+
+This walkthrough documents the DOM-free retry policy, the timeout-wrapped submission loop, and the tests that prove retryable failures are retried while deliberate server responses render immediately.
+
+## Retry policy\n\nThe policy is a standalone ES module, letting the browser loop and unit tests share the exact same full-jitter schedule and infrastructure-failure classification.
+
+```bash
+sed -n '1,120p' public/js/resilient-submit-logic.js
+```
+
+```output
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 /**
- * Progressive-enhancement background submission for mutation forms.
- *
- * Activation hook: any <form data-resilient-submit> on the page. Opted-in
- * forms also provide data-resilient-submit-target for opaque redirects. These
- * are documented cross-file conventions because this dependency-free script is
- * served directly rather than imported by the server-rendered TSX.
+ * Shared retry policy for resilient form submissions.
+ * @module resilient-submit-logic
  */
 
-import {
-  ATTEMPT_TIMEOUT_MS,
-  getRetryDelay,
-  isRetryableAttempt,
-  MAX_ATTEMPTS,
-} from './resilient-submit-logic.js'
+export const MAX_ATTEMPTS = 5
+// export const RETRY_BASE_DELAY_MS = 500 // PRODUCTION:UNCOMMENT
+export const RETRY_BASE_DELAY_MS = 10 // PRODUCTION:REMOVE
+// export const RETRY_CAP_DELAY_MS = 2_000 // PRODUCTION:UNCOMMENT
+export const RETRY_CAP_DELAY_MS = 40 // PRODUCTION:REMOVE
+// export const ATTEMPT_TIMEOUT_MS = 10_000 // PRODUCTION:UNCOMMENT
+export const ATTEMPT_TIMEOUT_MS = 100 // PRODUCTION:REMOVE
 
-const FORM_SELECTOR = '[data-resilient-submit]'
-const SUBMITTING_LABEL = 'Submitting…'
-let inFlight = false
-
-const findSubmitControl = (form, submitter) => {
-  if (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) {
-    return submitter
-  }
-  return form.querySelector('button[type="submit"], input[type="submit"]')
+/**
+ * Returns the full-jitter delay before a retry.
+ *
+ * @param {number} retryIndex Zero-based retry index.
+ * @param {() => number} random Random value provider.
+ * @returns {number} Delay in milliseconds.
+ */
+export const getRetryDelay = (retryIndex, random = Math.random) => {
+  const cappedDelay = Math.min(RETRY_CAP_DELAY_MS, RETRY_BASE_DELAY_MS * 2 ** retryIndex)
+  return Math.floor(random() * cappedDelay)
 }
 
-const setSubmitting = (control) => {
-  if (!control) {
-    return () => {}
-  }
-  const label = control instanceof HTMLInputElement ? control.value : control.textContent
-  control.disabled = true
-  if (control instanceof HTMLInputElement) {
-    control.value = SUBMITTING_LABEL
-  } else {
-    control.textContent = SUBMITTING_LABEL
-  }
-  return () => {
-    control.disabled = false
+/**
+ * Determines whether an attempt failed due to transient infrastructure.
+ *
+ * @param {{ type: 'rejected' | 'timeout' } | { type: 'response', status: number }} attempt
+ * @returns {boolean} Whether the submission should be retried.
+ */
+export const isRetryableAttempt = (attempt) =>
+  attempt.type === 'rejected' || attempt.type === 'timeout' || attempt.status >= 500
+```
+
+## Timeout-wrapped retry loop\n\nEach attempt receives its own AbortController and timeout. Only network rejections, timeouts, and 5xx responses wait for a scheduled retry; 2xx, followed redirects, and 4xx pages are swapped into the current document immediately.
+
+```bash
+sed -n '45,135p' public/js/resilient-submit.js
+```
+
+```output
     if (control instanceof HTMLInputElement) {
       control.value = label
     } else {
@@ -133,13 +149,22 @@ const handleSubmit = (event) => {
       inFlight = false
     })
 }
+```
 
-const init = () => {
-  document.addEventListener('submit', handleSubmit)
-}
+## Automated evidence\n\nThe unit table validates the bounds and classifier; the Playwright spec simulates a transient 503 before letting the normal expense endpoint receive the retry, and confirms validation produces just one POST.
 
-try {
-  init()
-} catch (error) {
-  console.error('[resilient-submit] init failed:', error)
-}
+```bash
+bun test tests/resilient-submit-retry.spec.ts
+```
+
+```output
+bun test v1.3.14 (0d9b296a)
+
+tests/resilient-submit-retry.spec.ts:
+(pass) resilient submit retry policy > allows one initial attempt plus four retries with capped full-jitter exponential delays [4.51ms]
+(pass) resilient submit retry policy > retries transport errors, timeouts, and 5xx responses only [0.04ms]
+
+ 2 pass
+ 0 fail
+Ran 2 tests across 1 file. [36.00ms]
+```

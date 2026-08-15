@@ -20,13 +20,8 @@ import {
   updateManyAndExpense,
   deleteExpense,
 } from '../../lib/db/expense-access'
-import {
-  listCategories,
-  findCategoryByName,
-} from '../../lib/db/category-access'
-import {
-  listTags,
-} from '../../lib/db/tag-access'
+import { listCategories, findCategoryByName } from '../../lib/db/category-access'
+import { listTags } from '../../lib/db/tag-access'
 import { formatCents, formatCentsPlain } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
@@ -109,7 +104,7 @@ const renderEditPage = (props: EditFormProps) => {
       </div>
       <script src='/js/category-combobox.js' defer></script>
       <script src='/js/tag-chip-checkboxes.js' defer></script>
-      <script src='/js/resilient-submit.js' defer></script>
+      <script src='/js/resilient-submit.js' type='module'></script>
     </div>
   )
 }
@@ -348,7 +343,9 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       }
 
       const resolvedById = new Map(allTagsResult.value.map((t) => [t.id, t.name]))
-      const existingTagNames = existingTagIds.map((id) => resolvedById.get(id) ?? '').filter(Boolean)
+      const existingTagNames = existingTagIds
+        .map((id) => resolvedById.get(id) ?? '')
+        .filter(Boolean)
 
       const sortedNewTags = newTagNames.slice().sort((a, b) => a.localeCompare(b))
       const allTagNames = [...existingTagNames, ...newTagNames]
