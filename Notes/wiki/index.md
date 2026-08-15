@@ -49,6 +49,7 @@ Content-oriented catalog of all wiki pages for the `expense-log` project.
 - [money.ts](src/lib/money.md) — money formatting and parsing.
 - [po-notify.ts](src/lib/po-notify.md) — Pushover notifications.
 - [recurrence.ts](src/lib/recurrence.md) — recurrence date arithmetic.
+- [resilient-submit.tsx](src/lib/resilient-submit.md) — shared resilient-submit form attributes, key input, and script renderer.
 - [submission-idempotency.ts](src/lib/submission-idempotency.md) — `withIdempotency` helper and submission idempotency ledger backbone (Issue 19).
 - [redirects.tsx](src/lib/redirects.md) — redirect helpers with flash cookies.
 - [send-email.ts](src/lib/send-email.md) — SMTP email sending with retry.

@@ -6,8 +6,9 @@ The submission idempotency ledger is the server-side dedupe backbone introduced 
 
 - **Ledger table** — `submissionKey` in [src/db/schema.ts](src/db/schema.md). Primary key `key` (a server-minted ULID), `userId` (FK → `user.id` with `onDelete: 'cascade'`), `outcome` (JSON-serialized `{ path, message }`), `createdAt` (timestamp). Created by migration `drizzle/0005_perpetual_carnage.sql`.
 - **Helper** — [`withIdempotency`](src/lib/submission-idempotency.md) in `src/lib/submission-idempotency.ts`. HTTP-agnostic; accepts a drizzle client.
-- **Hidden form field** — `submissionKey` rendered by the entry form and round-tripped through the confirm form, minted per GET render in `expense-get-handler.ts`.
-- **Handler wiring** — the two committing expense handlers route their writes through `withIdempotency`.
+- **Shared form wiring** — `src/lib/resilient-submit.tsx` provides the resilient-submit attributes, hidden `submissionKey` input, and script renderer used by the rollout forms.
+- **Hidden form field** — `submissionKey` is server-minted as a ULID on the rendered entry, edit, or delete page and round-tripped through confirmation forms.
+- **Handler wiring** — expense create, confirmation, edit, and delete commits, plus category and tag creation, route their writes through `withIdempotency`.
 
 ## The `withIdempotency` Contract
 
@@ -34,14 +35,19 @@ The submission idempotency ledger is the server-side dedupe backbone introduced 
 4. **POST handler** (`readRawBody` in `expense-form-helpers.ts`): extracts `submissionKey` from the parsed body, defaulting to `''` when absent or non-string.
 5. **Commit**: the handler passes `raw.submissionKey` + `requireUserId(c)` to `withIdempotency`, which either short-circuits to the stored outcome or runs the commit and records the ledger row.
 
-## Handlers That Use It
+## Applies To
 
-Only the actual commit calls are wrapped. Pre-write validation and the confirmation-page render branch stay outside the idempotent section so a failed validation records no ledger row and the key stays resubmittable.
+The rollout applies resilient-submit UI wiring (the data attributes, hidden server-minted key, and client script) to expense create/edit/delete and confirmation, category create/rename/merge/delete, tag create/rename/merge/delete, and recurring create/edit/delete, including their confirmation screens.
 
-- **Direct-create path** — `handleExpensesPost` in [expense-post-handler.ts](src/routes/expenses/expense-post-handler.md). When nothing is new (existing category + only existing tags), the commit goes straight through `withIdempotency` wrapping `createExpenseWithTags`. When something is new, the handler renders the confirmation page instead — no write, no ledger row.
-- **Confirm-create path** — `handleExpensesConfirmPost` in [expense-confirm-post-handler.ts](src/routes/expenses/expense-confirm-post-handler.md). After `resolveConfirmTagsAndCategory` succeeds (all pre-write validation done), the commit goes through `withIdempotency` wrapping `createManyAndExpense`. The confirm form's hidden `submissionKey` is the original one minted on the entry GET, so a replay of either the entry POST or the confirm POST dedupes against the same ledger row.
+Authentication forms are explicitly excluded: sign-in, sign-up, and password-reset forms retain native submission and do not render a `submissionKey`.
 
-Both handlers share the `EXPENSE_ADDED_OUTCOME` constant (`{ path: PATHS.EXPENSES, message: 'Expense added.' }`) so a replay reproduces the original success redirect.
+Only actual commit calls are wrapped. Pre-write validation and confirmation-page rendering remain outside `withIdempotency`, so a failed validation records no ledger row and the key stays resubmittable.
+
+- **Expense create and confirmation** — `handleExpensesPost` and `handleExpensesConfirmPost` wrap `createExpenseWithTags` and `createManyAndExpense` respectively. Both use `EXPENSE_ADDED_OUTCOME` (`{ path: PATHS.EXPENSES, message: 'Expense added.' }`) to replay the original redirect.
+- **Expense edit and delete** — `build-edit-expense.tsx` wraps direct and confirmation updates plus deletion, replaying the corresponding successful redirect.
+- **Category and tag creation** — their management route builders wrap the creation commits and use the category/tag management route as the replay destination.
+
+The remaining category/tag rename, merge, and delete commits and recurring commits share the rollout form wiring but still require their handler-level `withIdempotency` wiring before they can provide server-side replay protection.
 
 ## Key Design Decisions
 
@@ -58,7 +64,8 @@ Both handlers share the `EXPENSE_ADDED_OUTCOME` constant (`{ path: PATHS.EXPENSE
 
 ## Walkthrough
 
-- [Code walkthrough (Issue 19)](../walkthroughs/19-submission-idempotency-backbone/code-walkthrough/code-walkthrough.md) — showboat-generated walkthrough of the implementation.
+- [Code walkthrough (Issue 19)](../walkthroughs/19-submission-idempotency-backbone/code-walkthrough/code-walkthrough.md) — showboat-generated walkthrough of the backbone implementation.
+- [Code walkthrough (Task 24)](../walkthroughs/24-resilient-submit-rollout-all-forms/code-walkthrough/code-walkthrough.md) — showboat-generated walkthrough of the form-wiring rollout.
 
 ## References
 

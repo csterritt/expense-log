@@ -8,8 +8,10 @@
  */
 import { Context, Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
+import { Result } from 'true-myth'
+import { ulid } from 'ulid'
 
-import { PATHS, STANDARD_SECURE_HEADERS } from '../constants'
+import { ALLOW_SCRIPTS_SECURE_HEADERS, PATHS, STANDARD_SECURE_HEADERS } from '../constants'
 import { Bindings } from '../local-types'
 import { useLayout } from './build-layout'
 import { signedInAccess } from '../middleware/signed-in-access'
@@ -38,6 +40,13 @@ import {
   type ExpenseFormValues,
 } from '../lib/form-state'
 import { redirectWithError, redirectWithMessage } from '../lib/redirects'
+import { withIdempotency } from '../lib/submission-idempotency'
+import {
+  renderResilientSubmitScript,
+  renderSubmissionKeyInput,
+  resilientSubmitProps,
+} from '../lib/resilient-submit'
+import { requireUserId } from './expenses/expense-form-helpers'
 
 const CATEGORY_MERGE_CONFIRM_PATH = '/categories/merge-confirm'
 const categoryInputMax = categoryNameMax + 50
@@ -60,6 +69,7 @@ const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
     sourceId: typeof form.sourceId === 'string' ? form.sourceId : '',
     targetId: typeof form.targetId === 'string' ? form.targetId : '',
     action: typeof form.action === 'string' ? form.action : '',
+    submissionKey: typeof form.submissionKey === 'string' ? form.submissionKey : '',
   }
 }
 
@@ -89,7 +99,14 @@ const renderCategories = (rows: CategoryRow[], state: CategoryFormState) => {
       <section className='card bg-base-100 shadow'>
         <div className='card-body'>
           <h2 className='card-title'>Create category</h2>
-          <form method='post' action={PATHS.CATEGORIES} className='flex flex-col gap-3' noValidate>
+          <form
+            method='post'
+            action={PATHS.CATEGORIES}
+            className='flex flex-col gap-3'
+            {...resilientSubmitProps(PATHS.CATEGORIES)}
+            noValidate
+          >
+            {renderSubmissionKeyInput(ulid())}
             <label className='flex flex-col gap-1'>
               <span className='label-text'>Name</span>
               <input
@@ -148,8 +165,10 @@ const renderCategories = (rows: CategoryRow[], state: CategoryFormState) => {
                             method='post'
                             action={categoryRenamePath(row.id)}
                             className='flex flex-col gap-2 md:flex-row md:items-start'
+                            {...resilientSubmitProps(PATHS.CATEGORIES)}
                             noValidate
                           >
+                            {renderSubmissionKeyInput(ulid())}
                             <label className='flex flex-col gap-1'>
                               <span className='sr-only'>Rename {row.name}</span>
                               <input
@@ -178,7 +197,13 @@ const renderCategories = (rows: CategoryRow[], state: CategoryFormState) => {
                           </form>
                         </td>
                         <td className='text-right'>
-                          <form method='post' action={categoryDeletePath(row.id)} noValidate>
+                          <form
+                            method='post'
+                            action={categoryDeletePath(row.id)}
+                            {...resilientSubmitProps(PATHS.CATEGORIES)}
+                            noValidate
+                          >
+                            {renderSubmissionKeyInput(ulid())}
                             <button
                               type='submit'
                               className='btn btn-sm btn-error btn-outline'
@@ -197,6 +222,7 @@ const renderCategories = (rows: CategoryRow[], state: CategoryFormState) => {
           )}
         </div>
       </section>
+      {renderResilientSubmitScript()}
     </div>
   )
 }
@@ -221,8 +247,10 @@ const renderMergeConfirm = (props: {
         action={CATEGORY_MERGE_CONFIRM_PATH}
         className='flex gap-3'
         data-testid='category-merge-confirm-form'
+        {...resilientSubmitProps(PATHS.CATEGORIES)}
         noValidate
       >
+        {renderSubmissionKeyInput(ulid())}
         <input type='hidden' name='sourceId' value={source.id} />
         <input type='hidden' name='targetId' value={target.id} />
         <button
@@ -249,7 +277,7 @@ const renderMergeConfirm = (props: {
 export const buildCategories = (app: Hono<{ Bindings: Bindings }>): void => {
   app.get(
     PATHS.CATEGORIES,
-    secureHeaders(STANDARD_SECURE_HEADERS),
+    secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const db = createDbClient(c.env.PROJECT_DB)
@@ -276,16 +304,25 @@ export const buildCategories = (app: Hono<{ Bindings: Bindings }>): void => {
         return redirectWithFormErrors(c, PATHS.CATEGORIES, validated.error, { name: raw.name })
       }
       const db = createDbClient(c.env.PROJECT_DB)
-      const result = await createCategory(db, validated.value.name)
-      if (result.isErr) {
+      const outcome = await withIdempotency(db, {
+        key: raw.submissionKey,
+        userId: requireUserId(c),
+        run: async () => {
+          const result = await createCategory(db, validated.value.name)
+          return result.isErr
+            ? Result.err(result.error)
+            : Result.ok({ path: PATHS.CATEGORIES, message: 'Category created.' })
+        },
+      })
+      if (outcome.isErr) {
         return redirectWithFormErrors(
           c,
           PATHS.CATEGORIES,
-          { name: result.error.message },
+          { name: outcome.error.message },
           { name: raw.name },
         )
       }
-      return redirectWithMessage(c, PATHS.CATEGORIES, 'Category created.')
+      return redirectWithMessage(c, outcome.value.path, outcome.value.message)
     },
   )
 

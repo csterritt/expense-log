@@ -560,3 +560,11 @@ Documented the Issue 19 implementation: the `submissionKey` ledger table, the `w
 - `Notes/wiki/src/routes/expenses/expense-form.md` — documented hidden `submissionKey` input on entry form and round-trip through `renderConfirmNewItems`.
 - `Notes/wiki/unit-tests.md` — added `submission-idempotency.spec.ts` entry; spec count now 19.
 - `Notes/wiki/index.md` — added new "Concept pages" section with `idempotency-ledger.md`; added `submission-idempotency.ts` to lib/ source list; updated unit-test count to 19.
+
+## [2026-08-15] ingest | Task 24: Resilient-submit rollout
+
+Documented the Task 24 form-wiring rollout and its bounded server-side idempotency coverage.
+
+- `Notes/wiki/idempotency-ledger.md` — expanded the applies-to scope to expense, category, tag, and recurring form families; recorded the explicit auth-form exclusion and distinguished the commits currently protected by `withIdempotency` from the remaining handler wiring.
+- `Notes/wiki/src/lib/resilient-submit.md` — added the shared helper page.
+- `Notes/wiki/source-code.md`, `Notes/wiki/e2e-tests.md`, and `Notes/wiki/index.md` — cataloged the new helper and rollout smoke spec.

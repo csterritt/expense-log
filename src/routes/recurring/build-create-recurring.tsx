@@ -10,26 +10,17 @@
  */
 import { Context, Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
+import { ulid } from 'ulid'
 
 import { ALLOW_SCRIPTS_SECURE_HEADERS, PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
 import { signedInAccess } from '../../middleware/signed-in-access'
-import {
-  createRecurringWithTags,
-  createManyAndRecurring,
-} from '../../lib/db/expense-access'
-import {
-  resolveConfirmTagsAndCategory,
-} from '../../lib/db/confirm-helpers'
-import {
-  listCategories,
-  findCategoryByName,
-} from '../../lib/db/category-access'
-import {
-  listTags,
-} from '../../lib/db/tag-access'
+import { createRecurringWithTags, createManyAndRecurring } from '../../lib/db/expense-access'
+import { resolveConfirmTagsAndCategory } from '../../lib/db/confirm-helpers'
+import { listCategories, findCategoryByName } from '../../lib/db/category-access'
+import { listTags } from '../../lib/db/tag-access'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseRecurringCreate,
@@ -42,9 +33,7 @@ import {
   redirectWithFormErrors,
   type ExpenseFormValues,
 } from '../../lib/form-state'
-import {
-  renderConfirmNewItems,
-} from '../expenses/expense-form'
+import { renderConfirmNewItems } from '../expenses/expense-form'
 import {
   renderRecurringForm,
   type RecurringFormState,
@@ -89,7 +78,6 @@ const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
   }
 }
 
-
 export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
   // ---------- GET /recurring/new ----------
   app.get(
@@ -126,6 +114,7 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
             },
           }
         : emptyRecurringState(today)
+      state.values.submissionKey = ulid()
       return c.render(
         useLayout(
           c,
@@ -137,11 +126,16 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
               state,
               payloads,
             })}
-            <a href={PATHS.RECURRING} className='btn btn-ghost mt-2' data-testid='recurring-new-back'>
+            <a
+              href={PATHS.RECURRING}
+              className='btn btn-ghost mt-2'
+              data-testid='recurring-new-back'
+            >
               Back to list
             </a>
             <script src='/js/category-combobox.js' defer></script>
             <script src='/js/tag-chip-checkboxes.js' defer></script>
+            <script src='/js/resilient-submit.js' type='module'></script>
           </div>,
         ),
       )
@@ -198,7 +192,12 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
       const resolvedIdSet = new Set(allTagsResult.value.map((t) => t.id))
       const unknownIds = tagInputParse.lookupCandidateTagIds.filter((id) => !resolvedIdSet.has(id))
       if (unknownIds.length > 0) {
-        return redirectWithFormErrors(c, newPath, { tags: 'One or more selected tags no longer exist.' }, rawValues)
+        return redirectWithFormErrors(
+          c,
+          newPath,
+          { tags: 'One or more selected tags no longer exist.' },
+          rawValues,
+        )
       }
 
       const lookup = await findCategoryByName(db, validated.value.category)
@@ -334,7 +333,8 @@ export const buildCreateRecurring = (app: Hono<{ Bindings: Bindings }>): void =>
         }
       }
 
-      const { existingTagIds, newTagNames, existingCategoryId, newCategoryName } = resolved as Extract<typeof resolved, { ok: true }>
+      const { existingTagIds, newTagNames, existingCategoryId, newCategoryName } =
+        resolved as Extract<typeof resolved, { ok: true }>
 
       const createResult = await createManyAndRecurring(db, {
         newCategoryName: newCategoryName ?? null,

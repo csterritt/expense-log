@@ -13,6 +13,11 @@
  * @module routes/expenses/expense-form
  */
 import { PATHS } from '../../constants'
+import {
+  renderResilientSubmitScript,
+  renderSubmissionKeyInput,
+  resilientSubmitProps,
+} from '../../lib/resilient-submit'
 import { categoryNameMax, descriptionMax, type FieldErrors } from '../../lib/expense-validators'
 import type { ExpenseFormValues } from '../../lib/form-state'
 import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
@@ -66,11 +71,10 @@ export const renderExpenseForm = (props: RenderExpenseFormProps) => {
       action={action}
       className='mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-start'
       data-testid='expense-form'
-      data-resilient-submit
-      data-resilient-submit-target={PATHS.EXPENSES}
+      {...resilientSubmitProps(PATHS.EXPENSES)}
       noValidate
     >
-      <input type='hidden' name='submissionKey' value={values.submissionKey ?? ''} />
+      {renderSubmissionKeyInput(values.submissionKey)}
       <div className='flex flex-col md:col-span-2'>
         <label className='label' htmlFor='expense-form-description'>
           <span className='label-text'>Description</span>
@@ -257,8 +261,7 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
         action={action}
         className='flex gap-3'
         data-testid={`${prefix}-form`}
-        data-resilient-submit={isRecurring ? undefined : ''}
-        data-resilient-submit-target={isRecurring ? undefined : PATHS.EXPENSES}
+        {...resilientSubmitProps(isRecurring ? PATHS.RECURRING : PATHS.EXPENSES)}
         noValidate
       >
         <input type='hidden' name='description' value={values.description ?? ''} />
@@ -275,7 +278,7 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
           <input type='hidden' name='tagId' value={id} />
         ))}
         <input type='hidden' name='newTags' value={values.newTags ?? ''} />
-        <input type='hidden' name='submissionKey' value={values.submissionKey ?? ''} />
+        {renderSubmissionKeyInput(values.submissionKey)}
         <button
           type='submit'
           name='action'
@@ -295,7 +298,7 @@ export const renderConfirmNewItems = (props: ConfirmNewItemsProps) => {
           Cancel
         </button>
       </form>
-      {!isRecurring && <script src='/js/resilient-submit.js' type='module'></script>}
+      {renderResilientSubmitScript()}
     </div>
   )
 }

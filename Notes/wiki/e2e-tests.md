@@ -30,6 +30,7 @@ Catalog of all Playwright end-to-end test files under `e2e-tests/`. Tests run ag
 | [21-entry-no-js-and-broken-js.spec.ts](e2e-tests/expenses/21-entry-no-js-and-broken-js.md) | Entry form works with no JS and with broken JS (graceful degradation). |
 | [22-edit-tag-chip-ui.spec.ts](e2e-tests/expenses/22-edit-tag-chip-ui.md) | Tag chip checkbox UI in the edit form. |
 | [23-list-filter-chip-unification.spec.ts](e2e-tests/expenses/23-list-filter-chip-unification.md) | Unified tag chip component in filter bar and forms. |
+| `24-resilient-submit-rollout.spec.ts` | Verifies resilient-submit markup and ULID keys across expense edit/delete, category, tag, and recurring forms; asserts auth forms remain excluded. |
 
 ## gated-sign-up/
 

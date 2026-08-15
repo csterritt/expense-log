@@ -14,6 +14,7 @@
  */
 import { Context, Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
+import { ulid } from 'ulid'
 
 import { ALLOW_SCRIPTS_SECURE_HEADERS, PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import { Bindings } from '../../local-types'
@@ -30,19 +31,13 @@ import {
   createOrReuseTag,
   resolveConfirmTagsAndCategory,
 } from '../../lib/db/confirm-helpers'
-import {
-  listCategories,
-  findCategoryByName,
-} from '../../lib/db/category-access'
-import {
-  listTags,
-} from '../../lib/db/tag-access'
+import { listCategories, findCategoryByName } from '../../lib/db/category-access'
+import { listTags } from '../../lib/db/tag-access'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseRecurringCreate,
   parseNewCategoryName,
   parseTagInputs,
-  type FieldErrors,
 } from '../../lib/expense-validators'
 import {
   readAndClearFormState,
@@ -56,6 +51,11 @@ import {
   type RecurringFormPayloads,
 } from './recurring-form'
 import { formatCents, formatCentsPlain } from '../../lib/money'
+import {
+  renderResilientSubmitScript,
+  renderSubmissionKeyInput,
+  resilientSubmitProps,
+} from '../../lib/resilient-submit'
 
 const requireId = (c: Context<{ Bindings: Bindings }>): string | null => {
   const id = c.req.param('id')
@@ -125,9 +125,10 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
         return redirectWithError(c, PATHS.RECURRING, 'Failed to load form. Please try again.')
       }
       const allTagIds = template.tagIds ?? []
-      const defaultTagIds = allTagIds.length > 0
-        ? tagsResult.value.filter((t) => allTagIds.includes(t.id)).map((t) => t.id)
-        : []
+      const defaultTagIds =
+        allTagIds.length > 0
+          ? tagsResult.value.filter((t) => allTagIds.includes(t.id)).map((t) => t.id)
+          : []
 
       const payloads: RecurringFormPayloads = {
         categories: categoriesResult.value.map((row) => ({ name: row.name })),
@@ -159,6 +160,7 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
               anchorDate: template.anchorDate,
             },
           }
+      state.values.submissionKey = ulid()
       return c.render(
         useLayout(
           c,
@@ -179,11 +181,16 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
               state,
               payloads,
             })}
-            <a href={PATHS.RECURRING} className='btn btn-ghost mt-2' data-testid='recurring-edit-back'>
+            <a
+              href={PATHS.RECURRING}
+              className='btn btn-ghost mt-2'
+              data-testid='recurring-edit-back'
+            >
               Back to list
             </a>
             <script src='/js/category-combobox.js' defer></script>
             <script src='/js/tag-chip-checkboxes.js' defer></script>
+            <script src='/js/resilient-submit.js' type='module'></script>
           </div>,
         ),
       )
@@ -249,7 +256,12 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
       const resolvedIdSet = new Set(allTagsResult.value.map((t) => t.id))
       const unknownIds = tagInputParse.lookupCandidateTagIds.filter((id) => !resolvedIdSet.has(id))
       if (unknownIds.length > 0) {
-        return redirectWithFormErrors(c, editPath, { tags: 'One or more selected tags no longer exist.' }, rawValues)
+        return redirectWithFormErrors(
+          c,
+          editPath,
+          { tags: 'One or more selected tags no longer exist.' },
+          rawValues,
+        )
       }
 
       const lookup = await findCategoryByName(db, validated.value.category)
@@ -293,7 +305,9 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
       }
 
       const allTagsById = new Map(allTagsResult.value.map((t) => [t.id, t.name]))
-      const existingTagNames = existingTagIds.map((tagId) => allTagsById.get(tagId) ?? '').filter(Boolean)
+      const existingTagNames = existingTagIds
+        .map((tagId) => allTagsById.get(tagId) ?? '')
+        .filter(Boolean)
       const sortedNewTags = newTagNames.slice().sort((a, b) => a.localeCompare(b))
       const allTagNames = [...existingTagNames, ...newTagNames]
       const finalTagNames = allTagNames.slice().sort((a, b) => a.localeCompare(b))
@@ -394,14 +408,22 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
         }
       }
 
-      const { existingTagIds, newTagNames, existingCategoryId } = resolved as Extract<typeof resolved, { ok: true }>
+      const { existingTagIds, newTagNames, existingCategoryId } = resolved as Extract<
+        typeof resolved,
+        { ok: true }
+      >
       let resolvedCategoryId: string = existingCategoryId ?? ''
 
       if (existingCategoryId === null) {
         const { newCategoryName } = resolved as Extract<typeof resolved, { ok: true }>
         const catResult = await createOrReuseCategory(db, newCategoryName!)
         if (catResult.isErr) {
-          return redirectWithFormErrors(c, editPath, { category: catResult.error.message }, rawValues)
+          return redirectWithFormErrors(
+            c,
+            editPath,
+            { category: catResult.error.message },
+            rawValues,
+          )
         }
         resolvedCategoryId = catResult.value.id
       }
@@ -458,12 +480,17 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
               <dt className='font-semibold'>Description</dt>
               <dd data-testid='confirm-delete-recurring-description'>{template.description}</dd>
               <dt className='font-semibold'>Amount</dt>
-              <dd data-testid='confirm-delete-recurring-amount'>{formatCents(template.amountCents)}</dd>
+              <dd data-testid='confirm-delete-recurring-amount'>
+                {formatCents(template.amountCents)}
+              </dd>
               <dt className='font-semibold'>Category</dt>
               <dd data-testid='confirm-delete-recurring-category'>{template.categoryName}</dd>
               <dt className='font-semibold'>Tags</dt>
               <dd data-testid='confirm-delete-recurring-tags'>
-                {template.tagNames.slice().sort((a, b) => a.localeCompare(b)).join(', ')}
+                {template.tagNames
+                  .slice()
+                  .sort((a, b) => a.localeCompare(b))
+                  .join(', ')}
               </dd>
               <dt className='font-semibold'>Recurrence</dt>
               <dd data-testid='confirm-delete-recurring-recurrence'>{template.recurrence}</dd>
@@ -471,10 +498,16 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
               <dd data-testid='confirm-delete-recurring-anchor-date'>{template.anchorDate}</dd>
             </dl>
             <p className='text-sm text-base-content/60 mb-6'>
-              Past generated expenses linked to this template will remain but will no longer be associated with it.
+              Past generated expenses linked to this template will remain but will no longer be
+              associated with it.
             </p>
             <div className='flex gap-3'>
-              <form method='post' action={`/recurring/${id}/delete`}>
+              <form
+                method='post'
+                action={`/recurring/${id}/delete`}
+                {...resilientSubmitProps(PATHS.RECURRING)}
+              >
+                {renderSubmissionKeyInput(ulid())}
                 <button
                   type='submit'
                   className='btn btn-error'
@@ -491,6 +524,7 @@ export const buildEditRecurring = (app: Hono<{ Bindings: Bindings }>): void => {
                 Cancel
               </a>
             </div>
+            {renderResilientSubmitScript()}
           </div>,
         ),
       )

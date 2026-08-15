@@ -8,6 +8,8 @@
  */
 import { Context, Hono } from 'hono'
 import { secureHeaders } from 'hono/secure-headers'
+import { Result } from 'true-myth'
+import { ulid } from 'ulid'
 
 import { ALLOW_SCRIPTS_SECURE_HEADERS, PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import { Bindings } from '../../local-types'
@@ -24,6 +26,12 @@ import { listCategories, findCategoryByName } from '../../lib/db/category-access
 import { listTags } from '../../lib/db/tag-access'
 import { formatCents, formatCentsPlain } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
+import { withIdempotency } from '../../lib/submission-idempotency'
+import {
+  renderResilientSubmitScript,
+  renderSubmissionKeyInput,
+  resilientSubmitProps,
+} from '../../lib/resilient-submit'
 import {
   parseExpenseCreate,
   parseNewCategoryName,
@@ -41,6 +49,7 @@ import {
   type ExpenseFormPayloads,
   type ExpenseFormState,
 } from './expense-form'
+import { requireUserId } from './expense-form-helpers'
 
 const requireId = (c: Context<{ Bindings: Bindings }>): string => {
   const id = c.req.param('id')
@@ -70,6 +79,7 @@ const readRawBody = async (c: Context<{ Bindings: Bindings }>) => {
     tagId,
     newTags: typeof form.newTags === 'string' ? form.newTags : '',
     action: typeof form.action === 'string' ? form.action : '',
+    submissionKey: typeof form.submissionKey === 'string' ? form.submissionKey : '',
   }
 }
 
@@ -116,10 +126,11 @@ type DeleteConfirmProps = {
   amountCents: number
   categoryName: string
   tagNames: string[]
+  submissionKey: string
 }
 
 const renderDeleteConfirm = (props: DeleteConfirmProps) => {
-  const { id, date, description, amountCents, categoryName, tagNames } = props
+  const { id, date, description, amountCents, categoryName, tagNames, submissionKey } = props
   return (
     <div className='max-w-xl mx-auto' data-testid='confirm-delete-expense-page'>
       <h1 className='text-2xl font-bold mb-4'>Delete expense?</h1>
@@ -143,8 +154,10 @@ const renderDeleteConfirm = (props: DeleteConfirmProps) => {
         action={deletePath(id)}
         className='flex gap-3'
         data-testid='confirm-delete-expense-form'
+        {...resilientSubmitProps(PATHS.EXPENSES)}
         noValidate
       >
+        {renderSubmissionKeyInput(submissionKey)}
         <button
           type='submit'
           className='btn btn-error'
@@ -160,6 +173,7 @@ const renderDeleteConfirm = (props: DeleteConfirmProps) => {
           Cancel
         </a>
       </form>
+      {renderResilientSubmitScript()}
     </div>
   )
 }
@@ -234,6 +248,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       }
       const flash = readAndClearFormState(c)
       const state = buildEditState(loaded, flash)
+      state.values.submissionKey = ulid()
       return c.render(useLayout(c, renderEditPage({ expenseId: id, state, payloads })))
     },
   )
@@ -306,18 +321,27 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const anyNew = categoryIsNew || newTagNames.length > 0
 
       if (!anyNew) {
-        const updateResult = await updateExpenseWithTags(db, {
-          id,
-          description: validated.value.description,
-          amountCents: validated.value.amountCents,
-          date: validated.value.date,
-          categoryId: lookup.value!.id,
-          tagIds: existingTagIds,
+        const outcome = await withIdempotency(db, {
+          key: raw.submissionKey,
+          userId: requireUserId(c),
+          run: async () => {
+            const updateResult = await updateExpenseWithTags(db, {
+              id,
+              description: validated.value.description,
+              amountCents: validated.value.amountCents,
+              date: validated.value.date,
+              categoryId: lookup.value!.id,
+              tagIds: existingTagIds,
+            })
+            return updateResult.isErr
+              ? Result.err(updateResult.error)
+              : Result.ok({ path: PATHS.EXPENSES, message: 'Expense updated.' })
+          },
         })
-        if (updateResult.isErr) {
+        if (outcome.isErr) {
           return redirectWithError(c, editPath(id), 'Failed to save expense. Please try again.')
         }
-        return redirectWithMessage(c, PATHS.EXPENSES, 'Expense updated.')
+        return redirectWithMessage(c, outcome.value.path, outcome.value.message)
       }
 
       // Something is new — validate the new-category name when applicable.
@@ -358,6 +382,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
         category: raw.category,
         tagIds: existingTagIds,
         newTags: newTagNames.join(','),
+        submissionKey: raw.submissionKey,
       }
 
       return c.render(
@@ -459,32 +484,41 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
         newCategoryName = nameCheck.value
       }
 
-      const updateResult = await updateManyAndExpense(db, {
-        id,
-        newCategoryName,
-        existingCategoryId,
-        newTagNames,
-        existingTagIds,
-        date: validated.value.date,
-        description: validated.value.description,
-        amountCents: validated.value.amountCents,
+      const outcome = await withIdempotency(db, {
+        key: raw.submissionKey,
+        userId: requireUserId(c),
+        run: async () => {
+          const updateResult = await updateManyAndExpense(db, {
+            id,
+            newCategoryName,
+            existingCategoryId,
+            newTagNames,
+            existingTagIds,
+            date: validated.value.date,
+            description: validated.value.description,
+            amountCents: validated.value.amountCents,
+          })
+          return updateResult.isErr
+            ? Result.err(updateResult.error)
+            : Result.ok({ path: PATHS.EXPENSES, message: 'Expense updated.' })
+        },
       })
-      if (updateResult.isErr) {
+      if (outcome.isErr) {
         const errs: FieldErrors =
           newCategoryName !== null
-            ? { category: updateResult.error.message }
-            : { tags: updateResult.error.message }
+            ? { category: outcome.error.message }
+            : { tags: outcome.error.message }
         return redirectWithFormErrors(c, editPath(id), errs, rawValues)
       }
 
-      return redirectWithMessage(c, PATHS.EXPENSES, 'Expense updated.')
+      return redirectWithMessage(c, outcome.value.path, outcome.value.message)
     },
   )
 
   // ---------- GET /expenses/:id/delete ----------
   app.get(
     '/expenses/:id/delete',
-    secureHeaders(STANDARD_SECURE_HEADERS),
+    secureHeaders(ALLOW_SCRIPTS_SECURE_HEADERS),
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const id = requireId(c)
@@ -507,6 +541,7 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
             amountCents: row.amountCents,
             categoryName: row.categoryName,
             tagNames: row.tagNames,
+            submissionKey: ulid(),
           }),
         ),
       )
@@ -520,12 +555,22 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
     signedInAccess,
     async (c: Context<{ Bindings: Bindings }>) => {
       const id = requireId(c)
+      const raw = await readRawBody(c)
       const db = createDbClient(c.env.PROJECT_DB)
-      const result = await deleteExpense(db, id)
-      if (result.isErr) {
+      const outcome = await withIdempotency(db, {
+        key: raw.submissionKey,
+        userId: requireUserId(c),
+        run: async () => {
+          const result = await deleteExpense(db, id)
+          return result.isErr
+            ? Result.err(result.error)
+            : Result.ok({ path: PATHS.EXPENSES, message: 'Expense deleted.' })
+        },
+      })
+      if (outcome.isErr) {
         return redirectWithError(c, PATHS.EXPENSES, 'Failed to delete expense. Please try again.')
       }
-      return redirectWithMessage(c, PATHS.EXPENSES, 'Expense deleted.')
+      return redirectWithMessage(c, outcome.value.path, outcome.value.message)
     },
   )
 }
