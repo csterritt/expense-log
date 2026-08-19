@@ -1194,7 +1194,7 @@ describe('parseTagInputs (Task 1a — pure parser)', () => {
       const lower = VALID_ULID.toLowerCase()
       const r = parseTagInputs({ tagId: [lower], newTags: '' }, [])
       assert.deepStrictEqual(r.lookupCandidateTagIds, [])
-      assert.deepStrictEqual(r.fieldErrors, {})
+      assert.strictEqual(r.fieldErrors.tags, 'One or more selected tags are invalid.')
     })
 
     it('excludes a 25-char value (too short)', () => {
@@ -1217,9 +1217,11 @@ describe('parseTagInputs (Task 1a — pure parser)', () => {
       assert.deepStrictEqual(r.lookupCandidateTagIds, [])
     })
 
-    it('filters invalid ids while keeping valid ones', () => {
+    it('rejects invalid ids while keeping valid ids available for sticky form state', () => {
       const r = parseTagInputs({ tagId: [VALID_ULID, 'bad-id', VALID_ULID_2], newTags: '' }, [])
       assert.deepStrictEqual(r.lookupCandidateTagIds, [VALID_ULID, VALID_ULID_2])
+      assert.deepStrictEqual(r.tagIds, [VALID_ULID, VALID_ULID_2])
+      assert.strictEqual(r.fieldErrors.tags, 'One or more selected tags are invalid.')
     })
   })
 

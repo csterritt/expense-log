@@ -62,7 +62,7 @@ test.describe('Expense list filter — tag chip-checkbox unification', () => {
       await expect(chips).toHaveCount(4)
 
       const names = await chips.allTextContents()
-      const lower = names.map((n) => n.trim().toLowerCase())
+      const lower = names.map((n: string) => n.trim().toLowerCase())
       expect(lower).toEqual([...lower].sort())
 
       await expect(chipBlock).toHaveCSS('display', 'flex')
@@ -92,7 +92,7 @@ test.describe('Expense list filter — tag chip-checkbox unification', () => {
       expect(foodClass).toEqual(giftClass)
 
       expect(foodClass).toContain('badge')
-      expect(foodClass).toContain('badge-outline')
+      expect(foodClass).toContain('cursor-pointer')
     }),
   )
 

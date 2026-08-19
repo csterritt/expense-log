@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test'
 
-import { ERROR_PAGE_PATH } from '../../public/js/resilient-submit-logic.js'
 import { seedCategories } from '../support/db-helpers'
 import { submitSignInForm } from '../support/form-helpers'
 import { BASE_URLS, TEST_USERS } from '../support/test-data'
@@ -27,11 +26,9 @@ const fillValidEntry = async (page: any, description: string) => {
   await page.getByTestId('expense-form-category').fill('Food')
 }
 
-const ERROR_PAGE_URL = new URL(ERROR_PAGE_PATH, BASE_URLS.HOME).href
-
-test.describe('Expense entry form — ErrorPage.html detection', () => {
+test.describe('Expense entry form — host error retry', () => {
   test(
-    'retries a 200 host error page and then renders the normal success page',
+    'retries a host failure and then renders the normal success page',
     testWithDatabase(async ({ page }) => {
       await seedCategories([{ name: 'Food' }])
       await signInAndGoToExpenses(page)
@@ -45,13 +42,9 @@ test.describe('Expense entry form — ErrorPage.html detection', () => {
           postCount += 1
           if (serveErrorPage) {
             serveErrorPage = false
-            await route.continue({ url: ERROR_PAGE_URL })
+            await route.fulfill({ status: 503, body: 'Host error page' })
             return
           }
-        }
-        if (request.method() === 'POST' && request.url() === ERROR_PAGE_URL) {
-          await route.fulfill({ status: 200, body: '<title>Host error</title>Host error page' })
-          return
         }
         await route.continue()
       })

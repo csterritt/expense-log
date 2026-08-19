@@ -35,7 +35,7 @@ test.describe('Expense entry form — tamper and validation-error preservation',
 
       await signInAndGoToExpenses(page)
 
-      await page.getByTestId('tag-chip-food').click()
+      await page.getByTestId('expense-form').getByTestId('tag-chip-food').click()
 
       const newTagsInput = page.getByTestId('new-tags-input')
       await newTagsInput.fill('mynewtag')
@@ -47,6 +47,8 @@ test.describe('Expense entry form — tamper and validation-error preservation',
       await page.getByTestId('expense-form-create').click()
 
       await expect(page.getByTestId('confirm-create-new-page')).toBeVisible()
+      await expect(page.getByTestId('confirm-create-new-confirm')).toBeEnabled()
+      await page.waitForTimeout(50)
       await page.getByTestId('confirm-create-new-cancel').click()
 
       await page.waitForURL(BASE_URLS.EXPENSES)
@@ -58,11 +60,13 @@ test.describe('Expense entry form — tamper and validation-error preservation',
       await expect(page.getByTestId('expense-form-category')).toHaveValue('food')
 
       const foodInput = page
+        .getByTestId('expense-form')
         .getByTestId('tag-chip-food')
         .locator('input[type="checkbox"]')
       await expect(foodInput).toBeChecked()
 
       const giftInput = page
+        .getByTestId('expense-form')
         .getByTestId('tag-chip-gift')
         .locator('input[type="checkbox"]')
       await expect(giftInput).not.toBeChecked()

@@ -681,6 +681,9 @@ export const parseTagInputs = (raw: RawTagInputs, existingTags: ExistingTag[]): 
   }
 
   const syntacticIds = filterSyntacticUlids(rawIds)
+  if (rawIds.some((id) => id.length > 0 && !isValidUlid(id))) {
+    fieldErrors.tags = fieldErrors.tags ?? 'One or more selected tags are invalid.'
+  }
 
   const rawNewTags = typeof raw.newTags === 'string' ? raw.newTags : ''
 

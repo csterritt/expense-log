@@ -37,10 +37,10 @@ test.describe('Expense entry form — no-JS fallback', () => {
 
       await signInAndGoToExpenses(page)
 
-      const chipBlock = page.getByTestId('tag-chip-checkboxes')
+      const chipBlock = page.getByTestId('expense-form').getByTestId('tag-chip-checkboxes')
       await expect(chipBlock).toBeVisible()
 
-      const foodLabel = page.getByTestId('tag-chip-food')
+      const foodLabel = page.getByTestId('expense-form').getByTestId('tag-chip-food')
       await foodLabel.click()
       const foodInput = foodLabel.locator('input[type="checkbox"]')
       await expect(foodInput).toBeChecked()
@@ -117,7 +117,7 @@ test.describe('Expense entry form — no-JS fallback', () => {
 
       await signInAndGoToExpenses(page)
 
-      await page.getByTestId('tag-chip-food').click()
+      await page.getByTestId('expense-form').getByTestId('tag-chip-food').click()
 
       await page.getByTestId('expense-form-description').fill('Round trip no-js')
       await page.getByTestId('expense-form-amount').fill('not-a-number')
@@ -131,6 +131,7 @@ test.describe('Expense entry form — no-JS fallback', () => {
       await expect(page.getByTestId('expense-form-amount')).toHaveValue('not-a-number')
 
       const foodInput = page
+        .getByTestId('expense-form')
         .getByTestId('tag-chip-food')
         .locator('input[type="checkbox"]')
       await expect(foodInput).toBeChecked()
@@ -162,10 +163,10 @@ test.describe('Expense entry form — broken-JS fallback', () => {
 
       await signInAndGoToExpenses(page)
 
-      const chipBlock = page.getByTestId('tag-chip-checkboxes')
+      const chipBlock = page.getByTestId('expense-form').getByTestId('tag-chip-checkboxes')
       await expect(chipBlock).toBeVisible()
 
-      const foodLabel = page.getByTestId('tag-chip-food')
+      const foodLabel = page.getByTestId('expense-form').getByTestId('tag-chip-food')
       await foodLabel.click()
       const foodInput = foodLabel.locator('input[type="checkbox"]')
       await expect(foodInput).toBeChecked()

@@ -118,6 +118,7 @@ const send = async (form, submitter) => {
           ERROR_PAGE_PATH,
         )
       ) {
+        inFlight = false
         swapResponsePage(await result.response.text(), result.response.url)
         return true
       }
@@ -133,14 +134,19 @@ const send = async (form, submitter) => {
 
 const handleSubmit = (event) => {
   const form = event.target instanceof HTMLFormElement ? event.target : null
-  if (!form || !form.matches(FORM_SELECTOR) || inFlight) {
+  const submitter = event.submitter
+  if (
+    !form ||
+    !form.matches(FORM_SELECTOR) ||
+    inFlight ||
+    (submitter instanceof HTMLButtonElement && submitter.name === 'action' && submitter.value === 'cancel')
+  ) {
     return
   }
 
   event.preventDefault()
   inFlight = true
   clearExhaustionError(form)
-  const submitter = event.submitter
   const restore = setSubmitting(findSubmitControl(form, submitter))
   void send(form, submitter)
     .then((submitted) => {
