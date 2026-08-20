@@ -15,7 +15,7 @@ import { useLayout } from '../build-layout'
 import { findCategoryByName } from '../../lib/db/category-access'
 import { listTags } from '../../lib/db/tag-access'
 import { createExpenseWithTags } from '../../lib/db/expense-access'
-import { withIdempotency } from '../../lib/submission-idempotency'
+import { withAtomicIdempotency } from '../../lib/submission-idempotency'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import {
   parseExpenseCreate,
@@ -115,21 +115,23 @@ export const handleExpensesPost = async (c: Context<{ Bindings: Bindings }>) => 
     // Route the commit through the idempotency ledger so a replayed POST
     // carrying the same submissionKey reproduces the redirect without a
     // second write.
-    const outcome = await withIdempotency(db, {
+    const outcome = await withAtomicIdempotency(db, {
       key: raw.submissionKey,
       userId: requireUserId(c),
-      run: async () => {
-        const createResult = await createExpenseWithTags(db, {
-          description: validated.value.description,
-          amountCents: validated.value.amountCents,
-          date: validated.value.date,
-          categoryId: lookup.value!.id,
-          tagIds: existingTagIds,
-        })
-        if (createResult.isErr) {
-          return Result.err(createResult.error)
-        }
-        return Result.ok(EXPENSE_ADDED_OUTCOME)
+      outcome: EXPENSE_ADDED_OUTCOME,
+      run: async (submission) => {
+        const createResult = await createExpenseWithTags(
+          db,
+          {
+            description: validated.value.description,
+            amountCents: validated.value.amountCents,
+            date: validated.value.date,
+            categoryId: lookup.value!.id,
+            tagIds: existingTagIds,
+          },
+          submission,
+        )
+        return createResult.isErr ? Result.err(createResult.error) : Result.ok(createResult.value)
       },
     })
     if (outcome.isErr) {

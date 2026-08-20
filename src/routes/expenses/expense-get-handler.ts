@@ -8,6 +8,7 @@
  */
 
 import { Context } from 'hono'
+import { html } from 'hono/html'
 import { ulid } from 'ulid'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
@@ -16,13 +17,27 @@ import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import { listExpenses } from '../../lib/db/expense-access'
 import { listCategories } from '../../lib/db/category-access'
 import { listTags } from '../../lib/db/tag-access'
-import { redirectWithError } from '../../lib/redirects'
 import { parseExpenseListFilters } from '../../lib/expense-validators'
 import { readAndClearFormState } from '../../lib/form-state'
 import { renderExpenses } from './expense-list-renderer'
 import { emptyState } from './expense-form-helpers'
-import { PATHS } from '../../constants'
+import { HTML_STATUS } from '../../constants'
 import type { ExpenseFormPayloads, ExpenseFormState } from './expense-form'
+
+/**
+ * Render a terminal expense-list load error without redirecting the user.
+ */
+export const renderExpenseLoadError = (c: Context<{ Bindings: Bindings }>): Response => {
+  c.status(HTML_STATUS.INTERNAL_SERVER_ERROR)
+  return c.render(
+    useLayout(
+      c,
+      html`<div role="alert" data-testid="expenses-load-error">
+        Failed to load expenses. Please try again.
+      </div>`,
+    ),
+  )
+}
 
 /**
  * Handles GET requests to the expenses list page.
@@ -55,15 +70,15 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
 
   const expensesResult = await listExpenses(db, activeFilters)
   if (expensesResult.isErr) {
-    return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Failed to load expenses. Please try again.')
+    return renderExpenseLoadError(c)
   }
   const categoriesResult = await listCategories(db)
   if (categoriesResult.isErr) {
-    return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Failed to load expenses. Please try again.')
+    return renderExpenseLoadError(c)
   }
   const tagsResult = await listTags(db)
   if (tagsResult.isErr) {
-    return redirectWithError(c, PATHS.AUTH.SIGN_IN, 'Failed to load expenses. Please try again.')
+    return renderExpenseLoadError(c)
   }
   const allTagIds = new Set(tagsResult.value.map((row) => row.id))
   const resolvedTagIds = activeFilters.tagIds.filter((id) => allTagIds.has(id))

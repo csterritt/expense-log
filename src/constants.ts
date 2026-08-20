@@ -16,6 +16,7 @@ import { STATIC_TRUSTED_ORIGINS } from './lib/origin-config'
 export const HTML_STATUS = {
   SEE_OTHER: 303 as const,
   CONTENT_TOO_LARGE: 413 as const,
+  INTERNAL_SERVER_ERROR: 500 as const,
 } as const
 
 /**

@@ -47,6 +47,26 @@ export interface WithIdempotencyArgs {
   run: () => Promise<Result<SubmissionOutcome, Error>>
 }
 
+/**
+ * Ledger values that a mutation must include in its atomic D1 batch.
+ */
+export interface AtomicSubmission {
+  key: string
+  userId: string
+  outcome: SubmissionOutcome
+  createdAt: Date
+}
+
+/**
+ * Arguments for {@link withAtomicIdempotency}.
+ */
+export interface WithAtomicIdempotencyArgs {
+  key: string
+  userId: string
+  outcome: SubmissionOutcome
+  run: (submission?: AtomicSubmission) => Promise<Result<unknown, Error>>
+}
+
 // Crockford base32 ULID: 26 chars, excluding I, L, O, U. Case-insensitive.
 const ULID_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/i
 
@@ -78,6 +98,17 @@ const parseOutcome = (raw: string): SubmissionOutcome | null => {
     return null
   }
 }
+
+/**
+ * Build the ledger insert appended to the mutation's atomic D1 batch.
+ */
+export const buildAtomicSubmissionStatement = (db: DrizzleClient, submission: AtomicSubmission) =>
+  db.insert(submissionKey).values({
+    key: submission.key,
+    userId: submission.userId,
+    outcome: JSON.stringify(submission.outcome),
+    createdAt: submission.createdAt,
+  })
 
 /**
  * Best-effort prune of ledger rows older than {@link LEDGER_TTL_MS}.
@@ -156,4 +187,56 @@ export const withIdempotency = async (
   await pruneStaleLedgerRows(db)
 
   return Result.ok(result.value)
+}
+
+/**
+ * Run a mutation with its submission ledger insert in the same atomic batch.
+ *
+ * The supplied `run` callback must append the provided submission statement to
+ * the same D1 batch as its mutation. When the key is absent or malformed, the
+ * callback receives no submission and performs the mutation without dedupe.
+ */
+export const withAtomicIdempotency = async (
+  db: DrizzleClient,
+  { key, userId, outcome, run }: WithAtomicIdempotencyArgs,
+): Promise<Result<SubmissionOutcome, Error>> => {
+  if (!isValidSubmissionKey(key)) {
+    const result = await run()
+    return result.isErr ? Result.err(result.error) : Result.ok(outcome)
+  }
+
+  const readOutcome = () =>
+    toResult(() =>
+      db
+        .select({ outcome: submissionKey.outcome })
+        .from(submissionKey)
+        .where(eq(submissionKey.key, key))
+        .limit(1),
+    )
+
+  const existing = await readOutcome()
+  if (existing.isErr) {
+    return Result.err(existing.error)
+  }
+  if (existing.value.length > 0) {
+    const stored = parseOutcome(existing.value[0].outcome)
+    if (stored !== null) {
+      return Result.ok(stored)
+    }
+  }
+
+  const result = await run({ key, userId, outcome, createdAt: new Date() })
+  if (result.isErr) {
+    const raced = await readOutcome()
+    if (raced.isOk && raced.value.length > 0) {
+      const stored = parseOutcome(raced.value[0].outcome)
+      if (stored !== null) {
+        return Result.ok(stored)
+      }
+    }
+    return Result.err(result.error)
+  }
+
+  await pruneStaleLedgerRows(db)
+  return Result.ok(outcome)
 }

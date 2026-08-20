@@ -20,7 +20,12 @@ import { Result } from 'true-myth'
 import { ulid } from 'ulid'
 
 import { expense, submissionKey } from '../src/db/schema'
-import { withIdempotency, type SubmissionOutcome } from '../src/lib/submission-idempotency'
+import { createExpenseWithTags } from '../src/lib/db/expense-access'
+import {
+  withAtomicIdempotency,
+  withIdempotency,
+  type SubmissionOutcome,
+} from '../src/lib/submission-idempotency'
 import { createTestDb, seedCategory, seedUser, type TestDb } from './helpers/test-db'
 
 const USER_ID = 'user-1'
@@ -162,5 +167,69 @@ describe('withIdempotency', () => {
     // Both writes went through, but nothing was recorded in the ledger.
     assert.strictEqual(await countExpenses(db), 2)
     assert.strictEqual(await countLedgerRows(db), 0)
+  })
+
+  it('atomically records a fresh expense and replays it without a second write', async () => {
+    const db = await seedBase()
+    const key = ulid()
+    const outcome: SubmissionOutcome = { path: '/expenses', message: 'Expense added.' }
+    let calls = 0
+    const run = (submission?: Parameters<typeof createExpenseWithTags>[2]) => {
+      calls += 1
+      return createExpenseWithTags(
+        db,
+        {
+          description: 'coffee',
+          amountCents: 500,
+          categoryId: CATEGORY_ID,
+          date: '2024-01-01',
+          tagIds: [],
+        },
+        submission,
+      )
+    }
+
+    const first = await withAtomicIdempotency(db, { key, userId: USER_ID, outcome, run })
+    const replay = await withAtomicIdempotency(db, { key, userId: USER_ID, outcome, run })
+
+    assert.strictEqual(first.isOk, true)
+    assert.strictEqual(replay.isOk, true)
+    assert.strictEqual(calls, 1)
+    assert.strictEqual(await countExpenses(db), 1)
+    assert.strictEqual(await countLedgerRows(db), 1)
+  })
+
+  it('rolls back the expense when the atomic ledger insert fails', async () => {
+    const db = await seedBase()
+    const key = ulid()
+    const outcome: SubmissionOutcome = { path: '/expenses', message: 'Expense added.' }
+    await db.insert(submissionKey).values({
+      key,
+      userId: USER_ID,
+      outcome: 'not-json',
+      createdAt: new Date(),
+    })
+
+    const result = await withAtomicIdempotency(db, {
+      key,
+      userId: USER_ID,
+      outcome,
+      run: (submission) =>
+        createExpenseWithTags(
+          db,
+          {
+            description: 'coffee',
+            amountCents: 500,
+            categoryId: CATEGORY_ID,
+            date: '2024-01-01',
+            tagIds: [],
+          },
+          submission,
+        ),
+    })
+
+    assert.strictEqual(result.isErr, true)
+    assert.strictEqual(await countExpenses(db), 0)
+    assert.strictEqual(await countLedgerRows(db), 1)
   })
 })

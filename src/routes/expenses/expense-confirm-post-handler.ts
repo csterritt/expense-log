@@ -12,7 +12,7 @@ import { Result } from 'true-myth'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { createManyAndExpense } from '../../lib/db/expense-access'
-import { withIdempotency } from '../../lib/submission-idempotency'
+import { withAtomicIdempotency } from '../../lib/submission-idempotency'
 import { resolveConfirmTagsAndCategory } from '../../lib/db/confirm-helpers'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
 import { parseExpenseCreate, type FieldErrors } from '../../lib/expense-validators'
@@ -92,23 +92,25 @@ export const handleExpensesConfirmPost = async (c: Context<{ Bindings: Bindings 
   // Route the commit through the idempotency ledger so a replayed confirm
   // POST carrying the same submissionKey reproduces the redirect without a
   // second write.
-  const outcome = await withIdempotency(db, {
+  const outcome = await withAtomicIdempotency(db, {
     key: raw.submissionKey,
     userId: requireUserId(c),
-    run: async () => {
-      const createResult = await createManyAndExpense(db, {
-        newCategoryName: newCategoryName ?? null,
-        existingCategoryId: existingCategoryId ?? null,
-        newTagNames,
-        existingTagIds,
-        date: validated.value.date,
-        description: validated.value.description,
-        amountCents: validated.value.amountCents,
-      })
-      if (createResult.isErr) {
-        return Result.err(createResult.error)
-      }
-      return Result.ok(EXPENSE_ADDED_OUTCOME)
+    outcome: EXPENSE_ADDED_OUTCOME,
+    run: async (submission) => {
+      const createResult = await createManyAndExpense(
+        db,
+        {
+          newCategoryName: newCategoryName ?? null,
+          existingCategoryId: existingCategoryId ?? null,
+          newTagNames,
+          existingTagIds,
+          date: validated.value.date,
+          description: validated.value.description,
+          amountCents: validated.value.amountCents,
+        },
+        submission,
+      )
+      return createResult.isErr ? Result.err(createResult.error) : Result.ok(createResult.value)
     },
   })
   if (outcome.isErr) {

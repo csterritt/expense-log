@@ -26,7 +26,7 @@ import { listCategories, findCategoryByName } from '../../lib/db/category-access
 import { listTags } from '../../lib/db/tag-access'
 import { formatCents, formatCentsPlain } from '../../lib/money'
 import { redirectWithError, redirectWithMessage } from '../../lib/redirects'
-import { withIdempotency } from '../../lib/submission-idempotency'
+import { withAtomicIdempotency } from '../../lib/submission-idempotency'
 import {
   renderResilientSubmitScript,
   renderSubmissionKeyInput,
@@ -321,21 +321,27 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const anyNew = categoryIsNew || newTagNames.length > 0
 
       if (!anyNew) {
-        const outcome = await withIdempotency(db, {
+        const expenseUpdatedOutcome = { path: PATHS.EXPENSES, message: 'Expense updated.' }
+        const outcome = await withAtomicIdempotency(db, {
           key: raw.submissionKey,
           userId: requireUserId(c),
-          run: async () => {
-            const updateResult = await updateExpenseWithTags(db, {
-              id,
-              description: validated.value.description,
-              amountCents: validated.value.amountCents,
-              date: validated.value.date,
-              categoryId: lookup.value!.id,
-              tagIds: existingTagIds,
-            })
+          outcome: expenseUpdatedOutcome,
+          run: async (submission) => {
+            const updateResult = await updateExpenseWithTags(
+              db,
+              {
+                id,
+                description: validated.value.description,
+                amountCents: validated.value.amountCents,
+                date: validated.value.date,
+                categoryId: lookup.value!.id,
+                tagIds: existingTagIds,
+              },
+              submission,
+            )
             return updateResult.isErr
               ? Result.err(updateResult.error)
-              : Result.ok({ path: PATHS.EXPENSES, message: 'Expense updated.' })
+              : Result.ok(updateResult.value)
           },
         })
         if (outcome.isErr) {
@@ -484,23 +490,27 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
         newCategoryName = nameCheck.value
       }
 
-      const outcome = await withIdempotency(db, {
+      const expenseUpdatedOutcome = { path: PATHS.EXPENSES, message: 'Expense updated.' }
+      const outcome = await withAtomicIdempotency(db, {
         key: raw.submissionKey,
         userId: requireUserId(c),
-        run: async () => {
-          const updateResult = await updateManyAndExpense(db, {
-            id,
-            newCategoryName,
-            existingCategoryId,
-            newTagNames,
-            existingTagIds,
-            date: validated.value.date,
-            description: validated.value.description,
-            amountCents: validated.value.amountCents,
-          })
-          return updateResult.isErr
-            ? Result.err(updateResult.error)
-            : Result.ok({ path: PATHS.EXPENSES, message: 'Expense updated.' })
+        outcome: expenseUpdatedOutcome,
+        run: async (submission) => {
+          const updateResult = await updateManyAndExpense(
+            db,
+            {
+              id,
+              newCategoryName,
+              existingCategoryId,
+              newTagNames,
+              existingTagIds,
+              date: validated.value.date,
+              description: validated.value.description,
+              amountCents: validated.value.amountCents,
+            },
+            submission,
+          )
+          return updateResult.isErr ? Result.err(updateResult.error) : Result.ok(updateResult.value)
         },
       })
       if (outcome.isErr) {
@@ -557,14 +567,14 @@ export const buildEditExpense = (app: Hono<{ Bindings: Bindings }>): void => {
       const id = requireId(c)
       const raw = await readRawBody(c)
       const db = createDbClient(c.env.PROJECT_DB)
-      const outcome = await withIdempotency(db, {
+      const expenseDeletedOutcome = { path: PATHS.EXPENSES, message: 'Expense deleted.' }
+      const outcome = await withAtomicIdempotency(db, {
         key: raw.submissionKey,
         userId: requireUserId(c),
-        run: async () => {
-          const result = await deleteExpense(db, id)
-          return result.isErr
-            ? Result.err(result.error)
-            : Result.ok({ path: PATHS.EXPENSES, message: 'Expense deleted.' })
+        outcome: expenseDeletedOutcome,
+        run: async (submission) => {
+          const result = await deleteExpense(db, id, submission)
+          return result.isErr ? Result.err(result.error) : Result.ok(result.value)
         },
       })
       if (outcome.isErr) {
