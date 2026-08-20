@@ -79,8 +79,7 @@ export const createAuth = (env: Bindings) => {
       expiresIn: DURATIONS.THIRTY_DAYS_IN_SECONDS, // 30 days
       updateAge: DURATIONS.ONE_DAY_IN_SECONDS, // 1 day
       cookieCache: {
-        enabled: true,
-        maxAge: DURATIONS.FIVE_MINUTES_IN_SECONDS, // 5 minutes
+        enabled: false,
       },
     },
     // Using better-auth's default ID generation

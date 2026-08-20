@@ -14,7 +14,7 @@ import { PATHS, STANDARD_SECURE_HEADERS } from '../../constants'
 import type { AuthUser, Bindings, DrizzleClient } from '../../local-types'
 import { signedInAccess } from '../../middleware/signed-in-access'
 import { deleteUserAccount } from '../../lib/db/auth-access'
-import { removeCookie } from '../../lib/cookie-support'
+import { createAuth } from '../../lib/auth'
 import { logError, logInfo, sanitizeError } from '../../lib/logger'
 
 /**
@@ -57,16 +57,25 @@ export const handleDeleteAccount = (app: Hono<{ Bindings: Bindings }>): void => 
 
         logInfo('Account deleted successfully', { userId })
 
-        // Clear better-auth session cookies before creating redirect response
-        removeCookie(c, 'better-auth.session_token')
-        removeCookie(c, 'better-auth.session_data')
-
-        // Redirect to sign-in with success message
-        return redirectWithMessage(
+        const authUrl = new URL(c.req.url)
+        authUrl.pathname = '/api/auth/sign-out'
+        const authResponse = await createAuth(c.env).handler(
+          new Request(authUrl.toString(), {
+            method: 'POST',
+            headers: c.req.raw.headers,
+          }),
+        )
+        const redirectResponse = redirectWithMessage(
           c,
           PATHS.AUTH.SIGN_IN,
           'Your account has been successfully deleted.',
         )
+        const allCookieHeaders = authResponse.headers.getSetCookie?.() || []
+        allCookieHeaders.forEach((cookie) => {
+          redirectResponse.headers.append('Set-Cookie', cookie)
+        })
+
+        return redirectResponse
       } catch (error) {
         logError('Delete account handler error', { error: sanitizeError(error) })
         return redirectWithError(c, PATHS.PROFILE, 'An error occurred. Please try again.')
