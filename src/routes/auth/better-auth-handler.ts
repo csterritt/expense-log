@@ -8,6 +8,7 @@
  */
 import { Hono, Context, Next } from 'hono'
 
+import { PATHS } from '../../constants'
 import { createAuth } from '../../lib/auth'
 import type { Bindings, AuthUser, AuthSession, AuthSessionResponse } from '../../local-types'
 
@@ -30,6 +31,10 @@ type AppContext = Context<AppEnv>
 export const setupBetterAuth = (app: Hono<{ Bindings: Bindings }>): void => {
   // Better-auth handler with enhanced debugging
   app.all('/api/auth/*', async (c: AppContext) => {
+    if (c.req.path === PATHS.AUTH.SIGN_UP_EMAIL_API) {
+      return c.body(null, 404)
+    }
+
     try {
       const auth = createAuth(c.env)
       const response = await auth.handler(c.req.raw)
