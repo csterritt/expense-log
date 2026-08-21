@@ -68,14 +68,6 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
     ? filters
     : { ...defaultRangeEt(), tagIds: [], tagMode: 'or' as const }
 
-  const expensesResult = await listExpenses(db, activeFilters)
-  if (expensesResult.isErr) {
-    return renderExpenseLoadError(c)
-  }
-  const categoriesResult = await listCategories(db)
-  if (categoriesResult.isErr) {
-    return renderExpenseLoadError(c)
-  }
   const tagsResult = await listTags(db)
   if (tagsResult.isErr) {
     return renderExpenseLoadError(c)
@@ -83,6 +75,15 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
   const allTagIds = new Set(tagsResult.value.map((row) => row.id))
   const resolvedTagIds = activeFilters.tagIds.filter((id) => allTagIds.has(id))
   const resolvedFilters = { ...activeFilters, tagIds: resolvedTagIds }
+
+  const expensesResult = await listExpenses(db, resolvedFilters)
+  if (expensesResult.isErr) {
+    return renderExpenseLoadError(c)
+  }
+  const categoriesResult = await listCategories(db)
+  if (categoriesResult.isErr) {
+    return renderExpenseLoadError(c)
+  }
 
   const payloads: ExpenseFormPayloads = {
     categories: categoriesResult.value.map((row) => ({ name: row.name })),
