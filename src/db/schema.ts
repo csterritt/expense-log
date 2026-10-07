@@ -196,6 +196,24 @@ export const recurringTag = sqliteTable(
 )
 
 /**
+ * Submission idempotency ledger schema definition.
+ *
+ * Records a committing mutation's server-generated `submissionKey` (a ULID)
+ * inside the same transaction as the write so a replayed submission carrying
+ * an already-recorded key can be short-circuited to its stored `outcome`
+ * instead of writing again. Rows are pruned opportunistically after a short
+ * TTL. See PRD _Data model (new tables)_.
+ */
+export const submissionKey = sqliteTable('submissionKey', {
+  key: text('key').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  outcome: text('outcome').notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+})
+
+/**
  * Complete database schema object
  * Exports all table definitions for Drizzle ORM
  */
@@ -212,6 +230,7 @@ export const schema = {
   expenseTag,
   recurring,
   recurringTag,
+  submissionKey,
 }
 
 /**
@@ -229,6 +248,7 @@ export type Expense = typeof expense.$inferSelect
 export type ExpenseTag = typeof expenseTag.$inferSelect
 export type Recurring = typeof recurring.$inferSelect
 export type RecurringTag = typeof recurringTag.$inferSelect
+export type SubmissionKey = typeof submissionKey.$inferSelect
 
 /**
  * Inferred insert types for all tables (write operations)
@@ -245,3 +265,4 @@ export type NewExpense = typeof expense.$inferInsert
 export type NewExpenseTag = typeof expenseTag.$inferInsert
 export type NewRecurring = typeof recurring.$inferInsert
 export type NewRecurringTag = typeof recurringTag.$inferInsert
+export type NewSubmissionKey = typeof submissionKey.$inferInsert

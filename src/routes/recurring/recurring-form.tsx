@@ -19,6 +19,8 @@ import {
 } from '../../lib/expense-validators'
 import type { ExpenseFormValues } from '../../lib/form-state'
 import { TagChipCheckboxes } from '../../components/tag-chip-checkboxes'
+import { renderSubmissionKeyInput, resilientSubmitProps } from '../../lib/resilient-submit'
+import { PATHS } from '../../constants'
 
 export type RecurringFormState = {
   fieldErrors: FieldErrors
@@ -66,8 +68,10 @@ export const renderRecurringForm = (props: RenderRecurringFormProps) => {
       action={action}
       className='mb-6 grid grid-cols-1 md:grid-cols-5 gap-3 items-start'
       data-testid='recurring-form'
+      {...resilientSubmitProps(PATHS.RECURRING)}
       noValidate
     >
+      {renderSubmissionKeyInput(values.submissionKey)}
       <div className='flex flex-col md:col-span-2'>
         <label className='label' htmlFor='recurring-form-description'>
           <span className='label-text'>Description</span>
@@ -130,7 +134,9 @@ export const renderRecurringForm = (props: RenderRecurringFormProps) => {
           className={inputClass('select select-bordered w-full', !!fieldErrors.recurrence)}
           data-testid='recurring-form-recurrence'
         >
-          <option value='' selected={!values.recurrence}>-- select --</option>
+          <option value='' selected={!values.recurrence}>
+            -- select --
+          </option>
           {VALID_RECURRENCES.map((r) => (
             <option key={r} value={r} selected={r === values.recurrence}>
               {r}

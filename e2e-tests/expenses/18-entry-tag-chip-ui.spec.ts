@@ -35,7 +35,7 @@ test.describe('Expense entry form — tag chip-checkbox UI', () => {
 
       await signInAndGoToExpenses(page)
 
-      const chipBlock = page.getByTestId('tag-chip-checkboxes')
+      const chipBlock = page.getByTestId('expense-form').getByTestId('tag-chip-checkboxes')
       await expect(chipBlock).toBeVisible()
 
       const chips = chipBlock.locator('[data-testid^="tag-chip-"]')
@@ -47,13 +47,13 @@ test.describe('Expense entry form — tag chip-checkbox UI', () => {
 
       await expect(chipBlock).toHaveCSS('display', 'flex')
 
-      const foodChip = page.getByTestId('tag-chip-food')
+      const foodChip = page.getByTestId('expense-form').getByTestId('tag-chip-food')
       await expect(foodChip).toBeVisible()
-      const giftChip = page.getByTestId('tag-chip-gift')
+      const giftChip = page.getByTestId('expense-form').getByTestId('tag-chip-gift')
       await expect(giftChip).toBeVisible()
-      const legoChip = page.getByTestId('tag-chip-lego')
+      const legoChip = page.getByTestId('expense-form').getByTestId('tag-chip-lego')
       await expect(legoChip).toBeVisible()
-      const restaurantChip = page.getByTestId('tag-chip-restaurant')
+      const restaurantChip = page.getByTestId('expense-form').getByTestId('tag-chip-restaurant')
       await expect(restaurantChip).toBeVisible()
     }),
   )
@@ -73,10 +73,10 @@ test.describe('Expense entry form — tag chip-checkbox UI', () => {
 
       await signInAndGoToExpenses(page)
 
-      const foodLabel = page.getByTestId('tag-chip-food')
+      const foodLabel = page.getByTestId('expense-form').getByTestId('tag-chip-food')
       await foodLabel.click()
 
-      const restaurantLabel = page.getByTestId('tag-chip-restaurant')
+      const restaurantLabel = page.getByTestId('expense-form').getByTestId('tag-chip-restaurant')
       await restaurantLabel.click()
 
       const foodInput = foodLabel.locator('input[type="checkbox"]')
@@ -84,7 +84,7 @@ test.describe('Expense entry form — tag chip-checkbox UI', () => {
       const restaurantInput = restaurantLabel.locator('input[type="checkbox"]')
       await expect(restaurantInput).toBeChecked()
 
-      const giftInput = page.getByTestId('tag-chip-gift').locator('input[type="checkbox"]')
+      const giftInput = page.getByTestId('expense-form').getByTestId('tag-chip-gift').locator('input[type="checkbox"]')
       await expect(giftInput).not.toBeChecked()
 
       await page.getByTestId('expense-form-description').fill('Dinner out')
@@ -122,8 +122,8 @@ test.describe('Expense entry form — tag chip-checkbox UI', () => {
 
       await signInAndGoToExpenses(page)
 
-      const foodLabel = page.getByTestId('tag-chip-food')
-      const giftLabel = page.getByTestId('tag-chip-gift')
+      const foodLabel = page.getByTestId('expense-form').getByTestId('tag-chip-food')
+      const giftLabel = page.getByTestId('expense-form').getByTestId('tag-chip-gift')
 
       const foodClassBefore = await foodLabel.getAttribute('class')
       const giftClassBefore = await giftLabel.getAttribute('class')
@@ -154,7 +154,7 @@ test.describe('Expense entry form — tag chip-checkbox UI', () => {
 
       await signInAndGoToExpenses(page)
 
-      const chipBlock = page.getByTestId('tag-chip-checkboxes')
+      const chipBlock = page.getByTestId('expense-form').getByTestId('tag-chip-checkboxes')
       const checkboxes = chipBlock.locator('input[type="checkbox"]')
       await expect(checkboxes).toHaveCount(1)
 

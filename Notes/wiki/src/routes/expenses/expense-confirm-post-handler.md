@@ -10,9 +10,13 @@ POST handler for expense creation confirmation (when new categories/tags are inv
 2. Re-validates all fields defensively (hidden inputs could be tampered)
 3. Calls `resolveConfirmTagsAndCategory` to resolve tag/category state
 4. On resolution failure: redirects with appropriate error
-5. On success: calls `createManyAndExpense` to atomically create new category + new tags + expense + tag links
-6. On DB error: redirects with field-specific error
+5. On success: routes the commit through [`withIdempotency`](../../lib/submission-idempotency.md) (keyed off `raw.submissionKey` + `requireUserId(c)`) wrapping `createManyAndExpense`, which atomically creates new category + new tags + expense + tag links; on success redirects with `EXPENSE_ADDED_OUTCOME`
+6. On DB error: redirects with field-specific error (`category` when a new category was involved, `tags` otherwise)
 7. On success: redirects with "Expense added." message
+
+## Idempotency
+
+The commit (step 5) is wrapped in `withIdempotency`. The confirm form's hidden `submissionKey` is the original one minted on the entry GET, so a replay of either the entry POST or the confirm POST dedupes against the same ledger row. Pre-write validation (`resolveConfirmTagsAndCategory`) stays outside the idempotent section so a failed validation records no ledger row and the key stays resubmittable. See [Idempotency Ledger](../../idempotency-ledger.md).
 
 ## Dependencies
 
@@ -22,4 +26,6 @@ POST handler for expense creation confirmation (when new categories/tags are inv
 - `../../lib/expense-validators` — `parseExpenseCreate`, `FieldErrors`
 - `../../lib/form-state` — `redirectWithFormErrors`, `ExpenseFormValues`
 - `../../lib/redirects` — `redirectWithError`, `redirectWithMessage`
-- `./expense-form-helpers` — `readRawBody`
+- `../../lib/submission-idempotency` — `withIdempotency` (Issue 19)
+- `../../lib/result` — `Result` (true-myth)
+- `./expense-form-helpers` — `readRawBody`, `requireUserId`, `EXPENSE_ADDED_OUTCOME`

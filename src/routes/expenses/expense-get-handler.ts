@@ -8,6 +8,8 @@
  */
 
 import { Context } from 'hono'
+import { html } from 'hono/html'
+import { ulid } from 'ulid'
 import { Bindings } from '../../local-types'
 import { createDbClient } from '../../db/client'
 import { useLayout } from '../build-layout'
@@ -15,13 +17,27 @@ import { defaultRangeEt, todayEt } from '../../lib/et-date'
 import { listExpenses } from '../../lib/db/expense-access'
 import { listCategories } from '../../lib/db/category-access'
 import { listTags } from '../../lib/db/tag-access'
-import { redirectWithError } from '../../lib/redirects'
 import { parseExpenseListFilters } from '../../lib/expense-validators'
 import { readAndClearFormState } from '../../lib/form-state'
 import { renderExpenses } from './expense-list-renderer'
 import { emptyState } from './expense-form-helpers'
-import { PATHS } from '../../constants'
+import { HTML_STATUS } from '../../constants'
 import type { ExpenseFormPayloads, ExpenseFormState } from './expense-form'
+
+/**
+ * Render a terminal expense-list load error without redirecting the user.
+ */
+export const renderExpenseLoadError = (c: Context<{ Bindings: Bindings }>): Response => {
+  c.status(HTML_STATUS.INTERNAL_SERVER_ERROR)
+  return c.render(
+    useLayout(
+      c,
+      html`<div role="alert" data-testid="expenses-load-error">
+        Failed to load expenses. Please try again.
+      </div>`,
+    ),
+  )
+}
 
 /**
  * Handles GET requests to the expenses list page.
@@ -42,39 +58,32 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
     tagId: rawTagId !== undefined && rawTagId.length > 0 ? rawTagId : rawQ['tagId'],
     tagMode: rawQ['tagMode'],
   }
-  const { hasFilterParams, filters, fieldErrors: filterErrors } = parseExpenseListFilters(rawFilters)
+  const {
+    hasFilterParams,
+    filters,
+    fieldErrors: filterErrors,
+  } = parseExpenseListFilters(rawFilters)
 
   const activeFilters = hasFilterParams
     ? filters
     : { ...defaultRangeEt(), tagIds: [], tagMode: 'or' as const }
 
-  const expensesResult = await listExpenses(db, activeFilters)
-  if (expensesResult.isErr) {
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_IN,
-      'Failed to load expenses. Please try again.',
-    )
-  }
-  const categoriesResult = await listCategories(db)
-  if (categoriesResult.isErr) {
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_IN,
-      'Failed to load expenses. Please try again.',
-    )
-  }
   const tagsResult = await listTags(db)
   if (tagsResult.isErr) {
-    return redirectWithError(
-      c,
-      PATHS.AUTH.SIGN_IN,
-      'Failed to load expenses. Please try again.',
-    )
+    return renderExpenseLoadError(c)
   }
   const allTagIds = new Set(tagsResult.value.map((row) => row.id))
   const resolvedTagIds = activeFilters.tagIds.filter((id) => allTagIds.has(id))
   const resolvedFilters = { ...activeFilters, tagIds: resolvedTagIds }
+
+  const expensesResult = await listExpenses(db, resolvedFilters)
+  if (expensesResult.isErr) {
+    return renderExpenseLoadError(c)
+  }
+  const categoriesResult = await listCategories(db)
+  if (categoriesResult.isErr) {
+    return renderExpenseLoadError(c)
+  }
 
   const payloads: ExpenseFormPayloads = {
     categories: categoriesResult.value.map((row) => ({ name: row.name })),
@@ -82,6 +91,9 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
   }
   const today = todayEt()
   const flash = readAndClearFormState(c)
+  // Mint a fresh server-generated submission key per rendered page so the
+  // entry form (and any confirm round-trip) can dedupe replayed submits.
+  const submissionKey = ulid()
   const state: ExpenseFormState = flash
     ? {
         fieldErrors: flash.fieldErrors ?? {},
@@ -92,9 +104,10 @@ export const handleExpensesGet = async (c: Context<{ Bindings: Bindings }>) => {
           category: flash.values.category ?? '',
           tagIds: flash.values.tagIds ?? [],
           newTags: flash.values.newTags ?? '',
+          submissionKey,
         },
       }
-    : emptyState(today)
+    : { ...emptyState(today), values: { ...emptyState(today).values, submissionKey } }
   return c.render(
     useLayout(
       c,

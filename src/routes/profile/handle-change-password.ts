@@ -64,24 +64,44 @@ export const handleChangePassword = (app: Hono<{ Bindings: Bindings }>): void =>
         const auth = createAuth(c.env)
 
         try {
-          // Use better-auth's changePassword method
+          // Use better-auth's change password endpoint
           // This requires the session headers to authenticate the request
-          await auth.api.changePassword({
-            body: {
-              currentPassword,
-              newPassword,
-              revokeOtherSessions: true,
-            },
-            headers: c.req.raw.headers,
-          })
+          const authUrl = new URL(c.req.url)
+          authUrl.pathname = '/api/auth/change-password'
+          const headers = new Headers(c.req.raw.headers)
+          headers.set('Content-Type', 'application/json')
+          const authResponse = await auth.handler(
+            new Request(authUrl.toString(), {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                currentPassword,
+                newPassword,
+                revokeOtherSessions: true,
+              }),
+            }),
+          )
+
+          if (!authResponse.ok) {
+            const errorData: unknown = await authResponse.json()
+            throw new Error(
+              isErrorWithMessage(errorData) ? errorData.message : 'Password change failed',
+            )
+          }
 
           logInfo('Password changed successfully', { userId: user.id })
 
-          return redirectWithMessage(
+          const redirectResponse = redirectWithMessage(
             c,
             PATHS.PROFILE,
             'Your password has been successfully changed.',
           )
+          const allCookieHeaders = authResponse.headers.getSetCookie?.() || []
+          allCookieHeaders.forEach((cookie) => {
+            redirectResponse.headers.append('Set-Cookie', cookie)
+          })
+
+          return redirectResponse
         } catch (error) {
           logError('Password change error', { userId: user.id, error: sanitizeError(error) })
 

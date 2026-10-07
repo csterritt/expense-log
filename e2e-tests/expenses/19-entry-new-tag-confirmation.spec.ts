@@ -81,7 +81,7 @@ test.describe('Expense entry form — new-tag confirmation flow', () => {
 
       await signInAndGoToExpenses(page)
 
-      const foodLabel = page.getByTestId('tag-chip-food')
+      const foodLabel = page.getByTestId('expense-form').getByTestId('tag-chip-food')
       await foodLabel.click()
 
       const newTagsInput = page.getByTestId('new-tags-input')

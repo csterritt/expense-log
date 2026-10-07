@@ -15,6 +15,7 @@ import type { DrizzleClient } from '../../local-types'
 import { withRetry, toResult } from '../db-helpers'
 import { todayEt } from '../et-date'
 import { occurrencesToGenerate } from '../recurrence'
+import { buildAtomicSubmissionStatement, type AtomicSubmission } from '../submission-idempotency'
 
 /**
  * Input for creating a new category and expense together
@@ -297,12 +298,14 @@ export interface CreateExpenseWithTagsInput {
 export const createExpenseWithTags = (
   db: DrizzleClient,
   input: CreateExpenseWithTagsInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ id: string }, Error>> =>
-  withRetry('createExpenseWithTags', () => createExpenseWithTagsActual(db, input))
+  withRetry('createExpenseWithTags', () => createExpenseWithTagsActual(db, input, submission))
 
 const createExpenseWithTagsActual = async (
   db: DrizzleClient,
   input: CreateExpenseWithTagsInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ id: string }, Error>> => {
   try {
     const found = await db
@@ -327,16 +330,15 @@ const createExpenseWithTagsActual = async (
       updatedAt: now,
     })
 
-    if (uniqueTagIds.length === 0) {
-      await insertExpense
-    } else {
-      const statements: unknown[] = [insertExpense]
-      for (const tagId of uniqueTagIds) {
-        statements.push(db.insert(expenseTag).values({ expenseId: id, tagId }))
-      }
-      // D1 batch is atomic — the whole set succeeds or rolls back.
-      await db.batch(statements as never)
+    const statements: unknown[] = [insertExpense]
+    for (const tagId of uniqueTagIds) {
+      statements.push(db.insert(expenseTag).values({ expenseId: id, tagId }))
     }
+    if (submission) {
+      statements.push(buildAtomicSubmissionStatement(db, submission))
+    }
+    // D1 batch is atomic — the whole set succeeds or rolls back.
+    await db.batch(statements as never)
     return Result.ok({ id })
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
@@ -429,12 +431,14 @@ export interface UpdateExpenseWithTagsInput {
 export const updateExpenseWithTags = (
   db: DrizzleClient,
   input: UpdateExpenseWithTagsInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ id: string }, Error>> =>
-  withRetry('updateExpenseWithTags', () => updateExpenseWithTagsActual(db, input))
+  withRetry('updateExpenseWithTags', () => updateExpenseWithTagsActual(db, input, submission))
 
 const updateExpenseWithTagsActual = async (
   db: DrizzleClient,
   input: UpdateExpenseWithTagsInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ id: string }, Error>> => {
   try {
     const found = await db
@@ -473,6 +477,9 @@ const updateExpenseWithTagsActual = async (
     for (const tagId of uniqueTagIds) {
       statements.push(db.insert(expenseTag).values({ expenseId: input.id, tagId }))
     }
+    if (submission) {
+      statements.push(buildAtomicSubmissionStatement(db, submission))
+    }
     await db.batch(statements as never)
     return Result.ok({ id: input.id })
   } catch (e) {
@@ -505,12 +512,14 @@ export interface UpdateManyAndExpenseInput {
 export const updateManyAndExpense = (
   db: DrizzleClient,
   input: UpdateManyAndExpenseInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ id: string; categoryId: string; createdTagIds: string[] }, Error>> =>
-  withRetry('updateManyAndExpense', () => updateManyAndExpenseActual(db, input))
+  withRetry('updateManyAndExpense', () => updateManyAndExpenseActual(db, input, submission))
 
 const updateManyAndExpenseActual = async (
   db: DrizzleClient,
   input: UpdateManyAndExpenseInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ id: string; categoryId: string; createdTagIds: string[] }, Error>> => {
   try {
     const hasNewCategory =
@@ -589,6 +598,9 @@ const updateManyAndExpenseActual = async (
     for (const tagId of allTagIds) {
       statements.push(db.insert(expenseTag).values({ expenseId: input.id, tagId }))
     }
+    if (submission) {
+      statements.push(buildAtomicSubmissionStatement(db, submission))
+    }
 
     await db.batch(statements as never)
 
@@ -609,10 +621,18 @@ const updateManyAndExpenseActual = async (
  * cleans up its link rows automatically. Returns `Result.err` when the row
  * does not exist.
  */
-export const deleteExpense = (db: DrizzleClient, id: string): Promise<Result<void, Error>> =>
-  withRetry('deleteExpense', () => deleteExpenseActual(db, id))
+export const deleteExpense = (
+  db: DrizzleClient,
+  id: string,
+  submission?: AtomicSubmission,
+): Promise<Result<void, Error>> =>
+  withRetry('deleteExpense', () => deleteExpenseActual(db, id, submission))
 
-const deleteExpenseActual = async (db: DrizzleClient, id: string): Promise<Result<void, Error>> => {
+const deleteExpenseActual = async (
+  db: DrizzleClient,
+  id: string,
+  submission?: AtomicSubmission,
+): Promise<Result<void, Error>> => {
   try {
     const found = await db
       .select({ id: expense.id })
@@ -622,7 +642,11 @@ const deleteExpenseActual = async (db: DrizzleClient, id: string): Promise<Resul
     if (found.length === 0) {
       return Result.err(new Error('Expense not found.'))
     }
-    await db.delete(expense).where(eq(expense.id, id))
+    const statements: unknown[] = [db.delete(expense).where(eq(expense.id, id))]
+    if (submission) {
+      statements.push(buildAtomicSubmissionStatement(db, submission))
+    }
+    await db.batch(statements as never)
     return Result.ok(undefined as unknown as void)
   } catch (e) {
     return Result.err(e instanceof Error ? e : new Error(String(e)))
@@ -652,12 +676,14 @@ export interface CreateManyAndExpenseInput {
 export const createManyAndExpense = (
   db: DrizzleClient,
   input: CreateManyAndExpenseInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ categoryId: string; expenseId: string; createdTagIds: string[] }, Error>> =>
-  withRetry('createManyAndExpense', () => createManyAndExpenseActual(db, input))
+  withRetry('createManyAndExpense', () => createManyAndExpenseActual(db, input, submission))
 
 const createManyAndExpenseActual = async (
   db: DrizzleClient,
   input: CreateManyAndExpenseInput,
+  submission?: AtomicSubmission,
 ): Promise<Result<{ categoryId: string; expenseId: string; createdTagIds: string[] }, Error>> => {
   try {
     const hasNewCategory =
@@ -728,6 +754,9 @@ const createManyAndExpenseActual = async (
     const allTagIds = Array.from(new Set([...input.existingTagIds, ...createdTagIds]))
     for (const tagId of allTagIds) {
       statements.push(db.insert(expenseTag).values({ expenseId, tagId }))
+    }
+    if (submission) {
+      statements.push(buildAtomicSubmissionStatement(db, submission))
     }
 
     await db.batch(statements as never)

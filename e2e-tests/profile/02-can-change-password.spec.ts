@@ -67,6 +67,40 @@ test(
 )
 
 test(
+  'immediately revokes another browser session after changing password',
+  testWithDatabase(async ({ page }) => {
+    const browser = page.context().browser()
+    if (!browser) {
+      throw new Error('Playwright browser is unavailable')
+    }
+
+    const secondContext = await browser.newContext()
+    const secondPage = await secondContext.newPage()
+
+    try {
+      await secondPage.goto(BASE_URLS.SIGN_IN)
+      await submitSignInForm(secondPage, TEST_USERS.KNOWN_USER)
+      await verifyOnProtectedPage(secondPage)
+
+      await page.goto(BASE_URLS.SIGN_IN)
+      await submitSignInForm(page, TEST_USERS.KNOWN_USER)
+      await navigateToProfile(page)
+      await submitChangePasswordForm(
+        page,
+        TEST_USERS.KNOWN_USER.password,
+        'my-brand-new-password-123',
+      )
+      await verifyOnProfilePage(page)
+
+      await secondPage.goto(BASE_URLS.EXPENSES)
+      await verifyOnSignInPage(secondPage)
+    } finally {
+      await secondContext.close()
+    }
+  }),
+)
+
+test(
   'shows error when current password is incorrect',
   testWithDatabase(async ({ page }) => {
     const wrongPassword = 'definitely-wrong-password'

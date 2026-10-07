@@ -20,6 +20,7 @@ Catalog of all unit test files under `tests/`. Tests run with Bun's built-in tes
 | [scheduled.spec.ts](tests/scheduled.md) | Tests for scheduled cron job (recurring expense materialization). |
 | [send-email.spec.ts](tests/send-email.md) | Tests for email sending (SMTP config validation, OTP email, retry logic). |
 | [sign-up-utils.spec.ts](tests/sign-up-utils.md) | Tests for sign-up utilities (duplicate detection, error handling, processGatedSignUp). |
+| [submission-idempotency.spec.ts](tests/submission-idempotency.md) | Tests for `withIdempotency` (Issue 19): fresh key runs once + persists outcome; replay returns stored outcome with no second write; validation failure records no ledger row + stays resubmittable; absent/malformed key runs once with no dedupe. |
 | [summary-access.spec.ts](tests/summary-access.md) | Tests for summary DB access (group-by aggregation, chronological sort, granularity). |
 | [tag-chip-checkboxes.spec.ts](tests/tag-chip-checkboxes.md) | Tests for tag chip checkbox component rendering and behavior. |
 | [time-access.spec.ts](tests/time-access.md) | Tests for time access module (getCurrentTime, delta manipulation in test mode). |

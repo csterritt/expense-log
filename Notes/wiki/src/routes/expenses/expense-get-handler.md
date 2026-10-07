@@ -11,7 +11,8 @@ GET handler for the expenses list page.
 3. Fetches expenses, categories, and tags from DB
 4. Resolves tag IDs against existing tags (filters out stale IDs)
 5. Reads flash form state (sticky values + errors from PRG redirect)
-6. Renders the expenses list page with filter bar, expense form, and expense table
+6. Mints a fresh server-generated `submissionKey` (ULID) per rendered page and threads it into the form state so the entry form (and any confirm round-trip) can dedupe replayed submits (Issue 19; see [Idempotency Ledger](../../idempotency-ledger.md))
+7. Renders the expenses list page with filter bar, expense form, and expense table
 
 ## Dependencies
 
@@ -23,6 +24,7 @@ GET handler for the expenses list page.
 - `../../lib/form-state` — `readAndClearFormState`
 - `../../lib/et-date` — `defaultRangeEt`, `todayEt`
 - `../../lib/redirects` — `redirectWithError`
+- `ulid` — `ulid` (Issue 19 submission key mint)
 - `../build-layout` — `useLayout`
 - `./expense-list-renderer` — `renderExpenses`
 - `./expense-form-helpers` — `emptyState`

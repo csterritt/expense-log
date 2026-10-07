@@ -168,6 +168,7 @@ test.describe('Expense filter bar — description and date-range', () => {
 
       await signInAndGoToExpenses(page)
 
+      await page.getByTestId('filter-from').fill('2024-01-01')
       await page.getByTestId('filter-to').fill('2024-02-01')
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
@@ -228,6 +229,7 @@ test.describe('Expense filter bar — description and date-range', () => {
 
       await signInAndGoToExpenses(page)
 
+      await page.getByTestId('filter-from').fill('')
       await page.getByTestId('filter-to').fill('2024-01-01')
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
@@ -258,6 +260,8 @@ test.describe('Expense filter bar — description and date-range', () => {
 
       await signInAndGoToExpenses(page)
 
+      await page.getByTestId('filter-from').fill('')
+      await page.getByTestId('filter-to').fill('')
       await page.getByTestId('filter-submit').click()
       await page.waitForURL(/\/expenses/)
 

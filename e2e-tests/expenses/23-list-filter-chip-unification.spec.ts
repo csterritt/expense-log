@@ -62,7 +62,7 @@ test.describe('Expense list filter — tag chip-checkbox unification', () => {
       await expect(chips).toHaveCount(4)
 
       const names = await chips.allTextContents()
-      const lower = names.map((n) => n.trim().toLowerCase())
+      const lower = names.map((n: string) => n.trim().toLowerCase())
       expect(lower).toEqual([...lower].sort())
 
       await expect(chipBlock).toHaveCSS('display', 'flex')
@@ -92,7 +92,7 @@ test.describe('Expense list filter — tag chip-checkbox unification', () => {
       expect(foodClass).toEqual(giftClass)
 
       expect(foodClass).toContain('badge')
-      expect(foodClass).toContain('badge-outline')
+      expect(foodClass).toContain('cursor-pointer')
     }),
   )
 
@@ -188,7 +188,7 @@ test.describe('Expense list filter — tag chip-checkbox unification', () => {
   )
 
   test(
-    'stale tagId values (no longer existing) are silently omitted from rendered chip block',
+    'stale tagId values are omitted before applying an AND filter',
     testWithDatabase(async ({ page }) => {
       await seedExpenses([
         {
@@ -209,11 +209,13 @@ test.describe('Expense list filter — tag chip-checkbox unification', () => {
       const staleParams = new URLSearchParams()
       staleParams.append('tagId', foodId!)
       staleParams.append('tagId', '00000000000000000000000000')
+      staleParams.set('tagMode', 'and')
 
       await page.goto(`${BASE_URLS.EXPENSES}?${staleParams.toString()}`)
 
       await expect(page.getByTestId('expenses-page')).toBeVisible()
       await expect(page.getByTestId('filter-tags-error')).toHaveCount(0)
+      await expect(page.getByTestId('expense-row-description')).toHaveText(['seed'])
 
       const chipBlock = filterBar(page).getByTestId('tag-chip-checkboxes')
       const chipIds = chipBlock.locator('input[type="checkbox"]')
@@ -221,6 +223,27 @@ test.describe('Expense list filter — tag chip-checkbox unification', () => {
         els.map((el) => (el as HTMLInputElement).value),
       )
       expect(allValues).not.toContain('00000000000000000000000000')
+    }),
+  )
+
+  test(
+    'a stale-only tag filter is omitted before querying expenses',
+    testWithDatabase(async ({ page }) => {
+      await seedExpenses([
+        {
+          date: todayEt(),
+          description: 'seed',
+          amountCents: 100,
+          categoryName: 'food',
+          tagNames: ['food'],
+        },
+      ])
+
+      await signInAndGoToExpenses(page)
+      await page.goto(`${BASE_URLS.EXPENSES}?tagId=00000000000000000000000000`)
+
+      await expect(page.getByTestId('expense-row-description')).toHaveText(['seed'])
+      await expect(filterBar(page).locator('input[name="tagId"]:checked')).toHaveCount(0)
     }),
   )
 

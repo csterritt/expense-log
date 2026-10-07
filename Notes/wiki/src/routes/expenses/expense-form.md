@@ -19,6 +19,7 @@ Renders the expense form with:
 - Date input
 - Category combobox (datalist with existing categories, allows new names)
 - Tag chip checkboxes (existing tags) + new tags text input
+- Hidden `submissionKey` input (server-minted ULID, Issue 19; see [Idempotency Ledger](../../idempotency-ledger.md))
 - Submit button (label depends on mode: "Add expense" / "Save changes")
 - Embedded `<script>` with category data for the combobox JS (JSON safely escaped)
 
@@ -26,7 +27,7 @@ Renders the expense form with:
 
 Renders a confirmation page when new category names or new tag names are detected. Shows:
 - Summary of what will be created (new category, new tags)
-- Hidden form fields preserving all values
+- Hidden form fields preserving all values (including the original `submissionKey`, round-tripped so the confirm POST carries the same key)
 - Confirm and Cancel buttons
 
 ## Internal Helpers

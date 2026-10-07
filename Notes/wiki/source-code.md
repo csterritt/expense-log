@@ -37,6 +37,7 @@ Catalog of all source files under `src/`. Each entry links to its detailed wiki 
 | [money.ts](src/lib/money.md) | Money utilities: formatCents, formatCentsPlain, parseAmount (cents from user input). |
 | [po-notify.ts](src/lib/po-notify.md) | Pushover notification integration; sends admin alerts in non-dev environments. |
 | [recurrence.ts](src/lib/recurrence.md) | Recurrence date arithmetic: nextOccurrenceAfter, occurrencesToGenerate for Monthly/Quarterly/Yearly. |
+| [resilient-submit.tsx](src/lib/resilient-submit.md) | Shared resilient-submit attributes, hidden key input, and module-script renderer. |
 | [redirects.tsx](src/lib/redirects.md) | Redirect helpers with flash cookies: redirectWithMessage, redirectWithError. |
 | [send-email.ts](src/lib/send-email.md) | SMTP email sending via Nodemailer; sendEmail, sendOtpToUserViaEmail with retry logic. |
 | [setup-no-cache-headers.ts](src/lib/setup-no-cache-headers.md) | Sets Cache-Control/Pragma/Expires headers to prevent caching on authenticated pages. |

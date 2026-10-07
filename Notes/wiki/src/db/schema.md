@@ -52,8 +52,12 @@ Join table (expense ↔ tag): `expenseId` (FK → expense, cascade delete), `tag
 
 Join table (recurring ↔ tag): `recurringId` (FK → recurring, cascade delete), `tagId` (FK → tag, restrict delete). Composite primary key.
 
+### submissionKey
+
+Submission idempotency ledger (Issue 19; see [Idempotency Ledger](../idempotency-ledger.md)): `key` (PK — a server-minted ULID), `userId` (FK → user, cascade delete), `outcome` (JSON-serialized `{ path, message }` — the canonical post-submit redirect target plus flash message), `createdAt` (timestamp, not null). Records a committing mutation's server-generated `submissionKey` so a replayed submission carrying an already-recorded key can be short-circuited to its stored `outcome` instead of writing again. Rows are pruned opportunistically after a short TTL. Created by migration `drizzle/0005_perpetual_carnage.sql`.
+
 ## Exports
 
 - `schema` — object with all table definitions
-- Inferred select types: `User`, `Session`, `Account`, `Verification`, `InterestedEmail`, `SingleUseCode`, `Category`, `Tag`, `Expense`, `ExpenseTag`, `Recurring`, `RecurringTag`
-- Inferred insert types: `NewUser`, `NewSession`, `NewAccount`, `NewVerification`, `NewInterestedEmail`, `NewSingleUseCode`, `NewCategory`, `NewTag`, `NewExpense`, `NewExpenseTag`, `NewRecurring`, `NewRecurringTag`
+- Inferred select types: `User`, `Session`, `Account`, `Verification`, `InterestedEmail`, `SingleUseCode`, `Category`, `Tag`, `Expense`, `ExpenseTag`, `Recurring`, `RecurringTag`, `SubmissionKey`
+- Inferred insert types: `NewUser`, `NewSession`, `NewAccount`, `NewVerification`, `NewInterestedEmail`, `NewSingleUseCode`, `NewCategory`, `NewTag`, `NewExpense`, `NewExpenseTag`, `NewRecurring`, `NewRecurringTag`, `NewSubmissionKey`

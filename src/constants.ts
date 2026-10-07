@@ -16,6 +16,7 @@ import { STATIC_TRUSTED_ORIGINS } from './lib/origin-config'
 export const HTML_STATUS = {
   SEE_OTHER: 303 as const,
   CONTENT_TOO_LARGE: 413 as const,
+  INTERNAL_SERVER_ERROR: 500 as const,
 } as const
 
 /**
@@ -29,6 +30,8 @@ export const PATHS = {
   AUTH: {
     // Base path for Better Auth API
     API_BASE: '/api/auth',
+
+    SIGN_UP_EMAIL_API: '/api/auth/sign-up/email',
 
     // Auth email sign-in endpoint
     SIGN_IN_EMAIL_API: '/api/auth/sign-in/email',
