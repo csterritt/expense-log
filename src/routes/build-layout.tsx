@@ -148,7 +148,7 @@ export const useLayout = (
       {/* Footer */}
       <footer className='footer footer-center p-4 bg-base-300 text-base-content'>
         <div>
-          <p>Copyright &copy; 2025 V-{version}</p>
+          <p>Copyright &copy; 2026 V-{version}</p>
         </div>
       </footer>
     </div>
