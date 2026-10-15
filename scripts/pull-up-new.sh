@@ -19,10 +19,10 @@ fi
 
 last_dir=$(basename "$(pwd)")
 
-ssh chris@utmtwo "cd ${last_dir} && scripts/tar-new.sh /tmp/new-files.tar"
+ssh chris@utmbox "cd ${last_dir} && scripts/tar-new.sh /tmp/new-files.tar"
 
-scp chris@utmtwo:/tmp/new-files.tar /tmp/new-files.tar
-scp chris@utmtwo:/tmp/deleted-files.txt /tmp/deleted-files.txt
+scp chris@utmbox:/tmp/new-files.tar /tmp/new-files.tar
+scp chris@utmbox:/tmp/deleted-files.txt /tmp/deleted-files.txt
 
 tar xvf /tmp/new-files.tar
 
@@ -32,4 +32,4 @@ done < /tmp/deleted-files.txt
 
 rm -f /tmp/new-files.tar /tmp/deleted-files.txt
 
-ssh chris@utmtwo 'rm -f /tmp/new-files.tar /tmp/deleted-files.txt'
+ssh chris@utmbox 'rm -f /tmp/new-files.tar /tmp/deleted-files.txt'

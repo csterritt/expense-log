@@ -14,3 +14,5 @@ This is where project documentation and notes live.
 - `walkthroughs/` — project walkthroughs and demos
 - `Ideas.md` - the initial project ideas and requirements
 - `PRD-expense-log.md` - the project requirements document
+- `Ideas-2.md` - ideas for the second round of updates (duplicate detection)
+- `PRD-expense-log-2.md` - the requirements document for the second round (duplicate expense detection)
