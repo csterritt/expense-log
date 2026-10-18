@@ -4,11 +4,14 @@
  * Reads CSV from stdin where each row has three or four non-blank fields:
  *   description, amount, date[, category]
  *
- * Dates are of the form M/D/YY or M/D; M/D dates get '/26' appended.
+ * Dates are of the form M/D/YY or M/D; output is MM/DD/YYYY with the
+ * year assumed to be in the 2000s (M/D dates get 2026).
  *
  * Writes CSV to stdout with reordered fields:
  *   amount, date, description[, category]
  */
+
+export {}
 
 const parseCsvLine = (line: string): string[] => {
   const fields: string[] = []
@@ -54,7 +57,7 @@ const normalizeDate = (date: string): string | null => {
     return null
   }
   const [, month, day, year] = match
-  return `${month}/${day}/${year ?? '26'}`
+  return `${month.padStart(2, '0')}/${day.padStart(2, '0')}/20${year ?? '26'}`
 }
 
 const main = async (): Promise<void> => {
