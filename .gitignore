@@ -37,3 +37,4 @@ schema.sql
 .obsidian/
 .rodney
 try*
+data/
