@@ -16,3 +16,4 @@ This is where project documentation and notes live.
 - `PRD-expense-log.md` - the project requirements document
 - `Ideas-2.md` - ideas for the second round of updates (duplicate detection)
 - `PRD-expense-log-2.md` - the requirements document for the second round (duplicate expense detection)
+- `vps-migration-plan.md` - plan for moving from Cloudflare Workers + D1 to a stand-alone process on a VPS
